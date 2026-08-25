@@ -2,494 +2,213 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Checklist Recepción · Cableado & CCTV</title>
-
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#1F3864">
+<title>Recepción de Proyectos | Cableado & CCTV</title>
 <style>
-  :root {
-    --navy: #1F3864; --navy-dark: #152747; --blue: #2E75B6; --bg: #EEF1F5;
-    --card: #FFFFFF; --border: #DDE3EC; --text: #1C2530; --muted: #6B7686;
-    --ok: #1F8A46; --ok-bg: #E3F5EA; --bad: #C4372B; --bad-bg: #FBE7E5; --pending-bg: #F1F3F6;
-  }
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  body { margin: 0; padding: 0 0 84px 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-
-  header.topbar { position: sticky; top: 0; z-index: 30; background: linear-gradient(135deg, var(--navy), var(--navy-dark)); color: #fff; padding: 12px 16px; }
-  .brand { display: flex; align-items: center; justify-content: space-between; }
-  .brand-title { font-weight: 800; font-size: 15px; letter-spacing: .02em; }
-  .reset-btn { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3); color: #fff; font-size: 11px; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; }
-
-  .infobox { background: var(--card); margin: 12px; border-radius: 12px; padding: 12px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-  .infogrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .field { display: flex; flex-direction: column; gap: 3px; }
-  .field label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; }
-  .field input { border: 1.5px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px; outline: none; }
-  .field input:focus { border-color: var(--blue); }
-
-  .tabbar { display: flex; gap: 6px; margin: 0 12px 12px; }
-  .tab { flex: 1; background: var(--card); border: 1.5px solid var(--border); border-radius: 10px; padding: 10px 4px; text-align: center; font-size: 12px; font-weight: 700; color: var(--muted); cursor: pointer; }
-  .tab.active { background: var(--navy); border-color: var(--navy); color: #fff; }
-  .tab .prog { display: block; font-size: 10px; margin-top: 2px; opacity: .9; }
-
-  .panel { display: none; padding: 0 12px; }
-  .panel.active { display: block; }
-
-  .card { background: var(--card); border-radius: 12px; margin-bottom: 10px; border: 1px solid var(--border); overflow: hidden; }
-  .card-head { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #F7F9FC; cursor: pointer; user-select: none; font-weight: 700; font-size: 13px; }
-  .card-body { display: none; padding: 8px 12px 12px; }
-  .card.open .card-body { display: block; }
-  .chevron { transition: transform .2s; color: var(--muted); }
-  .card.open .chevron { transform: rotate(180deg); }
-
-  .item-row { padding: 10px 0; border-bottom: 1px solid #EEF1F5; }
-  .item-row:last-child { border-bottom: none; }
-  .item-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-  .item-label { font-size: 13px; line-height: 1.3; flex: 1; }
-  
-  .seg { display: flex; border-radius: 8px; overflow: hidden; border: 1.5px solid var(--border); flex-shrink: 0; }
-  .btn-si, .btn-no { border: none; background: var(--pending-bg); color: var(--muted); font-size: 11px; font-weight: 700; padding: 6px 12px; cursor: pointer; }
-  .btn-si.active { background: var(--ok-bg); color: var(--ok); }
-  .btn-no.active { background: var(--bad-bg); color: var(--bad); }
-
-  .grp-label { font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; margin: 10px 0 6px; }
-  .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
-  .chip { display: flex; align-items: center; gap: 4px; border: 1.5px solid var(--border); border-radius: 16px; padding: 6px 10px; font-size: 11.5px; font-weight: 600; background: #FBFCFE; cursor: pointer; user-select: none; }
-  .chip.ok { border-color: var(--ok); background: var(--ok-bg); color: var(--ok); }
-  .chip.bad { border-color: var(--bad); background: var(--bad-bg); color: var(--bad); }
-
-  .obs-input { width: 100%; margin-top: 6px; border: 1.5px solid var(--border); border-radius: 8px; padding: 8px; font-size: 12.5px; background: #FBFCFE; font-family: inherit; }
-  .obs-toggle { font-size: 11px; color: var(--blue); font-weight: 600; margin-top: 4px; display: inline-block; cursor: pointer; }
-
-  .bottomnav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid var(--border); display: flex; padding: 8px; gap: 6px; z-index: 30; }
-  .navbtn { flex: 1; border: none; border-radius: 10px; padding: 12px 4px; font-weight: 700; font-size: 12px; color: #fff; cursor: pointer; }
-  .navbtn.save { background: var(--navy); }
-  .navbtn.view { background: var(--blue); }
-  .navbtn.export { background: var(--ok); }
-
-  .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
-  .modal-overlay.open { display: flex; }
-  .modal-card { background: #fff; border-radius: 14px; width: 100%; max-width: 550px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; }
-  .modal-head { background: var(--navy); color: #fff; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; font-weight: 700; }
-  .modal-body { padding: 16px; overflow-y: auto; flex: 1; }
-  .modal-body pre { background: #F7F9FC; border: 1px solid var(--border); padding: 10px; border-radius: 8px; font-size: 11px; white-space: pre-wrap; word-break: break-all; }
-  .toast { position: fixed; bottom: 76px; left: 50%; transform: translateX(-50%); background: var(--navy-dark); color: #fff; padding: 8px 18px; border-radius: 20px; font-size: 12px; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 50; }
-  .toast.show { opacity: 1; }
+:root{--navy:#1F3864;--blue:#2E75B6;--bg:#EEF1F5;--card:#fff;--border:#DDE3EC;--text:#1C2530;--muted:#6B7686;--ok:#1F8A46;--okbg:#E3F5EA;--bad:#C4372B;--badbg:#FBE7E5}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif;padding-bottom:85px}
+header{position:sticky;top:0;z-index:20;background:var(--navy);color:white;padding:14px 15px;box-shadow:0 2px 10px #0002}
+.brand{font-size:11px;font-weight:800;letter-spacing:.12em;opacity:.85}.title{font-size:18px;font-weight:800;margin-top:3px}.sub{font-size:11px;opacity:.75}
+.top{display:flex;justify-content:space-between;gap:10px;align-items:center}.new{background:#ffffff1f;color:#fff;border:1px solid #ffffff44;border-radius:8px;padding:8px;font-weight:700}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;margin:12px;padding:13px;box-shadow:0 1px 3px #14203a12}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.full{grid-column:1/-1}
+label{display:block;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
+input,textarea{width:100%;border:1.5px solid var(--border);border-radius:9px;padding:10px;font-size:14px;background:#fbfcfe;color:var(--text)}
+.tabs{display:flex;gap:6px;margin:0 12px 12px}.tab{flex:1;border:1px solid var(--border);background:white;border-radius:10px;padding:9px 3px;font-weight:800;color:var(--muted)}.tab.active{background:var(--navy);color:#fff}.pct{display:block;font-size:10px;margin-top:2px}
+.panel{display:none}.panel.active{display:block}
+.section,.node{background:white;border:1px solid var(--border);border-radius:13px;margin:10px 12px;overflow:hidden}.head{padding:12px;display:flex;align-items:center;gap:9px;background:#f7f9fc;font-weight:800}.letter,.num{background:var(--navy);color:#fff;min-width:25px;height:25px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px}.head .grow{flex:1}.status{font-size:10px;color:var(--muted)}.body{padding:4px 12px 10px}.row{padding:10px 0;border-top:1px solid #eef1f5}.row:first-child{border-top:0}.rowtop{display:flex;gap:8px;align-items:flex-start}.item{flex:1;font-size:13px;line-height:1.35;padding-top:5px}.seg{display:flex}.seg button{border:1px solid var(--border);background:#f1f3f6;padding:8px 10px;font-weight:800}.seg .yes.active{background:var(--okbg);color:var(--ok)}.seg .no.active{background:var(--badbg);color:var(--bad)}.obs{display:none;margin-top:6px}.obs.show{display:block}.obslink{font-size:11px;color:var(--blue);font-weight:700;margin-top:6px;display:inline-block}
+.nodehead{display:flex;align-items:center;gap:10px;padding:11px}.nodehead .grow{flex:1}.nodebody{display:none;padding:0 12px 12px}.node.open .nodebody{display:block}.node.complete .num{background:var(--ok)}
+.group{margin-top:9px}.glabel{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:6px}.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{border:1.5px solid var(--border);border-radius:20px;background:#fbfcfe;padding:8px 10px;font-size:12px;font-weight:700}.chip.ok{background:var(--okbg);border-color:var(--ok);color:var(--ok)}.chip.bad{background:var(--badbg);border-color:var(--bad);color:var(--bad)}
+.bottom{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);padding:8px;display:flex;gap:7px;z-index:30}.bottom button{flex:1;border:0;border-radius:10px;padding:12px;font-weight:800}.export{background:var(--navy);color:#fff}.share{background:#f1f3f6}
+.history{position:fixed;inset:0;background:#0008;z-index:60;display:none;padding:45px 12px 20px}
+.history.show{display:block}.historybox{background:#fff;border-radius:15px;max-height:90vh;overflow:auto;padding:14px}
+.historyitem{border:1px solid var(--border);border-radius:10px;padding:10px;margin:7px 0;background:#fbfcfe}
+.historyitem b{display:block}.historyactions{display:flex;gap:6px;margin-top:8px}.historyactions button{flex:1;border:0;border-radius:8px;padding:8px;font-weight:700}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#152747;color:white;padding:10px 16px;border-radius:20px;display:none;z-index:70;font-size:13px}.toast.show{display:block}
+@media print{
+  header,.tabs,.bottom,.toast,.history{display:none!important}
+  body{background:#fff;padding:0;font-family:Arial,sans-serif}
+  .panel{display:block!important}
+  .section,.node,.card{break-inside:avoid;box-shadow:none;margin:7px 0;border:1px solid #aaa}
+  .nodebody{display:block!important}
+  .body{display:block!important}
+  .seg button{border:1px solid #777}
+}
+.signgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.sig{width:100%;height:100px;border:1.5px dashed var(--border);border-radius:9px;background:#fbfcfe;touch-action:none}
+.smallbtn{font-size:10px;color:var(--blue);font-weight:800;margin-top:4px}
 </style>
 </head>
 <body>
 
-<header class="topbar">
-  <div class="brand">
-    <div class="brand-title">Recepción Cableado & CCTV</div>
-    <button type="button" class="reset-btn" id="btnNuevaVisita">Nueva Visita</button>
+<header>
+  <div class="top">
+    <div><div class="brand">GERENCIA DE SISTEMAS</div><div class="title">Recepción de Cableado y CCTV</div><div class="sub">Checklist móvil · Ver. 3.0</div></div>
+    <div style="display:flex;gap:5px">
+      <button class="new" onclick="mostrarHistorial()">Historial</button>
+      <button class="new" onclick="nuevaVisita()">Nueva</button>
+    </div>
   </div>
 </header>
 
-<div class="infobox">
-  <div class="infogrid">
-    <div class="field"><label>Estación / GoMart</label><input id="h_estacion" type="text" placeholder="Ej. MIRADOR"></div>
-    <div class="field"><label>Responsable</label><input id="h_responsable" type="text" placeholder="Nombre"></div>
-    <div class="field"><label>Fecha</label><input id="h_fecha" type="date"></div>
-    <div class="field"><label>Hora</label><input id="h_hora" type="time"></div>
+<div class="card">
+  <div class="grid">
+    <div><label>Estación / GoMart</label><input id="estacion" placeholder="Ej. ES Manglares"></div>
+    <div><label>Responsable</label><input id="responsable" placeholder="Nombre"></div>
+    <div><label>Fecha</label><input id="fecha" type="date"></div>
+    <div><label>Hora</label><input id="hora" type="time"></div>
+    <div class="full"><label>Proveedor / proyecto</label><input id="proyecto" placeholder="Opcional"></div>
   </div>
 </div>
 
-<div class="tabbar">
-  <button type="button" class="tab active" data-tab="sitio">Visita en Sitio <span class="prog" id="prog_sitio">0%</span></button>
-  <button type="button" class="tab" data-tab="voz">Voz y Datos <span class="prog" id="prog_voz">0%</span></button>
-  <button type="button" class="tab" data-tab="cctv">CCTV <span class="prog" id="prog_cctv">0%</span></button>
+<div class="tabs">
+  <button class="tab active" onclick="tab('sitio')">Sitio<span class="pct" id="p-sitio">0%</span></button>
+  <button class="tab" onclick="tab('voz')">Voz/Datos<span class="pct" id="p-voz">0%</span></button>
+  <button class="tab" onclick="tab('cctv')">CCTV<span class="pct" id="p-cctv">0%</span></button>
 </div>
 
-<div class="panel active" id="panel_sitio"></div>
-<div class="panel" id="panel_voz"></div>
-<div class="panel" id="panel_cctv"></div>
+<main>
+  <section id="sitio" class="panel active"></section>
+  <section id="voz" class="panel"></section>
+  <section id="cctv" class="panel"></section>
+</main>
 
-<div class="bottomnav">
-  <button type="button" class="navbtn save" id="btnGuardar">💾 Guardar</button>
-  <button type="button" class="navbtn view" id="btnVerDatos">🔍 Ver Datos</button>
-  <button type="button" class="navbtn export" id="btnExportar">📊 Exportar CSV</button>
+<div class="bottom">
+  <button class="share" onclick="resumen()">📋 Resumen</button>
+  <button class="share" onclick="guardarRecepcion()">💾 Guardar</button>
+  <button class="export" onclick="exportarPDF()">📄 PDF</button>
 </div>
-
-<div class="modal-overlay" id="modalData">
-  <div class="modal-card">
-    <div class="modal-head">
-      <span>Estado del Registro Guardado</span>
-      <button type="button" style="background:none;border:none;color:#fff;font-size:16px;cursor:pointer;" id="btnCerrarModal">✕</button>
+<div id="history" class="history">
+  <div class="historybox">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h3 style="margin:0">Recepciones guardadas</h3>
+      <button onclick="cerrarHistorial()" style="border:0;background:#eee;border-radius:8px;padding:7px 10px">✕</button>
     </div>
-    <div class="modal-body">
-      <div style="font-size:14px;font-weight:800;margin-bottom:8px;">Avance Total: <span id="lblAvanceTotal" style="color:var(--blue);">0%</span></div>
-      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;">Estructura JSON Generada</div>
-      <pre id="jsonPreview"></pre>
-    </div>
+    <div id="historyList"></div>
   </div>
 </div>
-
-<div class="toast" id="toast"></div>
+<div id="toast" class="toast"></div>
 
 <script>
-const SITIO_SECTIONS = [
-  {id:'A', title:'Nodos de red y contactos piso de venta', items:['Canalizaciones / registros para datos en área de TPV','Canalizaciones / registros para micrófono y botón de pánico en área de TPV','Contactos doble NO regulados por cada TPV','Voltajes en contactos doble NO regulados por cada TPV','Pasos interiores en los muebles de los TPV','Pasos en la barra para los brazos de los TPV']},
-  {id:'B', title:'Nodos de red y contactos eléctricos — equipo administrativo', items:['Canalizaciones / registros para datos','Contacto doble NO regulado','Voltajes en contactos doble NO regulados por cada TPV','Repisa de 90x60 cm mínimo']},
-  {id:'C', title:'Nodos de red / registros — equipo de publicidad', items:['Canalizaciones / registros para datos','Contacto doble NO regulado','Voltajes en contactos doble NO regulados por cada TPV','Repisa de 90x60 cm mínimo','Gabinete estanca con puerta de 300x250x150 en bodega para guardar holgura']},
-  {id:'D', title:'Nodos de red — torniquete y WiFi', items:['Canalizaciones / registros para datos torniquete']},
-  {id:'E', title:'Adecuaciones para SITE de telecomunicaciones', items:['Todas las canalizaciones llegan al SITE / gabinete','1 contacto doble NO regulado','Voltajes en contactos doble NO regulados por cada TPV','Barra de tierra física','Acomodo del cableado','Limpieza del gabinete','Conexión a tierra física','Etiquetado de los patchcord']},
-  {id:'F', title:'Limpieza y acabados CCTV', items:['Resanes bases y bajantes','Retoque de pintura en área de bases y bajantes de cámaras','Canalización y registro con tapa para cámaras de Beercave y cuarto frío','Tapas de los registros','Bajantes (ubicaciones)']}
+const SITIO=[
+['A','Nodos de red y contactos piso de venta',[
+'Canalizaciones / registros para datos en área de TPV',
+'Canalizaciones / registros para micrófono y botón de pánico en área de TPV',
+'Contactos doble NO regulados por cada TPV',
+'Voltajes en contactos doble NO regulados por cada TPV',
+'Pasos interiores en los muebles de los TPV',
+'Pasos en la barra para los brazos de los TPV']],
+['B','Nodos de red y contactos eléctricos — equipo administrativo',[
+'Canalizaciones / registros para datos','Contacto doble NO regulados',
+'Voltajes en contactos doble NO regulados por cada TPV','Repisa de 90x60 cm mínimo']],
+['C','Nodos de red / registros — equipo de publicidad',[
+'Canalizaciones / registros para datos','Contacto doble NO regulado',
+'Voltajes en contactos doble NO regulados por cada TPV','Repisa de 90x60 cm mínimo',
+'Gabinete estanca con puerta de 300x250x150 en bodega para guardar holgura (sobre cuarto frío)']],
+['D','Nodos de red — torniquete y WiFi',['Canalizaciones / registros para datos torniquete']],
+['E','Adecuaciones para SITE de telecomunicaciones (rack/gabinete)',[
+'Todas las canalizaciones llegan al SITE / gabinete','1 contacto doble NO regulado',
+'Voltajes en contactos doble NO regulados por cada TPV','Barra de tierra física',
+'Acomodo del cableado','Limpieza del gabinete','Conexión a tierra física','Etiquetado de los patchcord']],
+['F','Limpieza y acabados CCTV',[
+'Resanes bases y bajantes','Retoque de pintura en área de bases y bajantes de cámaras',
+'Canalización y registro con tapa para cámaras de Beercave y cuarto frío','Tapas de los registros','Bajantes (ubicaciones)']]
 ];
 
-const CHIPS_VOZ = [
-  { group: 'Cableado del nodo', items: [{k:'remFP', l:'Rematado FP'}, {k:'remPP', l:'Rematado PP'}] },
-  { group: 'Etiquetado del nodo', items: [{k:'etqFP', l:'Face Plate'}, {k:'etqPP', l:'Patch Panel'}] },
-  { group: 'Etiquetado del patchcord', items: [{k:'etqPcPP', l:'Patch Panel'}, {k:'etqPcSW', l:'Switch'}] },
-  { group: 'Organización', items: [{k:'orgV', l:'Org. Vertical'}, {k:'orgH', l:'Org. Horizontal'}] },
-  { group: 'Pruebas', items: [{k:'contP', l:'Continuidad'}, {k:'transP', l:'Transmisión'}] }
+const VOZ=[
+['Cableado del nodo',[['remFP','Rematado face plate'],['remPP','Rematado patch panel']]],
+['Etiquetado del nodo',[['etqFP','Face plate'],['etqPP','Patch panel']]],
+['Etiquetado del patchcord',[['etqPcPP','Patch panel'],['etqPcSW','Switch']]],
+['Organización del cableado',[['orgV','Organizador vertical'],['orgH','Organizador horizontal']]],
+['Pruebas de comunicación',[['contP','Continuidad'],['transP','Transmisión']]]
 ];
 
-const CHIPS_CCTV = [
-  { group: 'Cableado del nodo', items: [{k:'remPP', l:'Rematado PP'}, {k:'etqPP', l:'Etiquetado PP'}] },
-  { group: 'Etiquetado del patchcord', items: [{k:'pcPP', l:'Patch Panel'}, {k:'pcSW', l:'Switch'}, {k:'pcNVR', l:'NVR'}] },
-  { group: 'Organización', items: [{k:'orgV', l:'Org. Vertical'}, {k:'orgH', l:'Org. Horizontal'}] },
-  { group: 'Acabados', items: [{k:'resanes', l:'Resanes'}, {k:'retoques', l:'Retoques'}, {k:'tapas', l:'Tapas Registros'}] },
-  { group: 'Pruebas', items: [{k:'contP', l:'Continuidad'}, {k:'transP', l:'Transmisión'}] }
+const CCTV=[
+['Cableado del nodo',[['remPP','Rematado patch panel'],['etqPP','Etiquetado patch panel']]],
+['Etiquetado del patchcord',[['pcPP','Patch panel'],['pcSW','Switch'],['pcNVR','NVR']]],
+['Organización del cableado',[['orgV','Acomodo organizador vertical'],['orgH','Acomodo organizador horizontal']]],
+['Limpieza y acabados CCTV',[['resanes','Resanes fijación de cámara'],['retoques','Retoques instalación de cámara'],['tapas','Tapas en los registros']]],
+['Pruebas de comunicación',[['contP','Continuidad'],['transP','Transmisión']]]
 ];
 
-const CIERRE_ITEMS = [
-  {k:'limpiezaSite', l:'Limpieza del SITE / gabinete'},
-  {k:'limpiezaOficinas', l:'Limpieza de oficinas / área de trabajo'},
-  {k:'tierraFisica', l:'Rack a tierra física / gabinete'}
-];
+const CIERRE=[['limpiezaSite','Limpieza del SITE / gabinete'],['limpiezaOficinas','Limpieza de oficinas / área de trabajo'],['tierraFisica','Rack a tierra física / gabinete']];
 
-let appData = {
-  header: {},
-  sitio: {},
-  voz: { nodos: {}, cierre: {}, recibe: '', entrega: '' },
-  cctv: { nodos: {}, cierre: {}, recibe: '', entrega: '' }
+let S=JSON.parse(localStorage.getItem('recepcionCCTV')||'null')||{
+ header:{estacion:'',responsable:'',fecha:new Date().toISOString().slice(0,10),hora:'',proyecto:''},
+ sitio:{},voz:{nodos:{},cierre:{},obs:''},cctv:{nodos:{},cierre:{},obs:''}
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-  cargarDatos();
-  renderApp();
-  configurarEventosGlobales();
-  actualizarMetricas();
-});
+function save(){localStorage.setItem('recepcionCCTV',JSON.stringify(S));update();}
+function toast(x){let t=document.getElementById('toast');t.textContent=x;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)}
+function tab(id){document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('active',x.id===id));document.querySelectorAll('.tab').forEach((x,i)=>x.classList.toggle('active',['sitio','voz','cctv'][i]===id));scrollTo(0,0)}
 
-function cargarDatos() {
-  const guardado = localStorage.getItem('checklist_github_data');
-  if (guardado) {
-    try { appData = JSON.parse(guardado); } catch(e){}
-  }
-}
-
-function guardarDatos() {
-  localStorage.setItem('checklist_github_data', JSON.stringify(appData));
-  actualizarMetricas();
-}
-
-function renderApp() {
-  ['estacion', 'responsable', 'fecha', 'hora'].forEach(f => {
-    const el = document.getElementById(`h_${f}`);
-    if (el) el.value = appData.header[f] || '';
+function renderSitio(){
+ let el=document.getElementById('sitio');el.innerHTML='';
+ SITIO.forEach(([id,title,items])=>{
+  let done=items.filter((_,i)=>S.sitio[id+i]).length;
+  let sec=document.createElement('div');sec.className='section';
+  sec.innerHTML=`<div class="head" onclick="this.nextElementSibling.hidden=!this.nextElementSibling.hidden"><span class="letter">${id}</span><span class="grow">${title}</span><span class="status">${done}/${items.length}</span>⌄</div>`;
+  let body=document.createElement('div');body.className='body';
+  items.forEach((label,i)=>{
+   let k=id+i,r=S.sitio[k]||{};
+   let row=document.createElement('div');row.className='row';
+   row.innerHTML=`<div class="rowtop"><div class="item">${i+1}. ${label}</div><div class="seg">
+   <button class="yes ${r.estado==='si'?'active':''}" onclick="sitioEstado('${k}','si')">SÍ</button>
+   <button class="no ${r.estado==='no'?'active':''}" onclick="sitioEstado('${k}','no')">NO</button></div></div>
+   <span class="obslink" onclick="document.getElementById('o${k}').classList.toggle('show')">${r.obs?'✎ Ver observación':'+ Observación'}</span>
+   <textarea id="o${k}" class="obs ${r.obs?'show':''}" placeholder="Observación..." oninput="S.sitio['${k}'].obs=this.value;save()">${r.obs||''}</textarea>`;
+   body.appendChild(row);
   });
-
-  renderSitio();
-  renderNodos('voz', CHIPS_VOZ, 24, 'Nodo');
-  renderNodos('cctv', CHIPS_CCTV, 24, 'Cámara');
+  sec.appendChild(body);el.appendChild(sec);
+ });
+ let g=document.createElement('div');g.className='card';g.innerHTML='<label>Observaciones generales</label><textarea rows="4" placeholder="Observaciones de la visita..." oninput="S.sitio.general=this.value;save()">'+(S.sitio.general||'')+'</textarea>';el.appendChild(g);
 }
+function sitioEstado(k,v){S.sitio[k]=S.sitio[k]||{obs:''};S.sitio[k].estado=S.sitio[k].estado===v?null:v;save();renderSitio()}
 
-function renderSitio() {
-  const container = document.getElementById('panel_sitio');
-  let html = '';
-
-  SITIO_SECTIONS.forEach(sec => {
-    html += `
-      <div class="card">
-        <div class="card-head">
-          <span>${sec.id}. ${sec.title}</span>
-          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.5"/></svg>
-        </div>
-        <div class="card-body">
-          ${sec.items.map((item, i) => {
-            const key = `${sec.id}_${i}`;
-            const state = appData.sitio[key] || {};
-            const isSi = state.status === 'si' ? 'active' : '';
-            const isNo = state.status === 'no' ? 'active' : '';
-            const hasObs = state.obs ? 'block' : 'none';
-
-            return `
-              <div class="item-row" data-key="${key}">
-                <div class="item-top">
-                  <div class="item-label">${i+1}. ${item}</div>
-                  <div class="seg">
-                    <button type="button" class="btn-si ${isSi}">SÍ</button>
-                    <button type="button" class="btn-no ${isNo}">NO</button>
-                  </div>
-                </div>
-                <span class="obs-toggle">${state.obs ? '✎ Observación' : '+ Obs'}</span>
-                <textarea class="obs-input" style="display:${hasObs}" rows="2" placeholder="Notas...">${state.obs || ''}</textarea>
-              </div>`;
-          }).join('')}
-        </div>
-      </div>`;
+function renderNodes(type,groups,count,noun){
+ let el=document.getElementById(type);el.innerHTML='';
+ for(let n=1;n<=count;n++){
+  let nd=S[type].nodos[n]||{},total=groups.reduce((a,g)=>a+g[1].length,0),done=groups.reduce((a,g)=>a+g[1].filter(x=>nd[x[0]]).length,0);
+  let card=document.createElement('div');card.className='node '+(done===total?'complete':'');
+  card.innerHTML=`<div class="nodehead" onclick="this.parentElement.classList.toggle('open')"><span class="num">${n}</span><span class="grow"><b>${noun} ${n}</b><div class="status">${done}/${total} verificados</div></span>⌄</div><div class="nodebody"></div>`;
+  let body=card.querySelector('.nodebody');
+  groups.forEach(g=>{let d=document.createElement('div');d.className='group';d.innerHTML=`<div class="glabel">${g[0]}</div><div class="chips"></div>`;let chips=d.querySelector('.chips');
+   g[1].forEach(([k,label])=>{let c=document.createElement('button');c.className='chip '+(nd[k]==='ok'?'ok':nd[k]==='bad'?'bad':'');c.textContent=(nd[k]==='ok'?'✓ ':nd[k]==='bad'?'✕ ':'')+label;c.onclick=()=>cycle(type,n,k,groups,count,noun);chips.appendChild(c)});body.appendChild(d);
   });
-
-  container.innerHTML = html;
+  el.appendChild(card);
+ }
+ let c=document.createElement('div');c.className='card';c.innerHTML='<b>Cierre y limpieza</b>';
+ CIERRE.forEach(([k,label])=>{let r=document.createElement('div');r.className='row';r.innerHTML=`<div class="rowtop"><div class="item">${label}</div><div class="seg"><button class="yes ${S[type].cierre[k]==='si'?'active':''}" onclick="cierre('${type}','${k}','si')">SÍ</button><button class="no ${S[type].cierre[k]==='no'?'active':''}" onclick="cierre('${type}','${k}','no')">NO</button></div></div>`;c.appendChild(r)});
+ c.innerHTML+='<label style="margin-top:12px">Observaciones</label><textarea rows="3" oninput="S[\''+type+'\'].obs=this.value;save()">'+(S[type].obs||'')+'</textarea>';
+ el.appendChild(c);
 }
+function cycle(type,n,k,groups,count,noun){S[type].nodos[n]=S[type].nodos[n]||{};let x=S[type].nodos[n][k]||null;S[type].nodos[n][k]=x===null?'ok':x==='ok'?'bad':null;save();renderNodes(type,groups,count,noun)}
+function cierre(type,k,v){S[type].cierre[k]=S[type].cierre[k]===v?null:v;save();renderNodes(type,type==='voz'?VOZ:CCTV,type==='voz'?24:16,type==='voz'?'Nodo':'Cámara')}
 
-function renderNodos(tab, groups, total, labelPrefix) {
-  const container = document.getElementById(`panel_${tab}`);
-  let html = '';
-
-  for (let n = 1; n <= total; n++) {
-    const nodoData = (appData[tab].nodos && appData[tab].nodos[n]) || {};
-    
-    html += `
-      <div class="card">
-        <div class="card-head">
-          <span>${labelPrefix} ${n}</span>
-          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.5"/></svg>
-        </div>
-        <div class="card-body" data-tab="${tab}" data-nodo="${n}">
-          ${groups.map(g => `
-            <div class="grp-label">${g.group}</div>
-            <div class="chip-row">
-              ${g.items.map(chip => {
-                const val = nodoData[chip.k] || '';
-                const icon = val === 'ok' ? '✓' : val === 'bad' ? '✕' : '';
-                return `<div class="chip ${val}" data-chip="${chip.k}">${chip.l} ${icon}</div>`;
-              }).join('')}
-            </div>
-          `).join('')}
-        </div>
-      </div>`;
-  }
-
-  const cierreData = appData[tab].cierre || {};
-  html += `
-    <div class="card open" style="margin-top: 15px;">
-      <div class="card-head">CIERRE Y ENTREGA</div>
-      <div class="card-body" style="display:block;">
-        ${CIERRE_ITEMS.map(item => {
-          const st = cierreData[item.k] || '';
-          return `
-            <div class="item-row" data-cierre-tab="${tab}" data-cierre-key="${item.k}">
-              <div class="item-top">
-                <div class="item-label">${item.l}</div>
-                <div class="seg">
-                  <button type="button" class="btn-si ${st === 'si' ? 'active' : ''}">SÍ</button>
-                  <button type="button" class="btn-no ${st === 'no' ? 'active' : ''}">NO</button>
-                </div>
-              </div>
-            </div>`;
-        }).join('')}
-        <div class="field" style="margin-top:10px;">
-          <label>Recibe (Sistemas)</label>
-          <input type="text" class="input-firmas" data-tab="${tab}" data-field="recibe" value="${appData[tab].recibe || ''}">
-        </div>
-        <div class="field" style="margin-top:6px;">
-          <label>Entrega (Proveedor)</label>
-          <input type="text" class="input-firmas" data-tab="${tab}" data-field="entrega" value="${appData[tab].entrega || ''}">
-        </div>
-      </div>
-    </div>`;
-
-  container.innerHTML = html;
+function update(){
+ ['estacion','responsable','fecha','hora','proyecto'].forEach(id=>{let x=document.getElementById(id);if(x&&x.value!==S.header[id])S.header[id]=x.value});
+ let total=SITIO.reduce((a,s)=>a+s[2].length,0),done=Object.values(S.sitio).filter(x=>x&&x.estado).length;document.getElementById('p-sitio').textContent=Math.round(done/total*100)+'%';
+ [['voz',VOZ,24],['cctv',CCTV,16]].forEach(([t,g,n])=>{let fields=g.reduce((a,x)=>a+x[1].length,0),d=0;for(let i=1;i<=n;i++)g.forEach(x=>x[1].forEach(([k])=>{if(S[t].nodos[i]&&S[t].nodos[i][k])d++}));Object.values(S[t].cierre).forEach(x=>{if(x)d++});document.getElementById('p-'+t).textContent=Math.round(d/(fields*n+3)*100)+'%'});
 }
+['estacion','responsable','fecha','hora','proyecto'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{S.header[id]=document.getElementById(id).value;save()}));
 
-function configurarEventosGlobales() {
-  ['estacion', 'responsable', 'fecha', 'hora'].forEach(f => {
-    document.getElementById(`h_${f}`).addEventListener('input', e => {
-      appData.header[f] = e.target.value;
-      guardarDatos();
-    });
-  });
-
-  document.querySelectorAll('.tab').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById(`panel_${btn.dataset.tab}`).classList.add('active');
-    });
-  });
-
-  document.addEventListener('click', e => {
-    const head = e.target.closest('.card-head');
-    if (head) {
-      head.parentElement.classList.toggle('open');
-      return;
-    }
-
-    const btnSi = e.target.closest('.btn-si');
-    const btnNo = e.target.closest('.btn-no');
-
-    if (btnSi || btnNo) {
-      const rowSitio = e.target.closest('.item-row[data-key]');
-      if (rowSitio) {
-        const key = rowSitio.dataset.key;
-        if (!appData.sitio[key]) appData.sitio[key] = { status: '', obs: '' };
-        const targetStatus = btnSi ? 'si' : 'no';
-        appData.sitio[key].status = appData.sitio[key].status === targetStatus ? '' : targetStatus;
-        guardarDatos();
-        renderSitio();
-        return;
-      }
-
-      const rowCierre = e.target.closest('.item-row[data-cierre-key]');
-      if (rowCierre) {
-        const tab = rowCierre.dataset.cierreTab;
-        const key = rowCierre.dataset.cierreKey;
-        if (!appData[tab].cierre) appData[tab].cierre = {};
-        const targetStatus = btnSi ? 'si' : 'no';
-        appData[tab].cierre[key] = appData[tab].cierre[key] === targetStatus ? '' : targetStatus;
-        guardarDatos();
-        renderNodos(tab, tab === 'voz' ? CHIPS_VOZ : CHIPS_CCTV, 24, tab === 'voz' ? 'Nodo' : 'Cámara');
-        return;
-      }
-    }
-
-    const toggleObs = e.target.closest('.obs-toggle');
-    if (toggleObs) {
-      const area = toggleObs.nextElementSibling;
-      area.style.display = area.style.display === 'none' ? 'block' : 'none';
-      return;
-    }
-
-    const chip = e.target.closest('.chip');
-    if (chip) {
-      const body = chip.closest('.card-body');
-      const tab = body.dataset.tab;
-      const nodo = body.dataset.nodo;
-      const key = chip.dataset.chip;
-
-      if (!appData[tab].nodos[nodo]) appData[tab].nodos[nodo] = {};
-
-      const current = appData[tab].nodos[nodo][key] || '';
-      const nextState = current === '' ? 'ok' : current === 'ok' ? 'bad' : '';
-
-      appData[tab].nodos[nodo][key] = nextState;
-
-      guardarDatos();
-      renderNodos(tab, tab === 'voz' ? CHIPS_VOZ : CHIPS_CCTV, 24, tab === 'voz' ? 'Nodo' : 'Cámara');
-      return;
-    }
-  });
-
-  document.addEventListener('input', e => {
-    if (e.target.classList.contains('obs-input')) {
-      const key = e.target.closest('.item-row').dataset.key;
-      if (!appData.sitio[key]) appData.sitio[key] = { status: '', obs: '' };
-      appData.sitio[key].obs = e.target.value;
-      guardarDatos();
-    }
-
-    if (e.target.classList.contains('input-firmas')) {
-      const tab = e.target.dataset.tab;
-      const field = e.target.dataset.field;
-      appData[tab][field] = e.target.value;
-      guardarDatos();
-    }
-  });
-
-  document.getElementById('btnGuardar').onclick = () => {
-    guardarDatos();
-    toast('💾 Progreso guardado');
-  };
-
-  document.getElementById('btnVerDatos').onclick = () => {
-    guardarDatos();
-    const metrics = calcularProgreso();
-    document.getElementById('lblAvanceTotal').textContent = metrics.total + '%';
-    document.getElementById('jsonPreview').textContent = JSON.stringify(appData, null, 2);
-    document.getElementById('modalData').classList.add('open');
-  };
-
-  document.getElementById('btnCerrarModal').onclick = () => {
-    document.getElementById('modalData').classList.remove('open');
-  };
-
-  document.getElementById('btnNuevaVisita').onclick = () => {
-    if (confirm('¿Limpiar todo para una nueva visita?')) {
-      localStorage.removeItem('checklist_github_data');
-      location.reload();
-    }
-  };
-
-  document.getElementById('btnExportar').onclick = exportarCSV;
+function csvEscape(v){v=String(v??'');return '"'+v.replaceAll('"','""')+'"'}
+function exportar(){
+ let rows=[['CHECKLIST RECEPCIÓN DE CABLEADO Y CCTV'],['Estación',S.header.estacion],['Responsable',S.header.responsable],['Proyecto',S.header.proyecto],['Fecha',S.header.fecha],['Hora',S.header.hora],[]];
+ SITIO.forEach(([id,title,items])=>{rows.push([id,title]);items.forEach((label,i)=>{let r=S.sitio[id+i]||{};rows.push([id+'.'+(i+1),label,r.estado||'',r.obs||''])})});
+ [['voz',VOZ,24,'Nodo'],['cctv',CCTV,16,'Cámara']].forEach(([t,g,n,noun])=>{rows.push([],[],[noun]);let h=['#'];g.forEach(x=>x[1].forEach(y=>h.push(y[1])));rows.push(h);for(let i=1;i<=n;i++){let r=[i],nd=S[t].nodos[i]||{};g.forEach(x=>x[1].forEach(([k])=>r.push(nd[k]==='ok'?'OK':nd[k]==='bad'?'NO':'')));rows.push(r)}rows.push([]);CIERRE.forEach(([k,l])=>rows.push([l,S[t].cierre[k]||'']));rows.push(['Observaciones',S[t].obs||''])});
+ let blob=new Blob(['\ufeff'+rows.map(r=>r.map(csvEscape).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});
+ let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Checklist_'+(S.header.estacion||'Recepcion')+'_'+(S.header.fecha||'')+'.csv';a.click();URL.revokeObjectURL(a.href);toast('Archivo CSV generado');
 }
-
-function calcularProgreso() {
-  let totalSitio = 0, doneSitio = 0;
-  SITIO_SECTIONS.forEach(sec => {
-    sec.items.forEach((_, i) => {
-      totalSitio++;
-      if (appData.sitio[`${sec.id}_${i}`]?.status) doneSitio++;
-    });
-  });
-
-  const countChips = (tab, total, groups) => {
-    const fieldsPerNode = groups.reduce((acc, g) => acc + g.items.length, 0);
-    let totalItems = (fieldsPerNode * total) + CIERRE_ITEMS.length;
-    let doneItems = 0;
-
-    for (let n = 1; n <= total; n++) {
-      const nd = (appData[tab].nodos && appData[tab].nodos[n]) || {};
-      groups.forEach(g => g.items.forEach(c => { if (nd[c.k]) doneItems++; }));
-    }
-    CIERRE_ITEMS.forEach(c => { if (appData[tab].cierre && appData[tab].cierre[c.k]) doneItems++; });
-
-    return { total: totalItems, done: doneItems };
-  };
-
-  const vozM = countChips('voz', 24, CHIPS_VOZ);
-  const cctvM = countChips('cctv', 24, CHIPS_CCTV);
-
-  const pctSitio = Math.round((doneSitio / totalSitio) * 100) || 0;
-  const pctVoz = Math.round((vozM.done / vozM.total) * 100) || 0;
-  const pctCctv = Math.round((cctvM.done / cctvM.total) * 100) || 0;
-
-  const grandTotal = totalSitio + vozM.total + cctvM.total;
-  const grandDone = doneSitio + vozM.done + cctvM.done;
-  const pctTotal = Math.round((grandDone / grandTotal) * 100) || 0;
-
-  return { sitio: pctSitio, voz: pctVoz, cctv: pctCctv, total: pctTotal };
+function resumen(){
+ let lines=['CHECKLIST RECEPCIÓN DE CABLEADO Y CCTV','Estación: '+(S.header.estacion||'-'),'Responsable: '+(S.header.responsable||'-'),'Proyecto: '+(S.header.proyecto||'-'),'Fecha: '+(S.header.fecha||'-'),'','Sitio: '+document.getElementById('p-sitio').textContent,'Voz/Datos: '+document.getElementById('p-voz').textContent,'CCTV: '+document.getElementById('p-cctv').textContent];
+ let falt=[];SITIO.forEach(([id,t,it])=>it.forEach((x,i)=>{let r=S.sitio[id+i];if(r&&r.estado==='no')falt.push(id+'.'+(i+1)+' '+x+(r.obs?' — '+r.obs:''))}));if(falt.length)lines.push('','PENDIENTES:',...falt.map(x=>'• '+x));
+ let text=lines.join('\n');if(navigator.share)navigator.share({title:'Checklist recepción',text}).catch(()=>{});else navigator.clipboard?.writeText(text).then(()=>toast('Resumen copiado'));
 }
-
-function actualizarMetricas() {
-  const m = calcularProgreso();
-  document.getElementById('prog_sitio').textContent = m.sitio + '%';
-  document.getElementById('prog_voz').textContent = m.voz + '%';
-  document.getElementById('prog_cctv').textContent = m.cctv + '%';
-}
-
-function exportarCSV() {
-  let csv = "\uFEFFSeccion,Elemento / Nodo,Estado,Observaciones / Detalle\n";
-
-  csv += `Informacion,Estacion,${appData.header.estacion || ''},\n`;
-  csv += `Informacion,Responsable,${appData.header.responsable || ''},\n`;
-  csv += `Informacion,Fecha,${appData.header.fecha || ''},\n`;
-  csv += `Informacion,Hora,${appData.header.hora || ''},\n`;
-
-  SITIO_SECTIONS.forEach(sec => {
-    sec.items.forEach((item, i) => {
-      const data = appData.sitio[`${sec.id}_${i}`] || {};
-      csv += `"Sitio - ${sec.title}","${item.replace(/"/g, '""')}","${data.status || 'PENDIENTE'}","${(data.obs || '').replace(/"/g, '""')}"\n`;
-    });
-  });
-
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.setAttribute('download', `Checklist_${appData.header.estacion || 'General'}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
-
-function toast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2000);
-}
+function nuevaVisita(){if(!confirm('¿Iniciar una nueva recepción? Se borrarán las respuestas guardadas en este dispositivo.'))return;S={header:{estacion:'',responsable:'',fecha:new Date().toISOString().slice(0,10),hora:'',proyecto:''},sitio:{},voz:{nodos:{},cierre:{},obs:''},cctv:{nodos:{},cierre:{},obs:''}};localStorage.removeItem('recepcionCCTV');init();toast('Nueva recepción iniciada')}
+function init(){['estacion','responsable','fecha','hora','proyecto'].forEach(id=>document.getElementById(id).value=S.header[id]||'');renderSitio();renderNodes('voz',VOZ,24,'Nodo');renderNodes('cctv',CCTV,16,'Cámara');update()}
+init();
 </script>
 </body>
 </html>
