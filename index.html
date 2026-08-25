@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Checklist Recepción · Cableado & CCTV</title>
 
+<!-- Librerías Externas -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
@@ -14,49 +15,76 @@
     --ok:#1F8A46; --ok-bg:#E3F5EA; --bad:#C4372B; --bad-bg:#FBE7E5; --pending-bg:#F1F3F6;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  body{margin:0;padding:0 0 84px 0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;}
+  body{margin:0;padding:0 0 84px 0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
 
-  header.topbar{position:sticky;top:0;z-index:30;background:linear-gradient(135deg,var(--navy),var(--navy-dark));color:#fff;padding:14px 16px;}
+  /* Header Bar */
+  header.topbar{position:sticky;top:0;z-index:30;background:linear-gradient(135deg,var(--navy),var(--navy-dark));color:#fff;padding:12px 16px;}
   .brand{display:flex;align-items:center;justify-content:space-between;}
-  .brand-title{font-weight:700;font-size:16px;}
-  .reset-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;font-size:11px;padding:6px 10px;border-radius:6px;cursor:pointer;}
+  .brand-title{font-weight:800;font-size:15px;letter-spacing:.02em;}
+  .reset-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;font-size:11px;padding:6px 12px;border-radius:6px;cursor:pointer;font-weight:600;}
 
-  .infobox{background:var(--card);margin:12px;border-radius:12px;padding:12px;border:1px solid var(--border);}
+  /* Header Form */
+  .infobox{background:var(--card);margin:12px;border-radius:12px;padding:12px;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,0.05);}
   .infogrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
   .field{display:flex;flex-direction:column;gap:3px;}
   .field label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;}
-  .field input{border:1px solid var(--border);border-radius:6px;padding:8px;font-size:13px;}
+  .field input{border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;outline:none;}
+  .field input:focus{border-color:var(--blue);}
 
+  /* Tabs */
   .tabbar{display:flex;gap:6px;margin:0 12px 12px;}
-  .tab{flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;}
+  .tab{flex:1;background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:10px 4px;text-align:center;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;}
   .tab.active{background:var(--navy);border-color:var(--navy);color:#fff;}
+  .tab .prog{display:block;font-size:10px;margin-top:2px;opacity:.9;}
 
+  /* Content Panels */
   .panel{display:none;padding:0 12px;}
   .panel.active{display:block;}
 
-  .section-card,.node-card{background:var(--card);border-radius:10px;margin-bottom:10px;border:1px solid var(--border);overflow:hidden;}
-  .section-head,.node-head{display:flex;align-items:center;justify-content:space-between;padding:12px;background:#F7F9FC;cursor:pointer;}
-  .section-body,.node-body{display:none;padding:12px;}
+  /* Cards & Sections */
+  .section-card,.node-card,.closeout-card{background:var(--card);border-radius:12px;margin-bottom:10px;border:1px solid var(--border);overflow:hidden;}
+  .section-head,.node-head{display:flex;align-items:center;justify-content:space-between;padding:12px;background:#F7F9FC;cursor:pointer;user-select:none;}
+  .section-body,.node-body{display:none;padding:8px 12px 12px;}
   .section-card.open .section-body,.node-card.open .node-body{display:block;}
+  .chevron{transition:transform .2s;color:var(--muted);}
+  .section-card.open .chevron,.node-card.open .chevron{transform:rotate(180deg);}
 
-  .item-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #EEF1F5;}
-  .seg button{border:none;background:var(--pending-bg);color:var(--muted);font-size:11px;font-weight:700;padding:6px 10px;cursor:pointer;}
+  /* Items & Segmented Controls */
+  .item-row{padding:10px 0;border-bottom:1px solid #EEF1F5;}
+  .item-row:last-child{border-bottom:none;}
+  .item-top{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .item-label{font-size:13px;line-height:1.3;flex:1;}
+  .seg{display:flex;border-radius:8px;overflow:hidden;border:1.5px solid var(--border);flex-shrink:0;}
+  .seg button{border:none;background:var(--pending-bg);color:var(--muted);font-size:11px;font-weight:700;padding:6px 12px;cursor:pointer;}
   .seg button.si.active{background:var(--ok-bg);color:var(--ok);}
   .seg button.no.active{background:var(--bad-bg);color:var(--bad);}
 
+  /* Chips for Nodes */
+  .grp-label{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;margin:10px 0 6px;}
+  .chip-row{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{display:flex;align-items:center;gap:6px;border:1.5px solid var(--border);border-radius:16px;padding:6px 10px;font-size:11.5px;font-weight:600;background:#FBFCFE;cursor:pointer;}
+  .chip.ok{border-color:var(--ok);background:var(--ok-bg);color:var(--ok);}
+  .chip.bad{border-color:var(--bad);background:var(--bad-bg);color:var(--bad);}
+
+  /* Inputs & Textareas */
+  .obs-input{width:100%;margin-top:6px;border:1.5px solid var(--border);border-radius:8px;padding:8px;font-size:12.5px;background:#FBFCFE;font-family:inherit;}
+  .obs-toggle{font-size:11px;color:var(--blue);font-weight:600;margin-top:4px;display:inline-block;cursor:pointer;}
+
+  /* Bottom Actions */
   .bottomnav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);display:flex;padding:8px;gap:6px;z-index:30;}
-  .navbtn{flex:1;border:none;border-radius:8px;padding:10px;font-weight:700;font-size:12px;color:#fff;cursor:pointer;}
+  .navbtn{flex:1;border:none;border-radius:10px;padding:12px 4px;font-weight:700;font-size:12px;color:#fff;cursor:pointer;}
   .navbtn.save{background:var(--navy);}
   .navbtn.view{background:var(--blue);}
   .navbtn.export{background:var(--ok);}
 
+  /* Modal */
   .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:100;padding:16px;}
   .modal-overlay.open{display:flex;}
-  .modal-card{background:#fff;border-radius:12px;width:100%;max-width:500px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;}
-  .modal-head{background:var(--navy);color:#fff;padding:12px;display:flex;justify-content:space-between;font-weight:700;}
+  .modal-card{background:#fff;border-radius:14px;width:100%;max-width:550px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;}
+  .modal-head{background:var(--navy);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;font-weight:700;}
   .modal-body{padding:16px;overflow-y:auto;flex:1;}
-  .modal-body pre{background:#F7F9FC;padding:10px;border-radius:6px;font-size:11px;white-space:pre-wrap;word-break:break-all;}
-  .toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:var(--navy-dark);color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:50;}
+  .modal-body pre{background:#F7F9FC;border:1px solid var(--border);padding:10px;border-radius:8px;font-size:11px;white-space:pre-wrap;word-break:break-all;}
+  .toast{position:fixed;bottom:76px;left:50%;transform:translateX(-50%);background:var(--navy-dark);color:#fff;padding:8px 18px;border-radius:20px;font-size:12px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:50;}
   .toast.show{opacity:1;}
 </style>
 </head>
@@ -64,7 +92,7 @@
 
 <header class="topbar">
   <div class="brand">
-    <div class="brand-title">Recepción de Cableado & CCTV</div>
+    <div class="brand-title">Recepción Cableado & CCTV</div>
     <button type="button" class="reset-btn" id="btnNuevaVisita">Nueva Visita</button>
   </div>
 </header>
@@ -79,9 +107,9 @@
 </div>
 
 <div class="tabbar">
-  <button type="button" class="tab active" data-tab="sitio">Sitio <span id="prog_sitio">0%</span></button>
-  <button type="button" class="tab" data-tab="voz">Voz/Datos <span id="prog_voz">0%</span></button>
-  <button type="button" class="tab" data-tab="cctv">CCTV <span id="prog_cctv">0%</span></button>
+  <button type="button" class="tab active" data-tab="sitio">Sitio <span class="prog" id="prog_sitio">0%</span></button>
+  <button type="button" class="tab" data-tab="voz">Voz y Datos <span class="prog" id="prog_voz">0%</span></button>
+  <button type="button" class="tab" data-tab="cctv">CCTV <span class="prog" id="prog_cctv">0%</span></button>
 </div>
 
 <div class="panel active" id="panel_sitio"></div>
@@ -94,17 +122,18 @@
   <button type="button" class="navbtn export" id="btnExportar">📊 Excel</button>
 </div>
 
-<!-- Modal JSON -->
+<!-- Modal Datos -->
 <div class="modal-overlay" id="modalData">
   <div class="modal-card">
     <div class="modal-head">
       <span>Estado del Registro Guardado</span>
-      <button type="button" style="background:none;border:none;color:#fff;cursor:pointer;" id="btnCerrarModal">✕</button>
+      <button type="button" style="background:none;border:none;color:#fff;font-size:16px;cursor:pointer;" id="btnCerrarModal">✕</button>
     </div>
     <div class="modal-body">
-      <div><strong>Avance Total: </strong><span id="lblAvanceTotal">0%</span></div>
-      <hr>
-      <div style="font-size:11px;font-weight:700;margin-top:10px;">OBJETO DE DATOS (JSON):</div>
+      <div style="font-size:14px;font-weight:800;margin-bottom:8px;">Avance Total: <span id="lblAvanceTotal" style="color:var(--blue);">0%</span></div>
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;">Pendientes de captura:</div>
+      <ul id="missingList" style="font-size:12px;color:var(--bad);padding-left:18px;margin:6px 0 14px;"></ul>
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;">Objeto de Datos (JSON)</div>
       <pre id="jsonPreview"></pre>
     </div>
   </div>
@@ -113,187 +142,324 @@
 <div class="toast" id="toast"></div>
 
 <script>
-/* DATOS ESTRUCTURALES */
+/* ESTRUCTURAS DE DATOS */
 const SITIO_SECTIONS = [
-  {id:'A', title:'Nodos de red y contactos piso de venta', items:['Canalizaciones TPV', 'Contacto doble NO regulado', 'Voltajes regulados']},
-  {id:'B', title:'Nodos de red — equipo administrativo', items:['Canalizaciones datos', 'Repisa 90x60cm']}
+  {id:'A', title:'Nodos de red y contactos piso de venta', items:['Canalizaciones / registros para datos en área de TPV','Canalizaciones / registros para micrófono y botón de pánico en área de TPV','Contactos doble NO regulados por cada TPV','Voltajes en contactos doble NO regulados por cada TPV','Pasos interiores en los muebles de los TPV','Pasos en la barra para los brazos de los TPV']},
+  {id:'B', title:'Nodos de red y contactos eléctricos — equipo administrativo', items:['Canalizaciones / registros para datos','Contacto doble NO regulado','Voltajes en contactos doble NO regulados por cada TPV','Repisa de 90x60 cm mínimo']},
+  {id:'C', title:'Nodos de red / registros — equipo de publicidad', items:['Canalizaciones / registros para datos','Contacto doble NO regulado','Voltajes en contactos doble NO regulados por cada TPV','Repisa de 90x60 cm mínimo','Gabinete estanca con puerta de 300x250x150 en bodega para guardar holgura']},
+  {id:'D', title:'Nodos de red — torniquete y WiFi', items:['Canalizaciones / registros para datos torniquete']},
+  {id:'E', title:'Adecuaciones para SITE de telecomunicaciones', items:['Todas las canalizaciones llegan al SITE / gabinete','1 contacto doble NO regulado','Voltajes en contactos doble NO regulados por cada TPV','Barra de tierra física','Acomodo del cableado','Limpieza del gabinete','Conexión a tierra física','Etiquetado de los patchcord']},
+  {id:'F', title:'Limpieza y acabados CCTV', items:['Resanes bases y bajantes','Retoque de pintura en área de bases y bajantes de cámaras','Canalización y registro con tapa para cámaras de Beercave y cuarto frío','Tapas de los registros','Bajantes (ubicaciones)']}
 ];
 
-/* ESTADO GLOBAL */
+const VOZ_GROUPS = [
+  {label:'Cableado del nodo', keys:[['remFP','Rematado FP'],['remPP','Rematado PP']]},
+  {label:'Etiquetado del nodo', keys:[['etqFP','Face Plate'],['etqPP','Patch Panel']]},
+  {label:'Etiquetado del patchcord', keys:[['etqPcPP','Patch Panel'],['etqPcSW','Switch']]},
+  {label:'Organización', keys:[['orgV','Org. Vertical'],['orgH','Org. Horizontal']]},
+  {label:'Pruebas', keys:[['contP','Continuidad'],['transP','Transmisión']]}
+];
+
+const CCTV_GROUPS = [
+  {label:'Cableado del nodo', keys:[['remPP','Rematado PP'],['etqPP','Etiquetado PP']]},
+  {label:'Etiquetado del patchcord', keys:[['pcPP','Patch Panel'],['pcSW','Switch'],['pcNVR','NVR']]},
+  {label:'Organización', keys:[['orgV','Org. Vertical'],['orgH','Org. Horizontal']]},
+  {label:'Acabados', keys:[['resanes','Resanes'],['retoques','Retoques'],['tapas','Tapas Registros']]},
+  {label:'Pruebas', keys:[['contP','Continuidad'],['transP','Transmisión']]}
+];
+
+const CLOSEOUT_ITEMS = [
+  ['limpiezaSite','Limpieza del SITE / gabinete'],
+  ['limpiezaOficinas','Limpieza de oficinas / área de trabajo'],
+  ['tierraFisica','Rack a tierra física / gabinete']
+];
+
+/* ESTADO GLOBAL UNIFICADO */
 let STATE = {
   id: '',
   header: {estacion:'', responsable:'', fecha:'', hora:''},
-  sitio: {items:{}},
-  voz: {nodos:{}},
-  cctv: {nodos:{}}
+  sitio: {items:{}, obs:''},
+  voz: {nodos:{}, cierre:{}, obs:'', recibe:'', entrega:''},
+  cctv: {nodos:{}, cierre:{}, obs:'', recibe:'', entrega:''}
 };
 
-/* CONTROLADORES DE ALMACENAMIENTO */
-function generarId() {
-  return 'chk_' + Date.now();
+/* MOTOR DE PERSISTENCIA Y REGLAS */
+function getIdAuditoria() {
+  if (!STATE.id) STATE.id = 'chk_' + Date.now();
+  return STATE.id;
 }
 
-function persistirEstado() {
-  if (!STATE.id) STATE.id = generarId();
-  
-  // Guardar registro actual
-  localStorage.setItem(`checklist_data_${STATE.id}`, JSON.stringify(STATE));
-  localStorage.setItem('checklist_last_id', STATE.id);
-  
-  // Actualizar lista general de auditorías
+function persistir() {
+  const id = getIdAuditoria();
+  localStorage.setItem(`checklist_data_${id}`, JSON.stringify(STATE));
+  localStorage.setItem('checklist_last_id', id);
+
   let index = JSON.parse(localStorage.getItem('checklist_index') || '[]');
-  if (!index.includes(STATE.id)) {
-    index.push(STATE.id);
+  if (!index.includes(id)) {
+    index.push(id);
     localStorage.setItem('checklist_index', JSON.stringify(index));
   }
+  actualizarMetricas();
 }
 
-function cargarEstadoGuardado() {
+function cargar() {
   const lastId = localStorage.getItem('checklist_last_id');
   if (lastId) {
-    const rawData = localStorage.getItem(`checklist_data_${lastId}`);
-    if (rawData) STATE = JSON.parse(rawData);
+    const raw = localStorage.getItem(`checklist_data_${lastId}`);
+    if (raw) STATE = JSON.parse(raw);
   }
-  if (!STATE.id) STATE.id = generarId();
+  if (!STATE.id) STATE.id = 'chk_' + Date.now();
+}
+
+/* MÉTRICAS DE PROGRESSO */
+function calcularMetricas() {
+  // 1. Sitio
+  let totalSitio = 0, doneSitio = 0;
+  let faltantes = [];
+  SITIO_SECTIONS.forEach(s => {
+    let secFaltan = 0;
+    s.items.forEach((_, i) => {
+      totalSitio++;
+      if (STATE.sitio.items[s.id + i]?.estado) doneSitio++;
+      else secFaltan++;
+    });
+    if (secFaltan > 0) faltantes.push(`Sitio - Sección ${s.id}: Faltan ${secFaltan} reactivos`);
+  });
+
+  // 2. Voz
+  const vFields = VOZ_GROUPS.reduce((a,g)=>a+g.keys.length,0);
+  let totalVoz = (vFields * 24) + CLOSEOUT_ITEMS.length;
+  let doneVoz = 0;
+  for(let n=1; n<=24; n++){
+    const nd = STATE.voz.nodos[n] || {};
+    VOZ_GROUPS.forEach(g => g.keys.forEach(([k]) => { if(nd[k]) doneVoz++; }));
+  }
+  CLOSEOUT_ITEMS.forEach(([k]) => { if(STATE.voz.cierre[k]) doneVoz++; });
+
+  // 3. CCTV
+  const cFields = CCTV_GROUPS.reduce((a,g)=>a+g.keys.length,0);
+  let totalCctv = (cFields * 16) + CLOSEOUT_ITEMS.length;
+  let doneCctv = 0;
+  for(let n=1; n<=16; n++){
+    const nd = STATE.cctv.nodos[n] || {};
+    CCTV_GROUPS.forEach(g => g.keys.forEach(([k]) => { if(nd[k]) doneCctv++; }));
+  }
+  CLOSEOUT_ITEMS.forEach(([k]) => { if(STATE.cctv.cierre[k]) doneCctv++; });
+
+  const gTotal = totalSitio + totalVoz + totalCctv;
+  const gDone = doneSitio + doneVoz + doneCctv;
+
+  return {
+    pctSitio: Math.round((doneSitio / totalSitio) * 100),
+    pctVoz: Math.round((doneVoz / totalVoz) * 100),
+    pctCctv: Math.round((doneCctv / totalCctv) * 100),
+    pctTotal: Math.round((gDone / gTotal) * 100),
+    faltantes
+  };
+}
+
+function actualizarMetricas() {
+  const m = calcularMetricas();
+  document.getElementById('prog_sitio').textContent = m.pctSitio + '%';
+  document.getElementById('prog_voz').textContent = m.pctVoz + '%';
+  document.getElementById('prog_cctv').textContent = m.pctCctv + '%';
 }
 
 /* RENDERIZADO DE INTERFAZ */
-function initApp() {
-  cargarEstadoGuardado();
+function init() {
+  cargar();
   
-  // Vincular campos del Header
-  const inputs = ['estacion', 'responsable', 'fecha', 'hora'];
-  inputs.forEach(f => {
+  // Header Binding
+  ['estacion','responsable','fecha','hora'].forEach(f => {
     const el = document.getElementById(`h_${f}`);
     el.value = STATE.header[f] || '';
-    el.addEventListener('input', (e) => {
-      STATE.header[f] = e.target.value;
-      persistirEstado();
-    });
+    el.addEventListener('input', e => { STATE.header[f] = e.target.value; persistir(); });
   });
 
   renderSitio();
-  actualizarMetricas();
+  renderNodos('voz', VOZ_GROUPS, 24, 'Nodo');
+  renderNodos('cctv', CCTV_GROUPS, 16, 'Cámara');
   bindEvents();
+  actualizarMetricas();
 }
 
 function renderSitio() {
   const panel = document.getElementById('panel_sitio');
   panel.innerHTML = '';
-
   SITIO_SECTIONS.forEach(sec => {
     const card = document.createElement('div');
     card.className = 'section-card';
     card.innerHTML = `
       <div class="section-head">
-        <span><strong>${sec.id}</strong>. ${sec.title}</span>
+        <span style="font-weight:700;font-size:13px;">${sec.id}. ${sec.title}</span>
+        <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.5"/></svg>
       </div>
       <div class="section-body">
         ${sec.items.map((item, i) => {
-          const key = sec.id + i;
-          const estado = STATE.sitio.items[key] || null;
+          const k = sec.id + i;
+          const rec = STATE.sitio.items[k] || {};
           return `
             <div class="item-row">
-              <span style="font-size:13px;">${item}</span>
-              <div class="seg">
-                <button type="button" class="si ${estado==='si'?'active':''}" onclick="setEstadoSitio('${key}','si')">SÍ</button>
-                <button type="button" class="no ${estado==='no'?'active':''}" onclick="setEstadoSitio('${key}','no')">NO</button>
+              <div class="item-top">
+                <div class="item-label">${i+1}. ${item}</div>
+                <div class="seg">
+                  <button type="button" class="si ${rec.estado==='si'?'active':''}" onclick="setSitioVal('${k}','si')">SÍ</button>
+                  <button type="button" class="no ${rec.estado==='no'?'active':''}" onclick="setSitioVal('${k}','no')">NO</button>
+                </div>
               </div>
-            </div>
-          `;
+              <span class="obs-toggle" onclick="this.nextElementSibling.classList.toggle('show')">${rec.obs ? '✎ Observación' : '+ Obs'}</span>
+              <textarea class="obs-input ${rec.obs?'show':''}" style="display:${rec.obs?'block':'none'}" rows="2" placeholder="Notas..." oninput="setSitioObs('${k}',this.value)">${rec.obs||''}</textarea>
+            </div>`;
         }).join('')}
-      </div>
-    `;
+      </div>`;
     card.querySelector('.section-head').onclick = () => card.classList.toggle('open');
     panel.appendChild(card);
   });
 }
 
-window.setEstadoSitio = function(key, val) {
-  STATE.sitio.items[key] = STATE.sitio.items[key] === val ? null : val;
-  persistirEstado();
+window.setSitioVal = (k, val) => {
+  const cur = STATE.sitio.items[k] || {};
+  cur.estado = cur.estado === val ? null : val;
+  STATE.sitio.items[k] = cur;
+  persistir();
   renderSitio();
-  actualizarMetricas();
 };
 
-function calcularPorcentaje() {
-  let totalItems = 0;
-  let marcados = 0;
+window.setSitioObs = (k, val) => {
+  const cur = STATE.sitio.items[k] || {};
+  cur.obs = val;
+  STATE.sitio.items[k] = cur;
+  persistir();
+};
 
-  SITIO_SECTIONS.forEach(sec => {
-    sec.items.forEach((_, i) => {
-      totalItems++;
-      if (STATE.sitio.items[sec.id + i]) marcados++;
-    });
-  });
+function renderNodos(tab, groups, total, labelSingular) {
+  const panel = document.getElementById('panel_' + tab);
+  panel.innerHTML = '';
 
-  return totalItems > 0 ? Math.round((marcados / totalItems) * 100) : 0;
+  for (let n = 1; n <= total; n++) {
+    const card = document.createElement('div');
+    card.className = 'node-card';
+    const nData = STATE[tab].nodos[n] || {};
+    
+    card.innerHTML = `
+      <div class="node-head">
+        <span style="font-weight:700;font-size:13px;">${labelSingular} ${n}</span>
+        <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.5"/></svg>
+      </div>
+      <div class="node-body">
+        ${groups.map(g => `
+          <div class="grp-label">${g.label}</div>
+          <div class="chip-row">
+            ${g.keys.map(([k, label]) => {
+              const st = nData[k] || null;
+              return `<div class="chip ${st||''}" onclick="cycleChip('${tab}',${n},'${k}')">${label} ${st==='ok'?'✓':st==='bad'?'✕':''}</div>`;
+            }).join('')}
+          </div>
+        `).join('')}
+      </div>`;
+    card.querySelector('.node-head').onclick = () => card.classList.toggle('open');
+    panel.appendChild(card);
+  }
+
+  // Cierre y Firmas
+  const cierreCard = document.createElement('div');
+  cierreCard.className = 'closeout-card';
+  cierreCard.style.padding = '12px';
+  cierreCard.innerHTML = `
+    <div style="font-weight:800;font-size:11px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Cierre y Entrega</div>
+    ${CLOSEOUT_ITEMS.map(([k, l]) => `
+      <div class="item-row">
+        <div class="item-top">
+          <div class="item-label">${l}</div>
+          <div class="seg">
+            <button type="button" class="si ${STATE[tab].cierre[k]==='si'?'active':''}" onclick="setCierre('${tab}','${k}','si')">SÍ</button>
+            <button type="button" class="no ${STATE[tab].cierre[k]==='no'?'active':''}" onclick="setCierre('${tab}','${k}','no')">NO</button>
+          </div>
+        </div>
+      </div>`).join('')}
+    <div class="field" style="margin-top:10px;"><label>Recibe (Sistemas)</label><input value="${STATE[tab].recibe||''}" oninput="STATE['${tab}'].recibe=this.value; persistir();"></div>
+    <div class="field" style="margin-top:6px;"><label>Entrega (Proveedor)</label><input value="${STATE[tab].entrega||''}" oninput="STATE['${tab}'].entrega=this.value; persistir();"></div>
+  `;
+  panel.appendChild(cierreCard);
 }
 
-function actualizarMetricas() {
-  const pct = calcularPorcentaje();
-  document.getElementById('prog_sitio').textContent = pct + '%';
-  document.getElementById('lblAvanceTotal').textContent = pct + '%';
-}
+window.cycleChip = (tab, n, k) => {
+  if (!STATE[tab].nodos[n]) STATE[tab].nodos[n] = {};
+  const cur = STATE[tab].nodos[n][k];
+  STATE[tab].nodos[n][k] = !cur ? 'ok' : cur === 'ok' ? 'bad' : null;
+  persistir();
+  const groups = tab === 'voz' ? VOZ_GROUPS : CCTV_GROUPS;
+  renderNodos(tab, groups, tab === 'voz' ? 24 : 16, tab === 'voz' ? 'Nodo' : 'Cámara');
+};
 
+window.setCierre = (tab, k, val) => {
+  STATE[tab].cierre[k] = STATE[tab].cierre[k] === val ? null : val;
+  persistir();
+  const groups = tab === 'voz' ? VOZ_GROUPS : CCTV_GROUPS;
+  renderNodos(tab, groups, tab === 'voz' ? 24 : 16, tab === 'voz' ? 'Nodo' : 'Cámara');
+};
+
+/* NAVEGACIÓN Y EVENTOS */
 function bindEvents() {
-  // Navegación por Pestañas
-  document.querySelectorAll('.tab').forEach(tab => {
-    tab.onclick = (e) => {
+  document.querySelectorAll('.tab').forEach(t => {
+    t.onclick = (e) => {
       e.preventDefault();
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-      tab.classList.add('active');
-      document.getElementById(`panel_${tab.dataset.tab}`).classList.add('active');
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      document.getElementById(`panel_${t.dataset.tab}`).classList.add('active');
     };
   });
 
-  // Botones Inferiores
-  document.getElementById('btnGuardar').onclick = (e) => {
+  document.getElementById('btnGuardar').onclick = e => {
     e.preventDefault();
-    persistirEstado();
-    mostrarToast('💾 Avance guardado con éxito');
+    persistir();
+    toast('💾 Progreso guardado exitosamente');
   };
 
-  document.getElementById('btnVerDatos').onclick = (e) => {
+  document.getElementById('btnVerDatos').onclick = e => {
     e.preventDefault();
-    persistirEstado();
+    persistir();
+    const m = calcularMetricas();
+    document.getElementById('lblAvanceTotal').textContent = m.pctTotal + '%';
+    const ul = document.getElementById('missingList');
+    ul.innerHTML = m.faltantes.map(f => `<li>${f}</li>`).join('') || '<li style="color:var(--ok)">Checklist completado</li>';
     document.getElementById('jsonPreview').textContent = JSON.stringify(STATE, null, 2);
     document.getElementById('modalData').classList.add('open');
   };
 
-  document.getElementById('btnCerrarModal').onclick = (e) => {
+  document.getElementById('btnCerrarModal').onclick = e => {
     e.preventDefault();
     document.getElementById('modalData').classList.remove('open');
   };
 
-  document.getElementById('btnNuevaVisita').onclick = (e) => {
+  document.getElementById('btnNuevaVisita').onclick = e => {
     e.preventDefault();
-    if (confirm('¿Deseas crear un nuevo formulario? El progreso actual quedará guardado.')) {
-      persistirEstado();
-      STATE = { id: generarId(), header: {estacion:'', responsable:'', fecha:'', hora:''}, sitio: {items:{}}, voz: {nodos:{}}, cctv: {nodos:{}} };
-      persistirEstado();
+    if (confirm('¿Crear una nueva hoja? Se conservará el registro anterior.')) {
+      persistir();
+      STATE = { id: 'chk_' + Date.now(), header: {estacion:'', responsable:'', fecha:'', hora:''}, sitio: {items:{}, obs:''}, voz: {nodos:{}, cierre:{}, obs:'', recibe:'', entrega:''}, cctv: {nodos:{}, cierre:{}, obs:'', recibe:'', entrega:''} };
+      persistir();
       location.reload();
     }
   };
 
-  document.getElementById('btnExportar').onclick = (e) => {
+  document.getElementById('btnExportar').onclick = e => {
     e.preventDefault();
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet([STATE.header]);
-    XLSX.utils.book_append_sheet(wb, ws, "Header");
-    XLSX.writeFile(wb, `${STATE.header.estacion || 'Auditoria'}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, "Resumen");
+    XLSX.writeFile(wb, `Checklist_${STATE.header.estacion||'General'}.xlsx`);
   };
 }
 
-function mostrarToast(msg) {
+function toast(m) {
   const t = document.getElementById('toast');
-  t.textContent = msg;
+  t.textContent = m;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2000);
 }
 
-window.onload = initApp;
+window.onload = init;
 </script>
 </body>
 </html>
