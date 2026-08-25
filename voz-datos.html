@@ -3,69 +3,208 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Checklist Voz y Datos - Synergo</title>
+  <title>Recepción de Voz, Datos y CCTV</title>
   <style>
-    @page { size: letter; margin: 10mm; }
+    @page { size: letter landscape; margin: 8mm; }
     *, *::before, *::after { box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; margin: 0; padding: 15px; background: #fff; color: #000; }
-    .no-print { text-align: right; margin-bottom: 15px; }
-    .btn-action { background: #1b365d; color: white; border: none; padding: 10px 18px; font-weight: bold; border-radius: 4px; cursor: pointer; }
-    @media print { .no-print { display: none !important; } }
-    .header-table, .info-table, .section-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
-    .header-table td, .info-table td { border: 1.5pt solid #000; padding: 6px; font-size: 9.5pt; }
-    .section-table th, .section-table td { border: 1pt solid #000; padding: 5px; font-size: 8.5pt; }
-    .section-header { background: #d9e1f2; font-weight: bold; }
-    .col-opt { width: 35px; text-align: center; }
-    .col-obs input, .info-table input { width: 100%; border: none; outline: none; background: transparent; font-size: 9pt; }
-    .error-row { background-color: #ffe6e6 !important; }
+    body { font-family: Arial, sans-serif; margin: 0; padding: 10px; background: #fff; color: #000; font-size: 8pt; }
+    
+    .no-print { text-align: right; margin-bottom: 10px; }
+    .btn-action { background: #1b365d; color: white; border: none; padding: 8px 16px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+    @media print { .no-print { display: none !important; } body { padding: 0; } }
+
+    /* Encabezados amarillos principales */
+    .main-title {
+      background-color: #fce4d6;
+      text-align: center;
+      font-weight: bold;
+      font-size: 11pt;
+      padding: 5px;
+      border: 1pt solid #000;
+      margin-top: 10px;
+      margin-bottom: 2px;
+      text-transform: uppercase;
+    }
+
+    /* Estilos de Tablas Matriz */
+    .matrix-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+    .matrix-table th, .matrix-table td { border: 1pt solid #000; padding: 2px 3px; text-align: center; vertical-align: middle; }
+    
+    .bg-blue-top { background-color: #bdd7ee; font-weight: bold; font-size: 7.5pt; text-transform: uppercase; }
+    .bg-blue-sub { background-color: #d9e1f2; font-weight: bold; font-size: 7pt; text-transform: uppercase; }
+    
+    .col-nodo { width: 45px; font-weight: bold; background-color: #f2f2f2; }
+    .cell-chk { width: 30px; }
+    .cell-chk input { transform: scale(0.9); cursor: pointer; }
+
+    /* Bloque Inferior */
+    .footer-section { width: 100%; border-collapse: collapse; margin-top: 5px; }
+    .footer-section td { vertical-align: top; }
+    
+    .table-sub { width: 100%; border-collapse: collapse; }
+    .table-sub td { border: 1pt solid #000; padding: 4px; font-size: 7.5pt; }
+    
+    .project-box {
+      border: 1pt solid #000;
+      background-color: #bdd7ee;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 10pt;
+    }
+
+    .obs-container { margin-top: 8px; border-bottom: 1pt solid #000; padding-bottom: 2px; }
+    .obs-container input { width: 85%; border: none; outline: none; font-size: 8pt; }
+
+    .signatures-table { width: 100%; margin-top: 25px; border-collapse: collapse; }
+    .signatures-table td { text-align: center; font-size: 8pt; vertical-align: bottom; }
+    .line-sig { border-top: 1pt solid #000; width: 70%; margin: 0 auto 3px auto; }
   </style>
 </head>
 <body>
 
 <div class="no-print">
-  <button class="btn-action" onclick="validarYExportar(['v1','v2','v3','v4','v5'])">🖨️ Exportar PDF / Imprimir</button>
+  <button class="btn-action" onclick="validarYExportarMatriz()">🖨️ Exportar PDF / Imprimir</button>
 </div>
 
-<table class="header-table">
-  <tr>
-    <td style="width: 25%;"><strong>SYNERGO</strong></td>
-    <td style="text-align: center; width: 50%;"><strong>GERENCIA DE SISTEMAS</strong><br><small>CHECKLIST VOZ Y DATOS</small></td>
-    <td style="text-align: right; width: 25%;"><strong>Ver. 1.0 Agosto2026</strong>[cite: 1, 2]</td>
-  </tr>
-</table>
-
-<table class="info-table">
-  <tr>
-    <td style="width: 20%; background: #f2f4f8;"><strong>SITIO / SUCURSAL:</strong></td>
-    <td colspan="3"><input type="text" id="req-sitio" placeholder="Nombre de la sucursal"></td>
-  </tr>
-  <tr>
-    <td style="background: #f2f4f8;"><strong>TECNICO RESPONSABLE:</strong></td>
-    <td style="width: 45%;"><input type="text" id="req-tecnico" placeholder="Nombre completo"></td>
-    <td style="background: #f2f4f8; width: 10%;"><strong>FECHA:</strong></td>
-    <td><input type="date" id="req-fecha"></td>
-  </tr>
-</table>
-
-<table class="section-table">
+<!-- TABLA 1: VOZ Y DATOS (24 NODOS) -->
+<div class="main-title">Recepción de Cableado de Voz y Datos en Tiendas y Estaciones</div>
+<table class="matrix-table" id="tabla-voz-datos">
   <thead>
-    <tr class="section-header">
-      <th colspan="2">A. INFRAESTRUCTURA DE VOZ Y DATOS</th>
-      <th class="col-opt">SI</th>
-      <th class="col-opt">NO</th>
-      <th class="col-opt">N/A</th>
-      <th style="width: 35%;">OBSERVACIONES</th>
+    <tr class="bg-blue-top">
+      <th rowspan="2" class="col-nodo"># NODO</th>
+      <th colspan="2">Cableado del Nodo</th>
+      <th colspan="2">Etiquetado del Nodo</th>
+      <th colspan="2">Etiquetado del Patchcord</th>
+      <th colspan="2">Organización del Cableado</th>
+      <th colspan="2">Pruebas de Comunicación</th>
+    </tr>
+    <tr class="bg-blue-sub">
+      <th>Rematado Face Plate</th>
+      <th>Rematado Patch Pannel</th>
+      <th>Face Plate</th>
+      <th>Patch Pannel</th>
+      <th>Patch Pannel</th>
+      <th>Switch</th>
+      <th>Organizador Vertical</th>
+      <th>Organizador Horizontal</th>
+      <th>Continuidad</th>
+      <th>Transmisión</th>
     </tr>
   </thead>
-  <tbody>
-    <tr id="row-v1"><td>1</td><td>Certificación y peinado de Patch Panel de datos</td><td class="col-opt"><input type="radio" name="v1"></td><td class="col-opt"><input type="radio" name="v1"></td><td class="col-opt"><input type="radio" name="v1"></td><td class="col-obs"><input type="text"></td></tr>
-    <tr id="row-v2"><td>2</td><td>Etiquetado de rosetas y Jacks de red</td><td class="col-opt"><input type="radio" name="v2"></td><td class="col-opt"><input type="radio" name="v2"></td><td class="col-opt"><input type="radio" name="v2"></td><td class="col-obs"><input type="text"></td></tr>
-    <tr id="row-v3"><td>3</td><td>Conexión y mapeo de líneas telefónicas / Conmutador</td><td class="col-opt"><input type="radio" name="v3"></td><td class="col-opt"><input type="radio" name="v3"></td><td class="col-opt"><input type="radio" name="v3"></td><td class="col-obs"><input type="text"></td></tr>
-    <tr id="row-v4"><td>4</td><td>Pruebas de continuidad en jacks de red TPV y Admin</td><td class="col-opt"><input type="radio" name="v4"></td><td class="col-opt"><input type="radio" name="v4"></td><td class="col-opt"><input type="radio" name="v4"></td><td class="col-obs"><input type="text"></td></tr>
-    <tr id="row-v5"><td>5</td><td>Montaje y fijación de Switch / Router en Rack</td><td class="col-opt"><input type="radio" name="v5"></td><td class="col-opt"><input type="radio" name="v5"></td><td class="col-opt"><input type="radio" name="v5"></td><td class="col-obs"><input type="text"></td></tr>
+  <tbody id="body-voz-datos">
+    <!-- Generado dinámicamente con JS para mantener código limpio -->
   </tbody>
 </table>
 
-<script src="js/validator.js"></script>
+<!-- TABLA 2: CCTV (16 NODOS) -->
+<div class="main-title">Recepción de CCTV en Tiendas y Estaciones</div>
+<table class="matrix-table" id="tabla-cctv">
+  <thead>
+    <tr class="bg-blue-top">
+      <th rowspan="2" class="col-nodo"># NODO</th>
+      <th colspan="2">Cableado del Nodo</th>
+      <th colspan="3">Etiquetado del Patchcord</th>
+      <th colspan="2">Organización del Cableado</th>
+      <th colspan="3">Limpieza y Acabados CCTV</th>
+      <th colspan="2">Pruebas de Comunicación</th>
+    </tr>
+    <tr class="bg-blue-sub">
+      <th>Rematado Patch Pannel</th>
+      <th>Etiquetado Patch Pannel</th>
+      <th>Patch Pannel</th>
+      <th>Switch</th>
+      <th>NVR</th>
+      <th>Acomodo en Organizador Vertical</th>
+      <th>Acomodo en Organizador Horizontal</th>
+      <th>Resanes Fijación de Cámara</th>
+      <th>Retoques Instalación de Cámara</th>
+      <th>Tapas en los Registros</th>
+      <th>Continuidad</th>
+      <th>Transmisión</th>
+    </tr>
+  </thead>
+  <tbody id="body-cctv">
+    <!-- Generado dinámicamente con JS -->
+  </tbody>
+</table>
+
+<!-- PIE DE FORMATO Y FIRMAS -->
+<table style="width: 100%;">
+  <tr>
+    <td style="width: 40%; vertical-align: top;">
+      <table class="table-sub">
+        <tr><td style="background-color: #d9e1f2; font-weight: bold;">LIMPIEZA DEL SITE / GABINETE</td><td class="cell-chk"><input type="checkbox" id="chk-l1"></td></tr>
+        <tr><td style="background-color: #d9e1f2; font-weight: bold;">LIMPIEZA DE OFICINAS / AREA DE TRABAJO</td><td class="cell-chk"><input type="checkbox" id="chk-l2"></td></tr>
+        <tr><td style="background-color: #d9e1f2; font-weight: bold;">RACK A TIERRA FISICA / GABINETE</td><td class="cell-chk"><input type="checkbox" id="chk-l3"></td></tr>
+      </table>
+    </td>
+    <td style="width: 5%;"></td>
+    <td style="width: 55%; vertical-align: top;">
+      <div class="project-box">PROYECTO: <input type="text" id="req-proyecto" style="border:none; background:transparent; font-weight:bold; font-size:10pt; margin-left:5px; width:60%;" placeholder="Nombre / Código"></div>
+    </td>
+  </tr>
+</table>
+
+<div class="obs-container">
+  <strong>OBSERVACIONES:</strong> <input type="text" id="obs-general" placeholder="Escriba aquí las observaciones...">
+</div>
+
+<table class="signatures-table">
+  <tr>
+    <td style="width: 35%;">
+      <div class="line-sig"></div>
+      <strong>RECIBE SISTEMAS</strong><br><small>Nombre y firma</small>
+    </td>
+    <td style="width: 35%;">
+      <div class="line-sig"></div>
+      <strong>ENTREGA PROVEEDOR</strong><br><small>Nombre y firma</small>
+    </td>
+    <td style="width: 30%; text-align: right;">
+      Fecha: <input type="date" id="req-fecha" style="border:none; border-bottom:1pt solid #000; font-size:8pt;">
+    </td>
+  </tr>
+</table>
+
+<script>
+  // Renderizar filas dinámicamente para asegurar coincidencia exacta
+  function renderMatriz() {
+    // 24 Nodos Voz y Datos (10 casillas de verificación por fila)
+    const bodyVD = document.getElementById('body-voz-datos');
+    for (let i = 1; i <= 24; i++) {
+      let tr = document.createElement('tr');
+      tr.innerHTML = `<td class="col-nodo">${i}</td>` + 
+        Array(10).fill(0).map((_, c) => `<td class="cell-chk"><input type="checkbox" name="vd_${i}_${c}"></td>`).join('');
+      bodyVD.appendChild(tr);
+    }
+
+    // 16 Nodos CCTV (12 casillas de verificación por fila)
+    const bodyCCTV = document.getElementById('body-cctv');
+    for (let i = 1; i <= 16; i++) {
+      let tr = document.createElement('tr');
+      tr.innerHTML = `<td class="col-nodo">${i}</td>` + 
+        Array(12).fill(0).map((_, c) => `<td class="cell-chk"><input type="checkbox" name="cctv_${i}_${c}"></td>`).join('');
+      bodyCCTV.appendChild(tr);
+    }
+  }
+
+  function validarYExportarMatriz() {
+    const proyecto = document.getElementById('req-proyecto').value.trim();
+    const fecha = document.getElementById('req-fecha').value;
+
+    if (!proyecto || !fecha) {
+      alert("⚠️ Por favor ingrese el Nombre del Proyecto y la Fecha antes de exportar.");
+      return;
+    }
+
+    window.print();
+  }
+
+  // Inicializar tablas al cargar
+  window.onload = renderMatriz;
+</script>
+
 </body>
 </html>
