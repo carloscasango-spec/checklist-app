@@ -3,14 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Checklist Voz y Datos - Synergo</title>
+  <title>Visita en Sitio - Gomart</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
-    @page { size: letter; margin: 10mm; }
     *, *::before, *::after { box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; margin: 0; padding: 15px; background: #fff; color: #000; }
+    body { font-family: Arial, sans-serif; margin: 0; padding: 15px; background: #fff; color: #000; font-size: 9pt; }
     .no-print { text-align: right; margin-bottom: 15px; }
     .btn-action { background: #1b365d; color: white; border: none; padding: 10px 18px; font-weight: bold; border-radius: 4px; cursor: pointer; }
-    @media print { .no-print { display: none !important; } }
+    .btn-action:hover { background: #0f2341; }
+    
     .header-table, .info-table, .section-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
     .header-table td, .info-table td { border: 1.5pt solid #000; padding: 6px; font-size: 9.5pt; }
     .section-table th, .section-table td { border: 1pt solid #000; padding: 5px; font-size: 8.5pt; }
@@ -23,49 +24,93 @@
 <body>
 
 <div class="no-print">
-  <button class="btn-action" onclick="validarYExportar(['v1','v2','v3','v4','v5'])">🖨️ Exportar PDF / Imprimir</button>
+  <button class="btn-action" onclick="descargarVisitaPDF()">📥 Descargar PDF</button>
 </div>
 
-<table class="header-table">
-  <tr>
-    <td style="width: 25%;"><strong>SYNERGO</strong></td>
-    <td style="text-align: center; width: 50%;"><strong>GERENCIA DE SISTEMAS</strong><br><small>CHECKLIST VOZ Y DATOS</small></td>
-    <td style="text-align: right; width: 25%;"><strong>Ver. 1.0 Agosto2026</strong>[cite: 1, 2]</td>
-  </tr>
-</table>
-
-<table class="info-table">
-  <tr>
-    <td style="width: 20%; background: #f2f4f8;"><strong>SITIO / SUCURSAL:</strong></td>
-    <td colspan="3"><input type="text" id="req-sitio" placeholder="Nombre de la sucursal"></td>
-  </tr>
-  <tr>
-    <td style="background: #f2f4f8;"><strong>TECNICO RESPONSABLE:</strong></td>
-    <td style="width: 45%;"><input type="text" id="req-tecnico" placeholder="Nombre completo"></td>
-    <td style="background: #f2f4f8; width: 10%;"><strong>FECHA:</strong></td>
-    <td><input type="date" id="req-fecha"></td>
-  </tr>
-</table>
-
-<table class="section-table">
-  <thead>
-    <tr class="section-header">
-      <th colspan="2">A. INFRAESTRUCTURA DE VOZ Y DATOS</th>
-      <th class="col-opt">SI</th>
-      <th class="col-opt">NO</th>
-      <th class="col-opt">N/A</th>
-      <th style="width: 35%;">OBSERVACIONES</th>
+<div id="formato-visita">
+  <table class="header-table">
+    <tr>
+      <td style="width: 25%;"><strong>SYNERGO</strong></td>
+      <td style="text-align: center; width: 50%;"><strong>GERENCIA DE SISTEMAS</strong><br><small>CHECKLIST VISITA EN SITIO</small></td>
+      <td style="text-align: right; width: 25%;"><strong>Ver. 1.0</strong></td>
     </tr>
-  </thead>
-  <tbody>
-    <tr id="row-v1"><td>1</td><td>Certificación y peinado de Patch Panel de datos</td><td class="col-opt"><input type="radio" name="v1"></td><td class="col-opt"><input type="radio" name="v1"></td><td class="col-opt"><input type="radio" name="v1"></td><td class="col-obs"><input type="text"></td></tr>
-    <tr id="row-v2"><td>2</td><td>Etiquetado de rosetas y Jacks de red</td><td class="col-opt"><input type="radio" name="v2"></td><td class="col-opt"><input type="radio" name="v2"></td><td class="col-opt"><input type="radio" name="v2"></td><td class="col-obs"><input type="text"></td></tr>
-    <tr id="row-v3"><td>3</td><td>Conexión y mapeo de líneas telefónicas / Conmutador</td><td class="col-opt"><input type="radio" name="v3"></td><td class="col-opt"><input type="radio" name="v3"></td><td class="col-opt"><input type="radio" name="v3"></td><td class="col-obs"><input type="text"></td></tr>
-    <tr id="row-v4"><td>4</td><td>Pruebas de continuidad en jacks de red TPV y Admin</td><td class="col-opt"><input type="radio" name="v4"></td><td class="col-opt"><input type="radio" name="v4"></td><td class="col-opt"><input type="radio" name="v4"></td><td class="col-obs"><input type="text"></td></tr>
-    <tr id="row-v5"><td>5</td><td>Montaje y fijación de Switch / Router en Rack</td><td class="col-opt"><input type="radio" name="v5"></td><td class="col-opt"><input type="radio" name="v5"></td><td class="col-opt"><input type="radio" name="v5"></td><td class="col-obs"><input type="text"></td></tr>
-  </tbody>
-</table>
+  </table>
 
-<script src="js/validator.js"></script>
+  <table class="info-table">
+    <tr>
+      <td style="width: 20%; background: #f2f4f8;"><strong>SUCURSAL / GOMART:</strong></td>
+      <td colspan="3"><input type="text" id="req-gomart" placeholder="Nombre del Gomart / Sucursal"></td>
+    </tr>
+    <tr>
+      <td style="background: #f2f4f8;"><strong>RESPONSABLE:</strong></td>
+      <td style="width: 45%;"><input type="text" id="req-responsable" placeholder="Nombre completo"></td>
+      <td style="background: #f2f4f8; width: 10%;"><strong>FECHA:</strong></td>
+      <td><input type="date" id="req-fecha"></td>
+    </tr>
+  </table>
+
+  <table class="section-table">
+    <thead>
+      <tr class="section-header">
+        <th colspan="2">A. ADECUACIONES Y REVISIÓN EN SITIO</th>
+        <th class="col-opt">SI</th>
+        <th class="col-opt">NO</th>
+        <th class="col-opt">N/A</th>
+        <th style="width: 35%;">OBSERVACIONES</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr id="row-a1"><td>1</td><td>Verificación de alimentaciones eléctricas y contactos de red</td><td class="col-opt"><input type="radio" name="a1"></td><td class="col-opt"><input type="radio" name="a1"></td><td class="col-opt"><input type="radio" name="a1"></td><td class="col-obs"><input type="text"></td></tr>
+      <tr id="row-a2"><td>2</td><td>Revisión de Rack de comunicaciones y gabinete</td><td class="col-opt"><input type="radio" name="a2"></td><td class="col-opt"><input type="radio" name="a2"></td><td class="col-opt"><input type="radio" name="a2"></td><td class="col-obs"><input type="text"></td></tr>
+      <tr id="row-a3"><td>3</td><td>Pruebas de energía ininterrumpida (UPS / No-Break)</td><td class="col-opt"><input type="radio" name="a3"></td><td class="col-opt"><input type="radio" name="a3"></td><td class="col-opt"><input type="radio" name="a3"></td><td class="col-obs"><input type="text"></td></tr>
+      <tr id="row-a4"><td>4</td><td>Revisión de cableado de puntos de venta (TPV)</td><td class="col-opt"><input type="radio" name="a4"></td><td class="col-opt"><input type="radio" name="a4"></td><td class="col-opt"><input type="radio" name="a4"></td><td class="col-obs"><input type="text"></td></tr>
+      <tr id="row-a5"><td>5</td><td>Limpieza y orden general de área de trabajo / Site</td><td class="col-opt"><input type="radio" name="a5"></td><td class="col-opt"><input type="radio" name="a5"></td><td class="col-opt"><input type="radio" name="a5"></td><td class="col-obs"><input type="text"></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+  function descargarVisitaPDF() {
+    const gomart = document.getElementById('req-gomart').value.trim();
+    const responsable = document.getElementById('req-responsable').value.trim();
+    const fecha = document.getElementById('req-fecha').value;
+
+    if (!gomart || !responsable || !fecha) {
+      alert("⚠️ Por favor completa los datos generales (Gomart, Responsable y Fecha) antes de descargar.");
+      return;
+    }
+
+    const radioGroups = ['a1', 'a2', 'a3', 'a4', 'a5'];
+    let faltanRadios = false;
+
+    radioGroups.forEach(group => {
+      const checked = document.querySelector(`input[name="${group}"]:checked`);
+      const fila = document.getElementById(`row-${group}`);
+      if (!checked) {
+        faltanRadios = true;
+        if (fila) fila.classList.add('error-row');
+      } else {
+        if (fila) fila.classList.remove('error-row');
+      }
+    });
+
+    if (faltanRadios) {
+      alert("⚠️ Falta responder algunos ítems del checklist. Se han marcado en rojo.");
+      return;
+    }
+
+    const elemento = document.getElementById('formato-visita');
+    const opciones = {
+      margin:       10,
+      filename:     `Visita_Sitio_${gomart}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2 },
+      jsPDF:        { unit: 'mm', format: 'letter', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opciones).from(elemento).save();
+  }
+</script>
+
 </body>
 </html>
