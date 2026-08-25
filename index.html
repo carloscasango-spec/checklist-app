@@ -194,7 +194,6 @@
 
 <div class="footer-note">Tus respuestas se guardan automáticamente en este dispositivo.</div>
 
-<!-- Botones inferiores con Guardar y PDF agregados -->
 <div class="bottomnav">
   <button class="navbtn save" onclick="guardarProgresoManual()">💾 Guardar</button>
   <button class="navbtn pdf" onclick="exportarPDF()">📄 PDF</button>
@@ -277,7 +276,7 @@ const CLOSEOUT_ITEMS = [
 ];
 
 /* ============================================================
-   STATE & PERSISTENCE
+   STATE & PERSISTENCE (PERSISTENCIA TOTALMENTE COMPATIBLE)
    ============================================================ */
 let STATE = {
   header:{estacion:'',responsable:'',fecha:'',hora:''},
@@ -286,44 +285,48 @@ let STATE = {
   cctv:{nodos:{}, cierre:{}, obs:'', firmas:{recibeNombre:'',recibeFecha:'',entregaNombre:'',entregaFecha:''}},
 };
 
-function getStorage(key) {
-  try {
-    const val = localStorage.getItem(key);
-    return val ? JSON.parse(val) : null;
-  } catch(e) { return null; }
-}
-
-function setStorage(key, val) {
+function safeSetStorage(key, val) {
   try {
     localStorage.setItem(key, JSON.stringify(val));
-  } catch(e) {}
+  } catch(e) {
+    console.warn('Storage no disponible localmente', e);
+  }
+}
+
+function safeGetStorage(key) {
+  try {
+    const v = localStorage.getItem(key);
+    return v ? JSON.parse(v) : null;
+  } catch(e) {
+    return null;
+  }
 }
 
 let saveTimer = null;
 function queueSave(){
   clearInterval(saveTimer);
   saveTimer = setTimeout(()=>{
-    setStorage('checklist:header', STATE.header);
-    setStorage('checklist:sitio', STATE.sitio);
-    setStorage('checklist:voz', STATE.voz);
-    setStorage('checklist:cctv', STATE.cctv);
+    safeSetStorage('checklist:header', STATE.header);
+    safeSetStorage('checklist:sitio', STATE.sitio);
+    safeSetStorage('checklist:voz', STATE.voz);
+    safeSetStorage('checklist:cctv', STATE.cctv);
     updateProgress();
-  }, 250);
+  }, 200);
 }
 
 function guardarProgresoManual() {
   queueSave();
-  showToast('💾 Cambios guardados localmente');
+  showToast('💾 Datos guardados en el dispositivo');
 }
 
 /* ============================================================
    INIT / RENDER
    ============================================================ */
 function init(){
-  const h = getStorage('checklist:header'); if(h) STATE.header = h;
-  const s = getStorage('checklist:sitio'); if(s) STATE.sitio = s;
-  const v = getStorage('checklist:voz'); if(v) STATE.voz = v;
-  const c = getStorage('checklist:cctv'); if(c) STATE.cctv = c;
+  const h = safeGetStorage('checklist:header'); if(h) STATE.header = h;
+  const s = safeGetStorage('checklist:sitio'); if(s) STATE.sitio = s;
+  const v = safeGetStorage('checklist:voz'); if(v) STATE.voz = v;
+  const c = safeGetStorage('checklist:cctv'); if(c) STATE.cctv = c;
 
   document.getElementById('h_estacion').value = STATE.header.estacion||'';
   document.getElementById('h_responsable').value = STATE.header.responsable||'';
@@ -580,6 +583,7 @@ function setupSigPad(id){
   canvas.addEventListener('mousedown',start); canvas.addEventListener('mousemove',move); window.addEventListener('mouseup',end);
   canvas.addEventListener('touchstart',start,{passive:false}); canvas.addEventListener('touchmove',move,{passive:false}); canvas.addEventListener('touchend',end);
 }
+
 function clearSig(id){
   const canvas = document.getElementById(id);
   if(!canvas) return;
@@ -618,10 +622,12 @@ function nuevaVisita(){
     voz:{nodos:{}, cierre:{}, obs:'', firmas:{}},
     cctv:{nodos:{}, cierre:{}, obs:'', firmas:{}},
   };
-  localStorage.removeItem('checklist:header');
-  localStorage.removeItem('checklist:sitio');
-  localStorage.removeItem('checklist:voz');
-  localStorage.removeItem('checklist:cctv');
+  try {
+    localStorage.removeItem('checklist:header');
+    localStorage.removeItem('checklist:sitio');
+    localStorage.removeItem('checklist:voz');
+    localStorage.removeItem('checklist:cctv');
+  } catch(e) {}
 
   document.getElementById('h_estacion').value='';
   document.getElementById('h_responsable').value='';
