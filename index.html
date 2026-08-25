@@ -5,262 +5,107 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Checklist Recepción · Cableado & CCTV</title>
 
-<!-- Librerías Externas -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
   :root{
-    --navy:#1F3864;
-    --navy-dark:#152747;
-    --blue:#2E75B6;
-    --bg:#EEF1F5;
-    --card:#FFFFFF;
-    --border:#DDE3EC;
-    --text:#1C2530;
-    --muted:#6B7686;
-    --ok:#1F8A46;
-    --ok-bg:#E3F5EA;
-    --bad:#C4372B;
-    --bad-bg:#FBE7E5;
-    --pending-bg:#F1F3F6;
-    --amber:#B7791F;
+    --navy:#1F3864; --navy-dark:#152747; --blue:#2E75B6; --bg:#EEF1F5;
+    --card:#FFFFFF; --border:#DDE3EC; --text:#1C2530; --muted:#6B7686;
+    --ok:#1F8A46; --ok-bg:#E3F5EA; --bad:#C4372B; --bad-bg:#FBE7E5; --pending-bg:#F1F3F6;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    overscroll-behavior-y:none;}
-  body{padding-bottom:84px;}
+  body{margin:0;padding:0 0 84px 0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;}
 
-  /* Top bar */
-  header.topbar{
-    position:sticky;top:0;z-index:30;
-    background:linear-gradient(135deg,var(--navy) 0%,var(--navy-dark) 100%);
-    color:#fff;padding:14px 16px 12px;
-    box-shadow:0 2px 10px rgba(0,0,0,.15);
-  }
+  header.topbar{position:sticky;top:0;z-index:30;background:linear-gradient(135deg,var(--navy),var(--navy-dark));color:#fff;padding:14px 16px;}
   .brand{display:flex;align-items:center;justify-content:space-between;}
-  .brand-name{font-weight:800;font-size:13px;letter-spacing:.14em;opacity:.85;}
-  .brand-title{font-weight:700;font-size:17px;margin-top:2px;}
-  .brand-sub{font-size:12px;opacity:.75;margin-top:1px;}
-  .reset-btn{
-    background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);
-    color:#fff;font-size:11px;padding:7px 10px;border-radius:8px;cursor:pointer;
-  }
+  .brand-title{font-weight:700;font-size:16px;}
+  .reset-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;font-size:11px;padding:6px 10px;border-radius:6px;cursor:pointer;}
 
-  /* Header info form */
-  .infobox{background:var(--card);margin:12px;border-radius:14px;padding:12px 14px;
-    box-shadow:0 1px 3px rgba(20,30,50,.08);border:1px solid var(--border);}
+  .infobox{background:var(--card);margin:12px;border-radius:12px;padding:12px;border:1px solid var(--border);}
   .infogrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-  .field{display:flex;flex-direction:column;gap:3px;margin-bottom:8px;}
-  .field label{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
-  .field input,.field textarea,.field select{
-    border:1.5px solid var(--border);border-radius:9px;padding:9px 10px;font-size:14.5px;
-    font-family:inherit;background:#fbfcfe;color:var(--text);
-  }
-  .field input:focus,.field textarea:focus{outline:none;border-color:var(--blue);background:#fff;}
+  .field{display:flex;flex-direction:column;gap:3px;}
+  .field label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;}
+  .field input{border:1px solid var(--border);border-radius:6px;padding:8px;font-size:13px;}
 
-  /* Tabs */
   .tabbar{display:flex;gap:6px;margin:0 12px 12px;}
-  .tab{flex:1;background:var(--card);border:1.5px solid var(--border);border-radius:11px;
-    padding:9px 4px;text-align:center;font-size:12.5px;font-weight:700;color:var(--muted);
-    position:relative;cursor:pointer;}
+  .tab{flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;}
   .tab.active{background:var(--navy);border-color:var(--navy);color:#fff;}
-  .tab .prog{display:block;font-size:10px;font-weight:600;margin-top:2px;opacity:.85;}
 
   .panel{display:none;padding:0 12px;}
   .panel.active{display:block;}
 
-  /* Section card (Sitio tab) */
-  .section-card{background:var(--card);border-radius:14px;margin-bottom:12px;overflow:hidden;
-    border:1px solid var(--border);box-shadow:0 1px 3px rgba(20,30,50,.06);}
-  .section-head{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;
-    background:#F7F9FC;cursor:pointer;}
-  .section-head .htxt{display:flex;align-items:baseline;gap:8px;}
-  .section-letter{background:var(--navy);color:#fff;font-weight:800;font-size:12px;
-    width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-  .section-title{font-weight:700;font-size:13.5px;line-height:1.25;}
-  .section-badge{font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap;}
-  .chevron{transition:transform .2s;color:var(--muted);margin-left:8px;flex-shrink:0;}
-  .section-card.open .chevron{transform:rotate(180deg);}
-  .section-body{display:none;padding:4px 12px 10px;}
-  .section-card.open .section-body{display:block;}
+  .section-card,.node-card{background:var(--card);border-radius:10px;margin-bottom:10px;border:1px solid var(--border);overflow:hidden;}
+  .section-head,.node-head{display:flex;align-items:center;justify-content:space-between;padding:12px;background:#F7F9FC;cursor:pointer;}
+  .section-body,.node-body{display:none;padding:12px;}
+  .section-card.open .section-body,.node-card.open .node-body{display:block;}
 
-  .item-row{padding:10px 2px;border-top:1px solid #EEF1F5;}
-  .item-row:first-child{border-top:none;}
-  .item-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
-  .item-label{font-size:13.5px;line-height:1.35;flex:1;padding-top:4px;}
-  .seg{display:flex;flex-shrink:0;border-radius:9px;overflow:hidden;border:1.5px solid var(--border);}
-  .seg button{border:none;background:var(--pending-bg);color:var(--muted);font-size:12px;font-weight:700;
-    padding:8px 11px;font-family:inherit;cursor:pointer;}
+  .item-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #EEF1F5;}
+  .seg button{border:none;background:var(--pending-bg);color:var(--muted);font-size:11px;font-weight:700;padding:6px 10px;cursor:pointer;}
   .seg button.si.active{background:var(--ok-bg);color:var(--ok);}
   .seg button.no.active{background:var(--bad-bg);color:var(--bad);}
-  .obs-toggle{font-size:11px;color:var(--blue);font-weight:600;margin-top:6px;display:inline-block;cursor:pointer;}
-  .obs-input{display:none;width:100%;margin-top:6px;border:1.5px solid var(--border);border-radius:8px;
-    padding:7px 9px;font-size:13px;font-family:inherit;background:#fbfcfe;}
-  .obs-input.show{display:block;}
 
-  /* Node cards */
-  .node-card{background:var(--card);border-radius:13px;margin-bottom:10px;border:1px solid var(--border);
-    overflow:hidden;box-shadow:0 1px 3px rgba(20,30,50,.06);}
-  .node-head{display:flex;align-items:center;gap:10px;padding:11px 13px;cursor:pointer;}
-  .node-num{width:30px;height:30px;border-radius:9px;background:var(--navy);color:#fff;
-    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;}
-  .node-num.complete{background:var(--ok);}
-  .node-info{flex:1;}
-  .node-title{font-weight:700;font-size:13.5px;}
-  .node-status{font-size:11px;color:var(--muted);margin-top:1px;}
-  .node-body{display:none;padding:2px 13px 12px;}
-  .node-card.open .node-body{display:block;}
-  .node-card.open .chevron{transform:rotate(180deg);}
+  .bottomnav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);display:flex;padding:8px;gap:6px;z-index:30;}
+  .navbtn{flex:1;border:none;border-radius:8px;padding:10px;font-weight:700;font-size:12px;color:#fff;cursor:pointer;}
+  .navbtn.save{background:var(--navy);}
+  .navbtn.view{background:var(--blue);}
+  .navbtn.export{background:var(--ok);}
 
-  .grp{margin-top:8px;}
-  .grp-label{font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;
-    letter-spacing:.04em;margin-bottom:6px;}
-  .chip-row{display:flex;flex-wrap:wrap;gap:6px;}
-  .chip{display:flex;align-items:center;gap:6px;border:1.5px solid var(--border);border-radius:20px;
-    padding:7px 12px 7px 8px;font-size:12.5px;font-weight:600;background:#fbfcfe;color:var(--text);cursor:pointer;}
-  .chip .dot{width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid #C7CFDB;
-    display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;flex-shrink:0;}
-  .chip.ok{border-color:var(--ok);background:var(--ok-bg);}
-  .chip.ok .dot{background:var(--ok);border-color:var(--ok);}
-  .chip.bad{border-color:var(--bad);background:var(--bad-bg);}
-  .chip.bad .dot{background:var(--bad);border-color:var(--bad);}
-
-  .closeout{background:var(--card);border-radius:14px;padding:13px 14px;margin:4px 0 12px;
-    border:1px solid var(--border);}
-  .closeout h4{margin:0 0 8px;font-size:12.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);}
-
-  .sign-block{background:var(--card);border-radius:14px;padding:13px 14px;margin-bottom:12px;
-    border:1px solid var(--border);}
-  .sign-title{font-weight:700;font-size:13px;margin-bottom:8px;}
-  .sign-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-
-  /* Bottom nav */
-  .bottomnav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);
-    display:flex;padding:8px 10px calc(8px + env(safe-area-inset-bottom));gap:4px;z-index:30;
-    box-shadow:0 -2px 10px rgba(20,30,50,.08);}
-  .navbtn{flex:1;border:none;border-radius:11px;padding:10px 2px;font-weight:700;font-size:11px;
-    font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;}
-  .navbtn.save{background:#1F3864;color:#fff;}
-  .navbtn.view{background:#2E75B6;color:#fff;}
-  .navbtn.pdf{background:#C4372B;color:#fff;}
-  .navbtn.export{background:#1D6F42;color:#fff;}
-
-  .toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%) translateY(20px);
-    background:var(--navy-dark);color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;
-    font-weight:600;opacity:0;transition:all .25s;pointer-events:none;z-index:50;white-space:nowrap;}
-  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-
-  /* Modal de datos guardados */
-  .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);
-    display:none;align-items:center;justify-content:center;z-index:100;padding:16px;}
+  .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:100;padding:16px;}
   .modal-overlay.open{display:flex;}
-  .modal-card{background:#fff;border-radius:14px;width:100%;max-width:600px;max-height:85vh;
-    display:flex;flex-direction:column;box-shadow:0 4px 20px rgba(0,0,0,0.2);overflow:hidden;}
-  .modal-head{background:var(--navy);color:#fff;padding:12px 16px;display:flex;
-    justify-content:space-between;align-items:center;font-weight:700;font-size:14px;}
-  .modal-close{background:none;border:none;color:#fff;font-size:18px;cursor:pointer;}
+  .modal-card{background:#fff;border-radius:12px;width:100%;max-width:500px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;}
+  .modal-head{background:var(--navy);color:#fff;padding:12px;display:flex;justify-content:space-between;font-weight:700;}
   .modal-body{padding:16px;overflow-y:auto;flex:1;}
-  
-  .stat-card{background:#F7F9FC;border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;}
-  .stat-main{font-size:22px;font-weight:800;color:var(--navy);margin-bottom:4px;}
-  .stat-bar-bg{background:#E3E8F0;height:10px;border-radius:5px;overflow:hidden;margin:8px 0;}
-  .stat-bar-fill{background:var(--ok);height:100%;width:0%;transition:width 0.3s;}
-  .stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;font-size:11px;text-align:center;margin-top:8px;}
-  .stat-box{background:#fff;padding:6px;border-radius:6px;border:1px solid var(--border);}
-  .stat-box-val{font-weight:700;font-size:13px;color:var(--navy);}
-
-  .missing-section{margin-top:10px;}
-  .missing-title{font-size:12px;font-weight:800;color:var(--navy);margin-bottom:6px;text-transform:uppercase;}
-  .missing-list{list-style:none;padding:0;margin:0;font-size:12px;color:var(--bad);}
-  .missing-list li{padding:4px 0;border-bottom:1px solid #EEF1F5;display:flex;align-items:center;gap:6px;}
-  .missing-list li::before{content:"•";color:var(--bad);font-weight:bold;}
-
-  .modal-body pre{background:#F7F9FC;border:1px solid var(--border);padding:10px;border-radius:8px;
-    font-size:10.5px;white-space:pre-wrap;word-break:break-all;margin-top:12px;max-height:150px;overflow-y:auto;}
-  .modal-foot{padding:10px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
-  .modal-btn{padding:8px 14px;border-radius:8px;font-size:12px;font-weight:700;border:none;cursor:pointer;}
-  .modal-btn.primary{background:var(--navy);color:#fff;}
-
-  .footer-note{font-size:10.5px;color:var(--muted);text-align:center;padding:10px 20px 4px;line-height:1.5;}
+  .modal-body pre{background:#F7F9FC;padding:10px;border-radius:6px;font-size:11px;white-space:pre-wrap;word-break:break-all;}
+  .toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:var(--navy-dark);color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:50;}
+  .toast.show{opacity:1;}
 </style>
 </head>
 <body>
 
 <header class="topbar">
   <div class="brand">
-    <div>
-      <div class="brand-name">SYNERGO · GERENCIA DE SISTEMAS</div>
-      <div class="brand-title">Recepción de Cableado y CCTV</div>
-      <div class="brand-sub">Checklist ES / GoMart — Ver. 2.0</div>
-    </div>
-    <button type="button" class="reset-btn" onclick="nuevaVisita(event)">Nueva visita</button>
+    <div class="brand-title">Recepción de Cableado & CCTV</div>
+    <button type="button" class="reset-btn" id="btnNuevaVisita">Nueva Visita</button>
   </div>
 </header>
 
 <div class="infobox">
   <div class="infogrid">
-    <div class="field"><label>Estación / GoMart</label><input id="h_estacion" type="text" placeholder="Ej. ES Manglares" oninput="saveHeader()"></div>
-    <div class="field"><label>Responsable</label><input id="h_responsable" type="text" placeholder="Nombre" oninput="saveHeader()"></div>
-    <div class="field"><label>Fecha</label><input id="h_fecha" type="date" oninput="saveHeader()"></div>
-    <div class="field"><label>Hora</label><input id="h_hora" type="time" oninput="saveHeader()"></div>
+    <div class="field"><label>Estación / GoMart</label><input id="h_estacion" type="text" placeholder="Ej. MIRADOR"></div>
+    <div class="field"><label>Responsable</label><input id="h_responsable" type="text" placeholder="Nombre"></div>
+    <div class="field"><label>Fecha</label><input id="h_fecha" type="date"></div>
+    <div class="field"><label>Hora</label><input id="h_hora" type="time"></div>
   </div>
 </div>
 
 <div class="tabbar">
-  <button type="button" class="tab active" data-tab="sitio" onclick="switchTab('sitio')">Sitio<span class="prog" id="prog_sitio">0%</span></button>
-  <button type="button" class="tab" data-tab="voz" onclick="switchTab('voz')">Voz y Datos<span class="prog" id="prog_voz">0%</span></button>
-  <button type="button" class="tab" data-tab="cctv" onclick="switchTab('cctv')">CCTV<span class="prog" id="prog_cctv">0%</span></button>
+  <button type="button" class="tab active" data-tab="sitio">Sitio <span id="prog_sitio">0%</span></button>
+  <button type="button" class="tab" data-tab="voz">Voz/Datos <span id="prog_voz">0%</span></button>
+  <button type="button" class="tab" data-tab="cctv">CCTV <span id="prog_cctv">0%</span></button>
 </div>
 
 <div class="panel active" id="panel_sitio"></div>
 <div class="panel" id="panel_voz"></div>
 <div class="panel" id="panel_cctv"></div>
 
-<div class="footer-note">Tus respuestas se guardan automáticamente en este dispositivo.</div>
-
 <div class="bottomnav">
-  <button type="button" class="navbtn save" onclick="guardarProgresoManual(event)">💾 Guardar</button>
-  <button type="button" class="navbtn view" onclick="verDatosGuardados(event)">🔍 Ver datos</button>
-  <button type="button" class="navbtn pdf" onclick="exportarPDF(event)">📄 PDF</button>
-  <button type="button" class="navbtn export" onclick="exportarExcel(event)">📊 Excel</button>
+  <button type="button" class="navbtn save" id="btnGuardar">💾 Guardar</button>
+  <button type="button" class="navbtn view" id="btnVerDatos">🔍 Ver Datos</button>
+  <button type="button" class="navbtn export" id="btnExportar">📊 Excel</button>
 </div>
 
-<!-- Modal de Datos -->
+<!-- Modal JSON -->
 <div class="modal-overlay" id="modalData">
   <div class="modal-card">
     <div class="modal-head">
       <span>Estado del Registro Guardado</span>
-      <button type="button" class="modal-close" onclick="cerrarModal()">✕</button>
+      <button type="button" style="background:none;border:none;color:#fff;cursor:pointer;" id="btnCerrarModal">✕</button>
     </div>
     <div class="modal-body">
-      
-      <div class="stat-card">
-        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;">Avance Total</div>
-        <div class="stat-main" id="totalPct">0%</div>
-        <div class="stat-bar-bg">
-          <div class="stat-bar-fill" id="totalBar"></div>
-        </div>
-        <div class="stat-grid">
-          <div class="stat-box"><div>Sitio</div><div class="stat-box-val" id="pctSitio">0%</div></div>
-          <div class="stat-box"><div>Voz y Datos</div><div class="stat-box-val" id="pctVoz">0%</div></div>
-          <div class="stat-box"><div>CCTV</div><div class="stat-box-val" id="pctCctv">0%</div></div>
-        </div>
-      </div>
-
-      <div class="missing-section">
-        <div class="missing-title">Lo que falta por capturar:</div>
-        <ul class="missing-list" id="missingList"></ul>
-      </div>
-
-      <div style="font-size:11px;font-weight:700;color:var(--muted);margin-top:14px;text-transform:uppercase;">Objeto de Datos (JSON)</div>
+      <div><strong>Avance Total: </strong><span id="lblAvanceTotal">0%</span></div>
+      <hr>
+      <div style="font-size:11px;font-weight:700;margin-top:10px;">OBJETO DE DATOS (JSON):</div>
       <pre id="jsonPreview"></pre>
-
-    </div>
-    <div class="modal-foot">
-      <button type="button" class="modal-btn" onclick="copiarJson()">📋 Copiar JSON</button>
-      <button type="button" class="modal-btn primary" onclick="cerrarModal()">Cerrar</button>
     </div>
   </div>
 </div>
@@ -268,549 +113,187 @@
 <div class="toast" id="toast"></div>
 
 <script>
-/* DATA MODEL */
+/* DATOS ESTRUCTURALES */
 const SITIO_SECTIONS = [
-  {id:'A', title:'Nodos de red y contactos piso de venta', items:[
-    'Canalizaciones / registros para datos en área de TPV',
-    'Canalizaciones / registros para micrófono y botón de pánico en área de TPV',
-    'Contactos doble NO regulados por cada TPV',
-    'Voltajes en contactos doble NO regulados por cada TPV',
-    'Pasos interiores en los muebles de los TPV',
-    'Pasos en la barra para los brazos de los TPV',
-  ]},
-  {id:'B', title:'Nodos de red y contactos eléctricos — equipo administrativo', items:[
-    'Canalizaciones / registros para datos',
-    'Contacto doble NO regulado',
-    'Voltajes en contactos doble NO regulados por cada TPV',
-    'Repisa de 90x60 cm mínimo',
-  ]},
-  {id:'C', title:'Nodos de red / registros — equipo de publicidad', items:[
-    'Canalizaciones / registros para datos',
-    'Contacto doble NO regulado',
-    'Voltajes en contactos doble NO regulados por cada TPV',
-    'Repisa de 90x60 cm mínimo',
-    'Gabinete estanca con puerta de 300x250x150 en bodega para guardar holgura (sobre cuarto frío)',
-  ]},
-  {id:'D', title:'Nodos de red — torniquete y WiFi', items:[
-    'Canalizaciones / registros para datos torniquete',
-  ]},
-  {id:'E', title:'Adecuaciones para SITE de telecomunicaciones (rack/gabinete)', items:[
-    'Todas las canalizaciones llegan al SITE / gabinete',
-    '1 contacto doble NO regulado',
-    'Voltajes en contactos doble NO regulados por cada TPV',
-    'Barra de tierra física',
-    'Acomodo del cableado',
-    'Limpieza del gabinete',
-    'Conexión a tierra física',
-    'Etiquetado de los patchcord',
-  ]},
-  {id:'F', title:'Limpieza y acabados CCTV', items:[
-    'Resanes bases y bajantes',
-    'Retoque de pintura en área de bases y bajantes de cámaras',
-    'Canalización y registro con tapa para cámaras de Beercave y cuarto frío',
-    'Tapas de los registros',
-    'Bajantes (ubicaciones)',
-  ]},
+  {id:'A', title:'Nodos de red y contactos piso de venta', items:['Canalizaciones TPV', 'Contacto doble NO regulado', 'Voltajes regulados']},
+  {id:'B', title:'Nodos de red — equipo administrativo', items:['Canalizaciones datos', 'Repisa 90x60cm']}
 ];
 
-const VOZ_GROUPS = [
-  {label:'Cableado del nodo', keys:[['remFP','Rematado face plate'],['remPP','Rematado patch panel']]},
-  {label:'Etiquetado del nodo', keys:[['etqFP','Face plate'],['etqPP','Patch panel']]},
-  {label:'Etiquetado del patchcord', keys:[['etqPcPP','Patch panel'],['etqPcSW','Switch']]},
-  {label:'Organización del cableado', keys:[['orgV','Organizador vertical'],['orgH','Organizador horizontal']]},
-  {label:'Pruebas de comunicación', keys:[['contP','Continuidad'],['transP','Transmisión']]},
-];
-const VOZ_NODE_COUNT = 24;
-
-const CCTV_GROUPS = [
-  {label:'Cableado del nodo', keys:[['remPP','Rematado patch panel'],['etqPP','Etiquetado patch panel']]},
-  {label:'Etiquetado del patchcord', keys:[['pcPP','Patch panel'],['pcSW','Switch'],['pcNVR','NVR']]},
-  {label:'Organización del cableado', keys:[['orgV','Acomodo organizador vertical'],['orgH','Acomodo organizador horizontal']]},
-  {label:'Limpieza y acabados CCTV', keys:[['resanes','Resanes fijación de cámara'],['retoques','Retoques instalación de cámara'],['tapas','Tapas en los registros']]},
-  {label:'Pruebas de comunicación', keys:[['contP','Continuidad'],['transP','Transmisión']]},
-];
-const CCTV_NODE_COUNT = 16;
-
-const CLOSEOUT_ITEMS = [
-  ['limpiezaSite','Limpieza del SITE / gabinete'],
-  ['limpiezaOficinas','Limpieza de oficinas / área de trabajo'],
-  ['tierraFisica','Rack a tierra física / gabinete'],
-];
-
-/* STATE */
+/* ESTADO GLOBAL */
 let STATE = {
   id: '',
-  header:{estacion:'',responsable:'',fecha:'',hora:''},
-  sitio:{items:{}, observaciones:''},
-  voz:{nodos:{}, cierre:{}, obs:'', firmas:{recibeNombre:'',recibeFecha:'',entregaNombre:'',entregaFecha:''}},
-  cctv:{nodos:{}, cierre:{}, obs:'', firmas:{recibeNombre:'',recibeFecha:'',entregaNombre:'',entregaFecha:''}},
+  header: {estacion:'', responsable:'', fecha:'', hora:''},
+  sitio: {items:{}},
+  voz: {nodos:{}},
+  cctv: {nodos:{}}
 };
 
-function safeSetStorage(key, val) {
-  try {
-    localStorage.setItem(key, JSON.stringify(val));
-  } catch(e) {
-    console.warn('Storage no disponible', e);
-  }
+/* CONTROLADORES DE ALMACENAMIENTO */
+function generarId() {
+  return 'chk_' + Date.now();
 }
 
-function safeGetStorage(key) {
-  try {
-    const v = localStorage.getItem(key);
-    return v ? JSON.parse(v) : null;
-  } catch(e) {
-    return null;
-  }
-}
-
-function getRegistroId() {
-  if (!STATE.id) {
-    STATE.id = 'chk_' + Date.now();
-  }
-  return STATE.id;
-}
-
-function guardarEnStorageDirecto() {
-  const regId = getRegistroId();
-  safeSetStorage(`checklist_data_${regId}`, STATE);
-  safeSetStorage('checklist_last_active_id', regId);
+function persistirEstado() {
+  if (!STATE.id) STATE.id = generarId();
   
-  let index = safeGetStorage('checklist_index') || [];
-  if (!index.includes(regId)) {
-    index.push(regId);
-    safeSetStorage('checklist_index', index);
+  // Guardar registro actual
+  localStorage.setItem(`checklist_data_${STATE.id}`, JSON.stringify(STATE));
+  localStorage.setItem('checklist_last_id', STATE.id);
+  
+  // Actualizar lista general de auditorías
+  let index = JSON.parse(localStorage.getItem('checklist_index') || '[]');
+  if (!index.includes(STATE.id)) {
+    index.push(STATE.id);
+    localStorage.setItem('checklist_index', JSON.stringify(index));
   }
 }
 
-let saveTimer = null;
-function queueSave(){
-  clearInterval(saveTimer);
-  saveTimer = setTimeout(()=>{
-    guardarEnStorageDirecto();
-    updateProgress();
-  }, 100);
+function cargarEstadoGuardado() {
+  const lastId = localStorage.getItem('checklist_last_id');
+  if (lastId) {
+    const rawData = localStorage.getItem(`checklist_data_${lastId}`);
+    if (rawData) STATE = JSON.parse(rawData);
+  }
+  if (!STATE.id) STATE.id = generarId();
 }
 
-function guardarProgresoManual(e) {
-  if(e) e.preventDefault();
-  guardarEnStorageDirecto();
-  updateProgress();
-  showToast('💾 Datos guardados correctamente');
-}
-
-/* CÁLCULO DE MÉTRICAS */
-function calcularMetricas() {
-  const sitioTotal = SITIO_SECTIONS.reduce((a,s)=>a+s.items.length,0);
-  let sitioDone = 0;
-  let sitioMissing = [];
-
-  SITIO_SECTIONS.forEach(sec=>{
-    let secMissing = 0;
-    sec.items.forEach((item,i)=>{
-      const key = sec.id+i;
-      if(STATE.sitio && STATE.sitio.items && STATE.sitio.items[key] && STATE.sitio.items[key].estado) {
-        sitioDone++;
-      } else {
-        secMissing++;
-      }
+/* RENDERIZADO DE INTERFAZ */
+function initApp() {
+  cargarEstadoGuardado();
+  
+  // Vincular campos del Header
+  const inputs = ['estacion', 'responsable', 'fecha', 'hora'];
+  inputs.forEach(f => {
+    const el = document.getElementById(`h_${f}`);
+    el.value = STATE.header[f] || '';
+    el.addEventListener('input', (e) => {
+      STATE.header[f] = e.target.value;
+      persistirEstado();
     });
-    if(secMissing > 0) {
-      sitioMissing.push(`Sitio - Sección ${sec.id} (${sec.title}): Faltan ${secMissing} reactivos`);
-    }
   });
 
-  const vozNodeFields = VOZ_GROUPS.reduce((a,g)=>a+g.keys.length,0);
-  const vozTotal = (vozNodeFields * VOZ_NODE_COUNT) + CLOSEOUT_ITEMS.length;
-  let vozDone = 0;
-  let vozIncompleteList = [];
+  renderSitio();
+  actualizarMetricas();
+  bindEvents();
+}
 
-  for(let n=1; n<=VOZ_NODE_COUNT; n++){
-    const nd = (STATE.voz && STATE.voz.nodos) ? (STATE.voz.nodos[n] || {}) : {};
-    let nDone = 0;
-    VOZ_GROUPS.forEach(g => g.keys.forEach(([k]) => { 
-      if(nd[k] === 'ok' || nd[k] === 'bad') nDone++; 
-    }));
-    vozDone += nDone;
-    if(nDone < vozNodeFields) {
-      vozIncompleteList.push(`Nodo ${n}`);
+function renderSitio() {
+  const panel = document.getElementById('panel_sitio');
+  panel.innerHTML = '';
+
+  SITIO_SECTIONS.forEach(sec => {
+    const card = document.createElement('div');
+    card.className = 'section-card';
+    card.innerHTML = `
+      <div class="section-head">
+        <span><strong>${sec.id}</strong>. ${sec.title}</span>
+      </div>
+      <div class="section-body">
+        ${sec.items.map((item, i) => {
+          const key = sec.id + i;
+          const estado = STATE.sitio.items[key] || null;
+          return `
+            <div class="item-row">
+              <span style="font-size:13px;">${item}</span>
+              <div class="seg">
+                <button type="button" class="si ${estado==='si'?'active':''}" onclick="setEstadoSitio('${key}','si')">SÍ</button>
+                <button type="button" class="no ${estado==='no'?'active':''}" onclick="setEstadoSitio('${key}','no')">NO</button>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+    card.querySelector('.section-head').onclick = () => card.classList.toggle('open');
+    panel.appendChild(card);
+  });
+}
+
+window.setEstadoSitio = function(key, val) {
+  STATE.sitio.items[key] = STATE.sitio.items[key] === val ? null : val;
+  persistirEstado();
+  renderSitio();
+  actualizarMetricas();
+};
+
+function calcularPorcentaje() {
+  let totalItems = 0;
+  let marcados = 0;
+
+  SITIO_SECTIONS.forEach(sec => {
+    sec.items.forEach((_, i) => {
+      totalItems++;
+      if (STATE.sitio.items[sec.id + i]) marcados++;
+    });
+  });
+
+  return totalItems > 0 ? Math.round((marcados / totalItems) * 100) : 0;
+}
+
+function actualizarMetricas() {
+  const pct = calcularPorcentaje();
+  document.getElementById('prog_sitio').textContent = pct + '%';
+  document.getElementById('lblAvanceTotal').textContent = pct + '%';
+}
+
+function bindEvents() {
+  // Navegación por Pestañas
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.onclick = (e) => {
+      e.preventDefault();
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(`panel_${tab.dataset.tab}`).classList.add('active');
+    };
+  });
+
+  // Botones Inferiores
+  document.getElementById('btnGuardar').onclick = (e) => {
+    e.preventDefault();
+    persistirEstado();
+    mostrarToast('💾 Avance guardado con éxito');
+  };
+
+  document.getElementById('btnVerDatos').onclick = (e) => {
+    e.preventDefault();
+    persistirEstado();
+    document.getElementById('jsonPreview').textContent = JSON.stringify(STATE, null, 2);
+    document.getElementById('modalData').classList.add('open');
+  };
+
+  document.getElementById('btnCerrarModal').onclick = (e) => {
+    e.preventDefault();
+    document.getElementById('modalData').classList.remove('open');
+  };
+
+  document.getElementById('btnNuevaVisita').onclick = (e) => {
+    e.preventDefault();
+    if (confirm('¿Deseas crear un nuevo formulario? El progreso actual quedará guardado.')) {
+      persistirEstado();
+      STATE = { id: generarId(), header: {estacion:'', responsable:'', fecha:'', hora:''}, sitio: {items:{}}, voz: {nodos:{}}, cctv: {nodos:{}} };
+      persistirEstado();
+      location.reload();
     }
-  }
-  const vozCierre = (STATE.voz && STATE.voz.cierre) ? STATE.voz.cierre : {};
-  CLOSEOUT_ITEMS.forEach(([k]) => { if(vozCierre[k]) vozDone++; });
-  if(vozIncompleteList.length > 0) {
-    sitioMissing.push(`Voz y Datos: Incompleto en (${vozIncompleteList.join(', ')})`);
-  }
+  };
 
-  const cctvNodeFields = CCTV_GROUPS.reduce((a,g)=>a+g.keys.length,0);
-  const cctvTotal = (cctvNodeFields * CCTV_NODE_COUNT) + CLOSEOUT_ITEMS.length;
-  let cctvDone = 0;
-  let cctvIncompleteList = [];
-
-  for(let n=1; n<=CCTV_NODE_COUNT; n++){
-    const nd = (STATE.cctv && STATE.cctv.nodos) ? (STATE.cctv.nodos[n] || {}) : {};
-    let nDone = 0;
-    CCTV_GROUPS.forEach(g => g.keys.forEach(([k]) => { 
-      if(nd[k] === 'ok' || nd[k] === 'bad') nDone++; 
-    }));
-    cctvDone += nDone;
-    if(nDone < cctvNodeFields) {
-      cctvIncompleteList.push(`Cámara ${n}`);
-    }
-  }
-  const cctvCierre = (STATE.cctv && STATE.cctv.cierre) ? STATE.cctv.cierre : {};
-  CLOSEOUT_ITEMS.forEach(([k]) => { if(cctvCierre[k]) cctvDone++; });
-  if(cctvIncompleteList.length > 0) {
-    sitioMissing.push(`CCTV: Incompleto en (${cctvIncompleteList.join(', ')})`);
-  }
-
-  const grandTotal = sitioTotal + vozTotal + cctvTotal;
-  const grandDone = sitioDone + vozDone + cctvDone;
-
-  const pctSitio = sitioTotal > 0 ? Math.round((sitioDone / sitioTotal) * 100) : 0;
-  const pctVoz = vozTotal > 0 ? Math.round((vozDone / vozTotal) * 100) : 0;
-  const pctCctv = cctvTotal > 0 ? Math.round((cctvDone / cctvTotal) * 100) : 0;
-  const pctTotal = grandTotal > 0 ? Math.round((grandDone / grandTotal) * 100) : 0;
-
-  return {
-    pctTotal,
-    pctSitio,
-    pctVoz,
-    pctCctv,
-    sitioMissing
+  document.getElementById('btnExportar').onclick = (e) => {
+    e.preventDefault();
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet([STATE.header]);
+    XLSX.utils.book_append_sheet(wb, ws, "Header");
+    XLSX.writeFile(wb, `${STATE.header.estacion || 'Auditoria'}.xlsx`);
   };
 }
 
-function verDatosGuardados(e) {
-  if(e) e.preventDefault();
-  guardarEnStorageDirecto();
-  const m = calcularMetricas();
-
-  document.getElementById('totalPct').textContent = m.pctTotal + '%';
-  document.getElementById('totalBar').style.width = m.pctTotal + '%';
-  document.getElementById('pctSitio').textContent = m.pctSitio + '%';
-  document.getElementById('pctVoz').textContent = m.pctVoz + '%';
-  document.getElementById('pctCctv').textContent = m.pctCctv + '%';
-
-  const missingList = document.getElementById('missingList');
-  missingList.innerHTML = '';
-  if(m.sitioMissing.length === 0 && m.pctTotal === 100) {
-    missingList.innerHTML = '<li style="color:var(--ok);">¡Excelente! El checklist está 100% completado.</li>';
-  } else {
-    m.sitioMissing.forEach(txt => {
-      const li = document.createElement('li');
-      li.textContent = txt;
-      missingList.appendChild(li);
-    });
-  }
-
-  document.getElementById('jsonPreview').textContent = JSON.stringify(STATE, null, 2);
-  document.getElementById('modalData').classList.add('open');
-}
-
-function cerrarModal() {
-  document.getElementById('modalData').classList.remove('open');
-}
-
-function copiarJson() {
-  const txt = document.getElementById('jsonPreview').textContent;
-  navigator.clipboard.writeText(txt);
-  showToast('📋 Datos copiados al portapapeles');
-}
-
-/* INIT & RENDER */
-function init(){
-  const lastId = safeGetStorage('checklist_last_active_id');
-  if(lastId) {
-    const data = safeGetStorage(`checklist_data_${lastId}`);
-    if(data) STATE = data;
-  }
-
-  if(!STATE.id) {
-    STATE.id = 'chk_' + Date.now();
-  }
-
-  document.getElementById('h_estacion').value = STATE.header.estacion||'';
-  document.getElementById('h_responsable').value = STATE.header.responsable||'';
-  document.getElementById('h_fecha').value = STATE.header.fecha || new Date().toISOString().slice(0,10);
-  document.getElementById('h_hora').value = STATE.header.hora||'';
-  STATE.header.fecha = document.getElementById('h_fecha').value;
-
-  renderSitio();
-  renderNodes('voz', VOZ_GROUPS, VOZ_NODE_COUNT, 'Nodo');
-  renderNodes('cctv', CCTV_GROUPS, CCTV_NODE_COUNT, 'Cámara');
-  updateProgress();
-}
-
-function saveHeader(){
-  STATE.header.estacion = document.getElementById('h_estacion').value;
-  STATE.header.responsable = document.getElementById('h_responsable').value;
-  STATE.header.fecha = document.getElementById('h_fecha').value;
-  STATE.header.hora = document.getElementById('h_hora').value;
-  queueSave();
-}
-
-function switchTab(tab){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===tab));
-  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active', p.id==='panel_'+tab));
-  window.scrollTo({top:0,behavior:'instant'});
-}
-
-function renderSitio(){
-  const panel = document.getElementById('panel_sitio');
-  panel.innerHTML = '';
-  SITIO_SECTIONS.forEach(sec=>{
-    const card = document.createElement('div');
-    card.className = 'section-card';
-    card.id = 'sec_'+sec.id;
-    const done = sec.items.filter((_,i)=> (STATE.sitio.items[sec.id+i]||{}).estado).length;
-    card.innerHTML = `
-      <div class="section-head" onclick="toggleSection('${sec.id}')">
-        <div class="htxt">
-          <div class="section-letter">${sec.id}</div>
-          <div class="section-title">${sec.title}</div>
-        </div>
-        <div style="display:flex;align-items:center;">
-          <div class="section-badge" id="secbadge_${sec.id}">${done}/${sec.items.length}</div>
-          <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </div>
-      </div>
-      <div class="section-body" id="secbody_${sec.id}"></div>
-    `;
-    panel.appendChild(card);
-    const body = card.querySelector('.section-body');
-    sec.items.forEach((label,i)=>{
-      const key = sec.id+i;
-      const rec = STATE.sitio.items[key] || {estado:null, obs:''};
-      const row = document.createElement('div');
-      row.className='item-row';
-      row.innerHTML = `
-        <div class="item-top">
-          <div class="item-label">${i+1}. ${label}</div>
-          <div class="seg">
-            <button type="button" class="si ${rec.estado==='si'?'active':''}" onclick="setSitioEstado('${key}','si')">SÍ</button>
-            <button type="button" class="no ${rec.estado==='no'?'active':''}" onclick="setSitioEstado('${key}','no')">NO</button>
-          </div>
-        </div>
-        <span class="obs-toggle" onclick="toggleObs('${key}')">${rec.obs? '✎ Ver observación' : '+ Añadir observación'}</span>
-        <textarea class="obs-input ${rec.obs?'show':''}" id="obsbox_${key}" rows="2" placeholder="Observación..." oninput="setSitioObs('${key}', this.value)">${rec.obs||''}</textarea>
-      `;
-      body.appendChild(row);
-    });
-  });
-
-  const g = document.createElement('div');
-  g.className='section-card open';
-  g.innerHTML = `
-    <div class="section-head"><div class="htxt"><div class="section-letter">G</div><div class="section-title">Observaciones generales</div></div></div>
-    <div class="section-body" style="display:block;padding:2px 12px 14px;">
-      <textarea class="obs-input show" rows="3" placeholder="Observaciones generales de la visita..." oninput="STATE.sitio.observaciones=this.value; queueSave();">${STATE.sitio.observaciones||''}</textarea>
-    </div>`;
-  panel.appendChild(g);
-}
-
-function toggleSection(id){ document.getElementById('sec_'+id).classList.toggle('open'); }
-function toggleObs(key){
-  const box = document.getElementById('obsbox_'+key);
-  box.classList.toggle('show');
-}
-function setSitioEstado(key, val){
-  const cur = STATE.sitio.items[key] || {estado:null,obs:''};
-  cur.estado = (cur.estado===val)? null : val;
-  STATE.sitio.items[key] = cur;
-  renderSitio();
-  reopenAfterRender(key);
-  queueSave();
-}
-function setSitioObs(key,val){
-  const cur = STATE.sitio.items[key] || {estado:null,obs:''};
-  cur.obs = val;
-  STATE.sitio.items[key]=cur;
-  queueSave();
-}
-function reopenAfterRender(key){
-  const secId = key.replace(/[0-9]/g,'');
-  const el = document.getElementById('sec_'+secId);
-  if(el) el.classList.add('open');
-}
-
-function renderNodes(tab, groups, count, nounSingular){
-  const panel = document.getElementById('panel_'+tab);
-  panel.innerHTML='';
-  for(let n=1;n<=count;n++){
-    const nodeData = STATE[tab].nodos[n] || {};
-    const totalFields = groups.reduce((a,g)=>a+g.keys.length,0);
-    const doneFields = groups.reduce((a,g)=>a+g.keys.filter(([k])=>nodeData[k]==='ok'||nodeData[k]==='bad').length,0);
-    const card = document.createElement('div');
-    card.className='node-card';
-    card.id = `${tab}_node_${n}`;
-    card.innerHTML = `
-      <div class="node-head" onclick="toggleNode('${tab}',${n})">
-        <div class="node-num ${doneFields===totalFields?'complete':''}">${n}</div>
-        <div class="node-info">
-          <div class="node-title">${nounSingular} ${n}</div>
-          <div class="node-status">${doneFields}/${totalFields} verificados</div>
-        </div>
-        <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </div>
-      <div class="node-body"></div>
-    `;
-    panel.appendChild(card);
-    const body = card.querySelector('.node-body');
-    groups.forEach(g=>{
-      const grp = document.createElement('div');
-      grp.className='grp';
-      grp.innerHTML = `<div class="grp-label">${g.label}</div><div class="chip-row"></div>`;
-      const row = grp.querySelector('.chip-row');
-      g.keys.forEach(([k,label])=>{
-        const state = nodeData[k]||null;
-        const chip = document.createElement('div');
-        chip.className = 'chip ' + (state==='ok'?'ok':state==='bad'?'bad':'');
-        chip.innerHTML = `<span class="dot">${state==='ok'?'✓':state==='bad'?'✕':''}</span>${label}`;
-        chip.onclick = ()=>cycleNodeField(tab,n,k);
-        row.appendChild(chip);
-      });
-      body.appendChild(grp);
-    });
-  }
-
-  const co = document.createElement('div');
-  co.className='closeout';
-  const cierre = STATE[tab].cierre || {};
-  co.innerHTML = `<h4>Cierre y limpieza</h4>`;
-  CLOSEOUT_ITEMS.forEach(([k,label])=>{
-    const row = document.createElement('div');
-    row.className='item-row';
-    row.innerHTML = `<div class="item-top">
-        <div class="item-label">${label}</div>
-        <div class="seg">
-          <button type="button" class="si ${cierre[k]==='si'?'active':''}" onclick="setCierre('${tab}','${k}','si')">SÍ</button>
-          <button type="button" class="no ${cierre[k]==='no'?'active':''}" onclick="setCierre('${tab}','${k}','no')">NO</button>
-        </div></div>`;
-    co.appendChild(row);
-  });
-  panel.appendChild(co);
-
-  const obsCard = document.createElement('div');
-  obsCard.className='closeout';
-  obsCard.innerHTML = `<h4>Observaciones</h4>
-    <textarea class="obs-input show" rows="3" placeholder="Observaciones..." oninput="STATE['${tab}'].obs=this.value; queueSave();">${STATE[tab].obs||''}</textarea>`;
-  panel.appendChild(obsCard);
-
-  const sign = document.createElement('div');
-  sign.className='sign-block';
-  const f = STATE[tab].firmas || {};
-  sign.innerHTML = `
-    <div class="sign-title">Recibe Sistemas / Entrega Proveedor</div>
-    <div class="sign-pair">
-      <div class="field"><label>Recibe (nombre)</label><input id="${tab}_recibeNombre" value="${f.recibeNombre||''}" oninput="setFirmaField('${tab}','recibeNombre',this.value)"></div>
-      <div class="field"><label>Entrega (nombre)</label><input id="${tab}_entregaNombre" value="${f.entregaNombre||''}" oninput="setFirmaField('${tab}','entregaNombre',this.value)"></div>
-    </div>`;
-  panel.appendChild(sign);
-}
-
-function toggleNode(tab, n){
-  document.getElementById(`${tab}_node_${n}`).classList.toggle('open');
-}
-
-function cycleNodeField(tab, n, key){
-  if(!STATE[tab].nodos[n]) STATE[tab].nodos[n] = {};
-  const cur = STATE[tab].nodos[n][key];
-  let next = null;
-  if(!cur) next = 'ok';
-  else if(cur === 'ok') next = 'bad';
-  else next = null;
-  
-  STATE[tab].nodos[n][key] = next;
-  const groups = (tab==='voz') ? VOZ_GROUPS : CCTV_GROUPS;
-  const noun = (tab==='voz') ? 'Nodo' : 'Cámara';
-  renderNodes(tab, groups, (tab==='voz')?VOZ_NODE_COUNT:CCTV_NODE_COUNT, noun);
-  document.getElementById(`${tab}_node_${n}`).classList.add('open');
-  queueSave();
-}
-
-function setCierre(tab, key, val){
-  if(!STATE[tab].cierre) STATE[tab].cierre = {};
-  const cur = STATE[tab].cierre[key];
-  STATE[tab].cierre[key] = (cur===val) ? null : val;
-  const groups = (tab==='voz') ? VOZ_GROUPS : CCTV_GROUPS;
-  const noun = (tab==='voz') ? 'Nodo' : 'Cámara';
-  renderNodes(tab, groups, (tab==='voz')?VOZ_NODE_COUNT:CCTV_NODE_COUNT, noun);
-  queueSave();
-}
-
-function setFirmaField(tab, field, val){
-  if(!STATE[tab].firmas) STATE[tab].firmas = {};
-  STATE[tab].firmas[field] = val;
-  queueSave();
-}
-
-function updateProgress(){
-  const m = calcularMetricas();
-  document.getElementById('prog_sitio').textContent = m.pctSitio + '%';
-  document.getElementById('prog_voz').textContent = m.pctVoz + '%';
-  document.getElementById('prog_cctv').textContent = m.pctCctv + '%';
-}
-
-function showToast(msg){
+function mostrarToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 2500);
+  setTimeout(() => t.classList.remove('show'), 2000);
 }
 
-function nuevaVisita(e){
-  if(e) e.preventDefault();
-  if(confirm('¿Deseas iniciar una nueva hoja de checklist? Se guardará el avance de la hoja actual.')){
-    guardarEnStorageDirecto();
-
-    STATE = {
-      id: 'chk_' + Date.now(),
-      header: {estacion:'', responsable:'', fecha: new Date().toISOString().slice(0,10), hora:''},
-      sitio: {items:{}, observaciones:''},
-      voz: {nodos:{}, cierre:{}, obs:'', firmas:{recibeNombre:'',recibeFecha:'',entregaNombre:'',entregaFecha:''}},
-      cctv: {nodos:{}, cierre:{}, obs:'', firmas:{recibeNombre:'',recibeFecha:'',entregaNombre:'',entregaFecha:''}}
-    };
-
-    guardarEnStorageDirecto();
-
-    document.getElementById('h_estacion').value = '';
-    document.getElementById('h_responsable').value = '';
-    document.getElementById('h_fecha').value = STATE.header.fecha;
-    document.getElementById('h_hora').value = '';
-
-    renderSitio();
-    renderNodes('voz', VOZ_GROUPS, VOZ_NODE_COUNT, 'Nodo');
-    renderNodes('cctv', CCTV_GROUPS, CCTV_NODE_COUNT, 'Cámara');
-    updateProgress();
-
-    showToast('📝 Nueva hoja iniciada');
-  }
-}
-
-function exportarExcel(e){
-  if(e) e.preventDefault();
-  const m = calcularMetricas();
-  const wb = XLSX.utils.book_new();
-  const dataHeader = [
-    ["REPORTING CHECKLIST RECEPCIÓN - SYNERGO"],
-    ["Estación/GoMart:", STATE.header.estacion],
-    ["Responsable:", STATE.header.responsable],
-    ["Fecha:", STATE.header.fecha],
-    ["Hora:", STATE.header.hora],
-    ["Avance Total:", m.pctTotal + '%'],
-    []
-  ];
-  const ws = XLSX.utils.aoa_to_sheet(dataHeader);
-  XLSX.utils.book_append_sheet(wb, ws, "Resumen");
-  XLSX.writeFile(wb, `Checklist_${STATE.header.estacion||'General'}.xlsx`);
-}
-
-function exportarPDF(e){
-  if(e) e.preventDefault();
-  window.print();
-}
-
-window.onload = init;
+window.onload = initApp;
 </script>
 </body>
 </html>
