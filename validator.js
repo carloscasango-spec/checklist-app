@@ -1,12 +1,15 @@
 function validarYExportar(radioGroups) {
-  // Limpiar resaltados previos
-  document.querySelectorAll('.error-row').forEach(el => el.classList.remove('error-row'));
+  // 1. Limpiar resaltados previos
+  const erroresPrevios = document.querySelectorAll('.error-row');
+  erroresPrevios.forEach(function(el) {
+    el.classList.remove('error-row');
+  });
 
-  // 1. Validar inputs requeridos de texto/fecha
+  // 2. Validar inputs requeridos de texto o fecha
   const inputsTexto = document.querySelectorAll('input[id^="req-"]');
   let faltanTextos = false;
 
-  inputsTexto.forEach(input => {
+  inputsTexto.forEach(function(input) {
     if (!input.value.trim()) {
       input.style.border = "1px solid red";
       faltanTextos = true;
@@ -15,23 +18,28 @@ function validarYExportar(radioGroups) {
     }
   });
 
-  // 2. Validar radios
+  // 3. Validar radio buttons opcionales por grupo
   const sinResponder = [];
 
-  radioGroups.forEach(groupName => {
-    const checked = document.querySelector(`input[name="${groupName}"]:checked`);
-    if (!checked) {
-      sinResponder.push(groupName);
-      const fila = document.getElementById(`row-${groupName}`);
-      if (fila) fila.classList.add('error-row');
-    }
-  });
+  if (Array.isArray(radioGroups)) {
+    radioGroups.forEach(function(groupName) {
+      const checked = document.querySelector('input[name="' + groupName + '"]:checked');
+      if (!checked) {
+        sinResponder.push(groupName);
+        const fila = document.getElementById('row-' + groupName);
+        if (fila) {
+          fila.classList.add('error-row');
+        }
+      }
+    });
+  }
 
+  // 4. Mostrar alerta si faltan campos
   if (faltanTextos || sinResponder.length > 0) {
     alert("⚠️ Hay campos o puntos obligatorios sin responder. Se han resaltado en la pantalla.");
     return;
   }
 
-  // 3. Imprimir si pasa las validaciones
+  // 5. Imprimir/Exportar si todo es correcto
   window.print();
 }
