@@ -417,38 +417,46 @@ function calcularMetricas() {
   const vozNodeFields = VOZ_GROUPS.reduce((a,g)=>a+g.keys.length,0);
   const vozTotal = (vozNodeFields * VOZ_NODE_COUNT) + CLOSEOUT_ITEMS.length;
   let vozDone = 0;
-  let vozIncompleteNodes = 0;
+  let vozIncompleteList = [];
 
   for(let n=1; n<=VOZ_NODE_COUNT; n++){
     const nd = STATE.voz.nodos[n] || {};
     let nDone = 0;
-    VOZ_GROUPS.forEach(g => g.keys.forEach(([k]) => { if(nd[k]) nDone++; }));
+    VOZ_GROUPS.forEach(g => g.keys.forEach(([k]) => { 
+      if(nd[k] === 'ok' || nd[k] === 'bad') nDone++; 
+    }));
     vozDone += nDone;
-    if(nDone < vozNodeFields) vozIncompleteNodes++;
+    if(nDone < vozNodeFields) {
+      vozIncompleteList.push(`Nodo ${n}`);
+    }
   }
   const vozCierre = STATE.voz.cierre || {};
   CLOSEOUT_ITEMS.forEach(([k]) => { if(vozCierre[k]) vozDone++; });
-  if(vozIncompleteNodes > 0) {
-    sitioMissing.push(`Voz y Datos: ${vozIncompleteNodes} nodos sin completar todos sus parámetros`);
+  if(vozIncompleteList.length > 0) {
+    sitioMissing.push(`Voz y Datos: Incompleto en (${vozIncompleteList.join(', ')})`);
   }
 
   // CCTV
   const cctvNodeFields = CCTV_GROUPS.reduce((a,g)=>a+g.keys.length,0);
   const cctvTotal = (cctvNodeFields * CCTV_NODE_COUNT) + CLOSEOUT_ITEMS.length;
   let cctvDone = 0;
-  let cctvIncompleteNodes = 0;
+  let cctvIncompleteList = [];
 
   for(let n=1; n<=CCTV_NODE_COUNT; n++){
     const nd = STATE.cctv.nodos[n] || {};
     let nDone = 0;
-    CCTV_GROUPS.forEach(g => g.keys.forEach(([k]) => { if(nd[k]) nDone++; }));
+    CCTV_GROUPS.forEach(g => g.keys.forEach(([k]) => { 
+      if(nd[k] === 'ok' || nd[k] === 'bad') nDone++; 
+    }));
     cctvDone += nDone;
-    if(nDone < cctvNodeFields) cctvIncompleteNodes++;
+    if(nDone < cctvNodeFields) {
+      cctvIncompleteList.push(`Cámara ${n}`);
+    }
   }
   const cctvCierre = STATE.cctv.cierre || {};
   CLOSEOUT_ITEMS.forEach(([k]) => { if(cctvCierre[k]) cctvDone++; });
-  if(cctvIncompleteNodes > 0) {
-    sitioMissing.push(`CCTV: ${cctvIncompleteNodes} cámaras sin completar todos sus parámetros`);
+  if(cctvIncompleteList.length > 0) {
+    sitioMissing.push(`CCTV: Incompleto en (${cctvIncompleteList.join(', ')})`);
   }
 
   // Totales generales
@@ -695,94 +703,46 @@ function renderNodes(tab, groups, count, nounSingular){
     <div class="sign-pair">
       <div class="field"><label>Recibe (nombre)</label><input id="${tab}_recibeNombre" value="${f.recibeNombre||''}" oninput="setFirmaField('${tab}','recibeNombre',this.value)"></div>
       <div class="field"><label>Entrega (nombre)</label><input id="${tab}_entregaNombre" value="${f.entregaNombre||''}" oninput="setFirmaField('${tab}','entregaNombre',this.value)"></div>
-      <div class="field"><label>Fecha</label><input type="date" id="${tab}_recibeFecha" value="${f.recibeFecha||''}" oninput="setFirmaField('${tab}','recibeFecha',this.value)"></div>
-      <div class="field"><label>Fecha</label><input type="date" id="${tab}_entregaFecha" value="${f.entregaFecha||''}" oninput="setFirmaField('${tab}','entregaFecha',this.value)"></div>
-    </div>
-    <div class="sign-pair" style="margin-top:4px;">
-      <div>
-        <canvas class="sigpad" id="${tab}_sig1"></canvas>
-        <span class="sig-clear" onclick="clearSig('${tab}_sig1')">Borrar firma</span>
-      </div>
-      <div>
-        <canvas class="sigpad" id="${tab}_sig2"></canvas>
-        <span class="sig-clear" onclick="clearSig('${tab}_sig2')">Borrar firma</span>
-      </div>
-    </div>
-  `;
+    </div>`;
   panel.appendChild(sign);
-  setTimeout(()=>{ setupSigPad(`${tab}_sig1`); setupSigPad(`${tab}_sig2`); }, 30);
 }
 
-function toggleNode(tab,n){ document.getElementById(`${tab}_node_${n}`).classList.toggle('open'); }
+function toggleNode(tab, n){
+  document.getElementById(`${tab}_node_${n}`).classList.toggle('open');
+}
 
-function cycleNodeField(tab,n,key){
-  if(!STATE[tab].nodos[n]) STATE[tab].nodos[n]={};
-  const cur = STATE[tab].nodos[n][key]||null;
-  const next = cur===null?'ok': cur==='ok'?'bad': null;
-  STATE[tab].nodos[n][key]=next;
-  const wasOpen = document.getElementById(`${tab}_node_${n}`).classList.contains('open');
-  const groups = tab==='voz'?VOZ_GROUPS:CCTV_GROUPS;
-  const count = tab==='voz'?VOZ_NODE_COUNT:CCTV_NODE_COUNT;
-  const noun = tab==='voz'?'Nodo':'Cámara';
-  renderNodes(tab, groups, count, noun);
-  if(wasOpen) document.getElementById(`${tab}_node_${n}`).classList.add('open');
+function cycleNodeField(tab, n, key){
+  if(!STATE[tab].nodos[n]) STATE[tab].nodos[n] = {};
+  const cur = STATE[tab].nodos[n][key];
+  let next = null;
+  if(!cur) next = 'ok';
+  else if(cur === 'ok') next = 'bad';
+  else next = null;
+  
+  STATE[tab].nodos[n][key] = next;
+  const groups = (tab==='voz') ? VOZ_GROUPS : CCTV_GROUPS;
+  const noun = (tab==='voz') ? 'Nodo' : 'Cámara';
+  renderNodes(tab, groups, (tab==='voz')?VOZ_NODE_COUNT:CCTV_NODE_COUNT, noun);
+  document.getElementById(`${tab}_node_${n}`).classList.add('open');
   queueSave();
 }
 
-function setCierre(tab,k,val){
-  if(!STATE[tab].cierre) STATE[tab].cierre={};
-  STATE[tab].cierre[k] = STATE[tab].cierre[k]===val? null : val;
-  const groups = tab==='voz'?VOZ_GROUPS:CCTV_GROUPS;
-  const count = tab==='voz'?VOZ_NODE_COUNT:CCTV_NODE_COUNT;
-  const noun = tab==='voz'?'Nodo':'Cámara';
-  renderNodes(tab, groups, count, noun);
+function setCierre(tab, key, val){
+  if(!STATE[tab].cierre) STATE[tab].cierre = {};
+  const cur = STATE[tab].cierre[key];
+  STATE[tab].cierre[key] = (cur===val) ? null : val;
+  const groups = (tab==='voz') ? VOZ_GROUPS : CCTV_GROUPS;
+  const noun = (tab==='voz') ? 'Nodo' : 'Cámara';
+  renderNodes(tab, groups, (tab==='voz')?VOZ_NODE_COUNT:CCTV_NODE_COUNT, noun);
   queueSave();
 }
 
-function setFirmaField(tab,field,val){
-  if(!STATE[tab].firmas) STATE[tab].firmas={};
-  STATE[tab].firmas[field]=val;
+function setFirmaField(tab, field, val){
+  if(!STATE[tab].firmas) STATE[tab].firmas = {};
+  STATE[tab].firmas[field] = val;
   queueSave();
 }
 
-/* ---------- Signature pad ---------- */
-function setupSigPad(id){
-  const canvas = document.getElementById(id);
-  if(!canvas) return;
-  const ratio = window.devicePixelRatio||1;
-  canvas.width = canvas.clientWidth*ratio;
-  canvas.height = canvas.clientHeight*ratio;
-  const ctx = canvas.getContext('2d');
-  ctx.scale(ratio,ratio);
-  ctx.strokeStyle = '#1F3864';
-  ctx.lineWidth = 2;
-  ctx.lineCap = 'round';
-  let drawing=false, last=null;
-  function pos(e){
-    const r = canvas.getBoundingClientRect();
-    const t = e.touches? e.touches[0]: e;
-    return {x:t.clientX-r.left, y:t.clientY-r.top};
-  }
-  function start(e){ drawing=true; last=pos(e); e.preventDefault(); }
-  function move(e){
-    if(!drawing) return;
-    const p = pos(e);
-    ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke();
-    last=p; e.preventDefault();
-  }
-  function end(){ drawing=false; }
-  canvas.addEventListener('mousedown',start); canvas.addEventListener('mousemove',move); window.addEventListener('mouseup',end);
-  canvas.addEventListener('touchstart',start,{passive:false}); canvas.addEventListener('touchmove',move,{passive:false}); canvas.addEventListener('touchend',end);
-}
-
-function clearSig(id){
-  const canvas = document.getElementById(id);
-  if(!canvas) return;
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-}
-
-/* ---------- Progress ---------- */
 function updateProgress(){
   const m = calcularMetricas();
   document.getElementById('prog_sitio').textContent = m.pctSitio + '%';
@@ -790,34 +750,6 @@ function updateProgress(){
   document.getElementById('prog_cctv').textContent = m.pctCctv + '%';
 }
 
-/* ---------- Reset ---------- */
-function nuevaVisita(){
-  if(!confirm('¿Iniciar una nueva visita? Se borrarán todas las respuestas capturadas en este dispositivo.')) return;
-  STATE = {
-    header:{estacion:'',responsable:'',fecha:new Date().toISOString().slice(0,10),hora:''},
-    sitio:{items:{}, observaciones:''},
-    voz:{nodos:{}, cierre:{}, obs:'', firmas:{}},
-    cctv:{nodos:{}, cierre:{}, obs:'', firmas:{}},
-  };
-  try {
-    localStorage.removeItem('checklist:header');
-    localStorage.removeItem('checklist:sitio');
-    localStorage.removeItem('checklist:voz');
-    localStorage.removeItem('checklist:cctv');
-  } catch(e) {}
-
-  document.getElementById('h_estacion').value='';
-  document.getElementById('h_responsable').value='';
-  document.getElementById('h_fecha').value = STATE.header.fecha;
-  document.getElementById('h_hora').value='';
-  renderSitio();
-  renderNodes('voz', VOZ_GROUPS, VOZ_NODE_COUNT, 'Nodo');
-  renderNodes('cctv', CCTV_GROUPS, CCTV_NODE_COUNT, 'Cámara');
-  updateProgress();
-  showToast('Nueva visita iniciada');
-}
-
-/* ---------- Toast ---------- */
 function showToast(msg){
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -825,172 +757,36 @@ function showToast(msg){
   setTimeout(()=>t.classList.remove('show'), 2500);
 }
 
-/* ============================================================
-   EXPORTAR PDF
-   ============================================================ */
-function exportarPDF() {
-  const est = STATE.header.estacion || 'Estacion';
-  const resp = STATE.header.responsable || '-';
-  const fec = STATE.header.fecha || '-';
-  const hor = STATE.header.hora || '-';
-
-  const container = document.createElement('div');
-  container.style.padding = '20px';
-  container.style.fontFamily = 'Arial, sans-serif';
-  container.style.fontSize = '10pt';
-  container.style.color = '#1C2530';
-
-  let html = `
-    <div style="border-bottom: 2px solid #1F3864; padding-bottom: 6px; margin-bottom: 12px;">
-      <h2 style="color:#1F3864; margin:0; font-size:15pt;">SYNERGO · GERENCIA DE SISTEMAS</h2>
-      <p style="margin:2px 0 0 0; font-weight:bold; font-size:11pt;">Recepción de Cableado y CCTV</p>
-    </div>
-    <table style="width:100%; border-collapse:collapse; margin-bottom:12px; font-size:9pt;">
-      <tr>
-        <td style="padding:3px 0;"><strong>Estación/GoMart:</strong> ${est}</td>
-        <td style="padding:3px 0;"><strong>Responsable:</strong> ${resp}</td>
-      </tr>
-      <tr>
-        <td style="padding:3px 0;"><strong>Fecha:</strong> ${fec}</td>
-        <td style="padding:3px 0;"><strong>Hora:</strong> ${hor}</td>
-      </tr>
-    </table>
-    
-    <h3 style="background:#1F3864; color:#fff; padding:6px 8px; margin:12px 0 6px 0; font-size:11pt;">1. Revisión en Sitio</h3>
-  `;
-
-  SITIO_SECTIONS.forEach(sec => {
-    html += `<h4 style="margin:8px 0 4px 0; color:#1F3864; font-size:9.5pt;">${sec.id}. ${sec.title}</h4>
-    <table style="width:100%; border-collapse:collapse; margin-bottom:8px; font-size:8.5pt;">
-      <thead>
-        <tr style="background:#EEF1F5;">
-          <th style="padding:4px; text-align:left; border:1px solid #DDE3EC;">Ítem</th>
-          <th style="padding:4px; width:50px; text-align:center; border:1px solid #DDE3EC;">Cumple</th>
-          <th style="padding:4px; text-align:left; border:1px solid #DDE3EC;">Observación</th>
-        </tr>
-      </thead>
-      <tbody>`;
-    sec.items.forEach((item, i) => {
-      const rec = STATE.sitio.items[sec.id + i] || {};
-      const estado = rec.estado === 'si' ? 'SÍ' : rec.estado === 'no' ? 'NO' : '-';
-      html += `
-        <tr>
-          <td style="padding:4px; border:1px solid #DDE3EC;">${i+1}. ${item}</td>
-          <td style="padding:4px; text-align:center; border:1px solid #DDE3EC;"><b>${estado}</b></td>
-          <td style="padding:4px; border:1px solid #DDE3EC;">${rec.obs || ''}</td>
-        </tr>
-      `;
-    });
-    html += `</tbody></table>`;
-  });
-
-  if(STATE.sitio.observaciones) {
-    html += `
-      <div style="margin-top:8px; font-size:9pt;">
-        <strong>Observaciones Generales Sitio:</strong>
-        <div style="border:1px solid #DDE3EC; padding:6px; margin-top:4px; border-radius:4px;">${STATE.sitio.observaciones}</div>
-      </div>
-    `;
+function nuevaVisita(){
+  if(confirm('¿Deseas reiniciar el checklist y borrar los datos locales?')){
+    localStorage.clear();
+    location.reload();
   }
-
-  container.innerHTML = html;
-
-  const opt = {
-    margin: 8,
-    filename: `Checklist_${est.replace(/[^a-z0-9]+/gi, '_')}.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2 },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  };
-
-  showToast('⏳ Generando PDF...');
-  html2pdf().set(opt).from(container).save().then(() => {
-    showToast('📄 PDF generado correctamente');
-  });
 }
 
-/* ============================================================
-   EXCEL EXPORT
-   ============================================================ */
 function exportarExcel(){
+  const m = calcularMetricas();
   const wb = XLSX.utils.book_new();
-
-  const s1 = [];
-  s1.push(['GERENCIA DE SISTEMAS','','','','','','','','Ver. 2.0']);
-  s1.push(['CHECKLIST DE ADECUACIONES EN GOMART']);
-  s1.push([STATE.header.estacion||'']);
-  s1.push(['RESPONSABLE:', STATE.header.responsable||'']);
-  s1.push(['FECHA:', STATE.header.fecha||'', 'HORA:', STATE.header.hora||'']);
-  s1.push([]);
-  SITIO_SECTIONS.forEach(sec=>{
-    s1.push([sec.id]);
-    s1.push([sec.title,'','','','SI','NO','','OBSERVACIONES']);
-    sec.items.forEach((label,i)=>{
-      const rec = STATE.sitio.items[sec.id+i] || {};
-      s1.push([i+1, label, '', '', rec.estado==='si'?'X':'', rec.estado==='no'?'X':'', '', rec.obs||'']);
-    });
-    s1.push([]);
-  });
-  s1.push(['G']);
-  s1.push(['OBSERVACIONES']);
-  s1.push([STATE.sitio.observaciones||'']);
-  const ws1 = XLSX.utils.aoa_to_sheet(s1);
-  ws1['!cols'] = [{wch:5},{wch:55},{wch:6},{wch:6},{wch:6},{wch:6},{wch:4},{wch:40}];
-  XLSX.utils.book_append_sheet(wb, ws1, 'Formato Visita en sitio');
-
-  function buildNodeSheet(tab, groups, count, nounHeader){
-    const rows = [];
-    rows.push(['RECEPCION DE CABLEADO EN TIENDAS Y ESTACIONES — '+ (STATE.header.estacion||'')]);
-    rows.push(['Responsable:', STATE.header.responsable||'', 'Fecha:', STATE.header.fecha||'']);
-    rows.push([]);
-    const grpHeader = ['# '+nounHeader];
-    const subHeader = ['#'];
-    groups.forEach(g=>{
-      g.keys.forEach((k,idx)=>{ grpHeader.push(idx===0? g.label:''); subHeader.push(k[1]); });
-    });
-    rows.push(grpHeader);
-    rows.push(subHeader);
-    for(let n=1;n<=count;n++){
-      const nd = STATE[tab].nodos[n]||{};
-      const row = [n];
-      groups.forEach(g=>g.keys.forEach(([k])=>{
-        row.push(nd[k]==='ok'?'OK':nd[k]==='bad'?'NO':'');
-      }));
-      rows.push(row);
-    }
-    rows.push([]);
-    const cierre = STATE[tab].cierre||{};
-    CLOSEOUT_ITEMS.forEach(([k,label])=>{
-      rows.push([label, cierre[k]==='si'?'SI':cierre[k]==='no'?'NO':'']);
-    });
-    rows.push([]);
-    rows.push(['OBSERVACIONES']);
-    rows.push([STATE[tab].obs||'']);
-    rows.push([]);
-    const f = STATE[tab].firmas||{};
-    rows.push(['RECIBE SISTEMAS','','','ENTREGA PROVEEDOR']);
-    rows.push([f.recibeNombre||'', '', '', f.entregaNombre||'']);
-    rows.push(['Fecha:', f.recibeFecha||'', '', 'Fecha:', f.entregaFecha||'']);
-    return rows;
-  }
-  const s2 = buildNodeSheet('voz', VOZ_GROUPS, VOZ_NODE_COUNT, 'NODO');
-  const ws2 = XLSX.utils.aoa_to_sheet(s2);
-  ws2['!cols'] = [{wch:6},...Array(10).fill({wch:16})];
-  XLSX.utils.book_append_sheet(wb, ws2, 'Voz y Datos');
-
-  const s3 = buildNodeSheet('cctv', CCTV_GROUPS, CCTV_NODE_COUNT, 'CAMARA');
-  const ws3 = XLSX.utils.aoa_to_sheet(s3);
-  ws3['!cols'] = [{wch:6},...Array(12).fill({wch:16})];
-  XLSX.utils.book_append_sheet(wb, ws3, 'CCTV');
-
-  const estacionSlug = (STATE.header.estacion||'checklist').replace(/[^a-z0-9]+/gi,'_');
-  const fecha = STATE.header.fecha || new Date().toISOString().slice(0,10);
-  const filename = `Checklist_${estacionSlug}_${fecha}.xlsx`;
-  XLSX.writeFile(wb, filename);
-  showToast('Excel generado: '+filename);
+  const dataHeader = [
+    ["REPORTING CHECKLIST RECEPCIÓN - SYNERGO"],
+    ["Estación/GoMart:", STATE.header.estacion],
+    ["Responsable:", STATE.header.responsable],
+    ["Fecha:", STATE.header.fecha],
+    ["Hora:", STATE.header.hora],
+    ["Avance Total:", m.pctTotal + '%'],
+    []
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(dataHeader);
+  XLSX.utils.book_append_sheet(wb, ws, "Resumen");
+  XLSX.writeFile(wb, `Checklist_${STATE.header.estacion||'General'}.xlsx`);
 }
 
-init();
+function exportarPDF(){
+  window.print();
+}
+
+// Inicializar al cargar ventana
+window.onload = init;
 </script>
 </body>
 </html>
