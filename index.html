@@ -6,12 +6,10 @@
 <meta name="theme-color" content="#1F3864">
 <title>Checklist Recepción - Cableado & CCTV</title>
 
-<!-- PWA Manifest dinámico -->
-<link rel="manifest" href="data:application/manifest+json,{'name':'Checklist Cableado','short_name':'Checklist','start_url':'./index.html','display':'standalone','background_color':'#EEF1F5','theme_color':'#1F3864'}">
+<link rel="manifest" href="data:application/manifest+json,{'name':'Checklist Cableado','short_name':'Checklist','start_url':'./index.html','display':'standalone','background_color':'#1F3864','theme_color':'#1F3864'}">
 
-<!-- Librería Excel CDN -->
+<!-- Librerías Externas -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<!-- Librería HTML2PDF CDN para generación de PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
@@ -32,7 +30,7 @@
     --na-bg: #EEF1F5;
   }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
   body { background-color: var(--bg); color: var(--text); padding-bottom: 90px; }
 
   header {
@@ -44,10 +42,10 @@
     z-index: 100;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   }
-  header h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: 0.5px; }
+  header h1 { font-size: 1.1rem; font-weight: 700; }
   header p { font-size: 0.75rem; opacity: 0.8; margin-top: 2px; }
 
-  .container { max-width: 800px; margin: 0 auto; padding: 12px; }
+  .container { max-width: 900px; margin: 0 auto; padding: 12px; }
 
   .card {
     background: var(--card);
@@ -76,18 +74,13 @@
 
   .field-group { display: flex; flex-direction: column; gap: 4px; }
   .field-group label { font-size: 0.75rem; font-weight: 600; color: var(--muted); }
-  .field-group input, .field-group select, .field-group textarea {
+  .field-group input, .field-group textarea {
     padding: 10px;
     border: 1px solid var(--border);
     border-radius: 8px;
     font-size: 0.85rem;
     background: #FAFAFB;
     outline: none;
-    transition: all 0.2s;
-  }
-  .field-group input:focus, .field-group select:focus, .field-group textarea:focus {
-    border-color: var(--blue);
-    background: #FFF;
   }
 
   .item-row {
@@ -98,8 +91,7 @@
     gap: 8px;
   }
   .item-row:last-child { border-bottom: none; }
-
-  .item-text { font-size: 0.85rem; font-weight: 600; color: var(--text); line-height: 1.3; }
+  .item-text { font-size: 0.85rem; font-weight: 600; color: var(--text); }
   
   .btn-group { display: flex; gap: 6px; }
   .btn-opt {
@@ -113,7 +105,6 @@
     border-radius: 6px;
     cursor: pointer;
     text-align: center;
-    transition: all 0.2s;
   }
 
   .btn-opt[data-val="SI"].active { background: var(--ok-bg); color: var(--ok); border-color: var(--ok); }
@@ -155,7 +146,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
   }
   .btn-excel { background: #1D6F42; color: white; }
   .btn-pdf { background: #C4372C; color: white; }
@@ -174,150 +164,157 @@
     display: none;
     z-index: 1000;
   }
-
-  /* Estilos específicos para impresión / PDF */
-  #pdf-template { display: none; }
-  .pdf-container { padding: 20px; font-family: Arial, sans-serif; color: #333; }
-  .pdf-header { text-align: center; border-bottom: 2px solid #1F3864; padding-bottom: 10px; margin-bottom: 15px; }
-  .pdf-header h2 { color: #1F3864; margin-bottom: 4px; font-size: 16pt; }
-  .pdf-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 9pt; }
-  .pdf-table th, .pdf-table td { border: 1px solid #ccc; padding: 6px; text-align: left; }
-  .pdf-table th { background-color: #1F3864; color: white; }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Checklist de Recepción</h1>
-  <p>Cableado Estructurado & Sistema CCTV</p>
+  <h1>SYNERGO · GERENCIA DE SISTEMAS</h1>
+  <p>Recepción de Cableado y CCTV</p>
 </header>
 
 <div class="toast" id="toast"></div>
 
 <div class="container">
 
-  <!-- REGISTROS GUARDADOS -->
+  <!-- HISTORIAL -->
   <div class="card">
-    <div class="card-title">📁 Historico de Checklists Guardados</div>
+    <div class="card-title">📁 Guardados Recientes</div>
     <div id="history-list">
-      <p style="font-size: 0.8rem; color: var(--muted);">No hay checklists guardados localmente.</p>
+      <p style="font-size: 0.8rem; color: var(--muted);">No hay revisiones guardadas en este dispositivo.</p>
     </div>
   </div>
 
-  <!-- CABECERA -->
+  <!-- DATOS CABECERA -->
   <div class="card">
-    <div class="card-title">📋 Datos General de Recepción</div>
+    <div class="card-title">📋 Datos de Sitio</div>
     <div class="grid-2">
-      <div class="field-group grid-full">
-        <label>ESTACIÓN / PROYECTO</label>
-        <input type="text" id="estacion" placeholder="Ej. Estación Central / Edificio A">
+      <div class="field-group">
+        <label>ESTACIÓN / GOMART</label>
+        <input type="text" id="estacion" placeholder="Ej. GC PALMA TROPICAL">
+      </div>
+      <div class="field-group">
+        <label>RESPONSABLE / REVISOR</label>
+        <input type="text" id="responsable" placeholder="Ej. Ruben">
       </div>
       <div class="field-group">
         <label>FECHA</label>
         <input type="date" id="fecha">
       </div>
       <div class="field-group">
-        <label>CONTRATISTA / EMPRESA</label>
-        <input type="text" id="contratista" placeholder="Ej. Redes Telecom S.A.">
-      </div>
-      <div class="field-group">
-        <label>INSPECTOR / REVISOR</label>
-        <input type="text" id="inspector" placeholder="Nombre de quien revisa">
-      </div>
-      <div class="field-group">
-        <label>SUPERVISOR</label>
-        <input type="text" id="supervisor" placeholder="Nombre supervisor">
+        <label>HORA</label>
+        <input type="time" id="hora">
       </div>
     </div>
   </div>
 
-  <!-- SECCION CABLEADO -->
+  <!-- SECCIONES COMPLETAS -->
   <div class="card">
-    <div class="card-title">🌐 1. Cableado Estructurado</div>
-    <div id="sec-cableado"></div>
+    <div class="card-title">A. Nodos de red y contactos piso de venta</div>
+    <div id="sec-A"></div>
   </div>
 
-  <!-- SECCION CCTV -->
   <div class="card">
-    <div class="card-title">📹 2. Sistema CCTV</div>
-    <div id="sec-cctv"></div>
+    <div class="card-title">B. Nodos de red y contactos eléctricos — equipo administrativo</div>
+    <div id="sec-B"></div>
   </div>
 
-  <!-- OBSERVACIONES GENERALES -->
   <div class="card">
-    <div class="card-title">📝 Observaciones Generales</div>
+    <div class="card-title">C. Nodos de red / registros — equipo de publicidad</div>
+    <div id="sec-C"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">D. Nodos de red — torniquete y WiFi</div>
+    <div id="sec-D"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">E. Adecuaciones para SITE de telecomunicaciones (rack/gabinete)</div>
+    <div id="sec-E"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">F. Limpieza y acabados CCTV</div>
+    <div id="sec-F"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">G. Observaciones generales</div>
     <div class="field-group">
-      <textarea id="obs_generales" rows="3" placeholder="Comentarios adicionales o pendientes..."></textarea>
+      <textarea id="obs_generales" rows="3" placeholder="Comentarios generales..."></textarea>
     </div>
   </div>
 
 </div>
 
-<!-- BARRA BOTONES -->
+<!-- BARRA DE ACCIONES -->
 <div class="bottom-bar">
   <button class="btn-main btn-save" onclick="guardarLocal()">💾 Guardar</button>
-  <button class="btn-main btn-pdf" onclick="generarPDF()">📄 Exportar PDF</button>
-  <button class="btn-main btn-excel" onclick="generarExcel()">📊 Excel</button>
-</div>
-
-<!-- PLANTILLA OCULTA PARA GENERAR PDF -->
-<div id="pdf-template">
-  <div class="pdf-container" id="pdf-content">
-    <div class="pdf-header">
-      <h2>CHECKLIST DE RECEPCIÓN TÉCNICA</h2>
-      <p style="font-size: 10pt;">Cableado Estructurado & Sistema CCTV</p>
-    </div>
-    <div id="pdf-datos" style="font-size: 9pt; margin-bottom: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 5px;"></div>
-    
-    <h3 style="font-size: 11pt; color: #1F3864; margin-top: 10px;">1. Cableado Estructurado</h3>
-    <table class="pdf-table" id="pdf-tabla-cableado">
-      <thead><tr><th>Ítem / Criterio</th><th style="width: 50px;">Estado</th><th>Observación</th></tr></thead>
-      <tbody></tbody>
-    </table>
-
-    <h3 style="font-size: 11pt; color: #1F3864; margin-top: 15px;">2. Sistema CCTV</h3>
-    <table class="pdf-table" id="pdf-tabla-cctv">
-      <thead><tr><th>Ítem / Criterio</th><th style="width: 50px;">Estado</th><th>Observación</th></tr></thead>
-      <tbody></tbody>
-    </table>
-
-    <div style="margin-top: 15px; font-size: 9pt;">
-      <strong>Observaciones Generales:</strong>
-      <p id="pdf-obs" style="border: 1px solid #ccc; padding: 6px; min-height: 40px; margin-top: 4px;"></p>
-    </div>
-  </div>
+  <button class="btn-main btn-pdf" onclick="exportarPDF()">📄 Exportar PDF</button>
+  <button class="btn-main btn-excel" onclick="exportarExcel()">📊 Exportar Excel</button>
 </div>
 
 <script>
-const CABLEADO_ITEMS = [
-  "Etiquetado de jacks, patch panels y cables según norma",
-  "Peinado y ordenamiento de cables en RACK / Gabinete",
-  "Certificación de puntos de red (Entregada y validada)",
-  "Tendido de cableado por canalización correspondiente",
-  "Uso de escalerillas, tubería conduit o canaletas norma",
-  "Margen de reserva de cable en rack y rosetas",
-  "Tierra física conectada correctamente al RACK",
-  "Instalación de Patch Cords de parcheo limpia",
-  "Limpieza general de RACK y área de trabajo"
-];
-
-const CCTV_ITEMS = [
-  "Montaje y fijación de cámaras (Interiores / Exteriores)",
-  "Cajas de registro selladas y herméticas (IP66/IP67)",
-  "Orientación, enfoque y campo de visión correcto",
-  "Conexionado de conectores RJ45 / Baluns de calidad",
-  "Configuración IP, nombres de cámara y fechas en NVR",
-  "Pruebas de grabación continua y detección de movimiento",
-  "Alimentación eléctrica / PoE estable en switches",
-  "Etiquetado de cables de CCTV en rack y extremo cámara"
-];
+const SECCIONES = {
+  secA: [
+    "Cajas de cobro (POS y Terminales)",
+    "Scanner / Báscula de mostrador",
+    "Impresora de tickets / facturas",
+    "Punto de verificación de precios",
+    "Pantallas / Señalización digital piso de venta",
+    "Contactos eléctricos regulados piso de venta"
+  ],
+  secB: [
+    "Nodo de red Computadora Gerencia",
+    "Impresora administrativa / multifuncional",
+    "Contactos eléctricos regulados oficinas",
+    "UPS / Respaldo de energía administrativo"
+  ],
+  secC: [
+    "Pantalla menú / Publicidad exterior",
+    "Pantalla menú / Publicidad interior",
+    "Registros de paso y tubos conduit etiquetados",
+    "Nodos de red para reproductores de medios",
+    "Alimentación eléctrica de equipos publicitarios"
+  ],
+  secD: [
+    "Nodo de red Access Point WiFi interior",
+    "Nodo de red Access Point WiFi exterior / terraza"
+  ],
+  secE: [
+    "Montaje y fijación de RACK / Gabinete a muro o piso",
+    "Ordenamiento y peinado de cables UTP Patch Panels",
+    "Etiquetado norma de Patch Panel y Switches",
+    "Instalación de barra de tierras y conexión física",
+    "Organizador horizontal y vertical de cables",
+    "Limpieza interior de gabinete y filtros",
+    "UPS de RACK conectado y funcionando",
+    "Identificación de circuitos eléctricos SITE"
+  ],
+  secF: [
+    "Cámaras con orientación y enfoque óptimo",
+    "Cajas de registro selladas de cámaras IP66",
+    "NVR configurado con fecha, hora y canales",
+    "Prueba de grabación y visualización remota",
+    "Limpieza de domos y lentes de cámaras"
+  ]
+};
 
 let state = {};
 
 function init() {
   document.getElementById('fecha').valueAsDate = new Date();
-  renderSection('sec-cableado', CABLEADO_ITEMS, 'cab');
-  renderSection('sec-cctv', CCTV_ITEMS, 'cctv');
+  const now = new Date();
+  document.getElementById('hora').value = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+  renderSection('sec-A', SECCIONES.secA, 'secA');
+  renderSection('sec-B', SECCIONES.secB, 'secB');
+  renderSection('sec-C', SECCIONES.secC, 'secC');
+  renderSection('sec-D', SECCIONES.secD, 'secD');
+  renderSection('sec-E', SECCIONES.secE, 'secE');
+  renderSection('sec-F', SECCIONES.secF, 'secF');
+
   cargarListaHistorico();
 }
 
@@ -362,37 +359,36 @@ function showToast(msg) {
   setTimeout(() => t.style.display = 'none', 3000);
 }
 
-/* GUARDADO LOCAL (HISTORIAL) */
+/* HISTORIAL LOCAL */
 function guardarLocal() {
-  const estacion = document.getElementById('estacion').value || 'Sin nombre';
+  const estacion = document.getElementById('estacion').value || 'Sin Nombre';
   const fecha = document.getElementById('fecha').value;
-  const timestamp = new Date().getTime();
+  const id = new Date().getTime();
 
-  const dataToSave = {
-    id: timestamp,
+  const registro = {
+    id,
     estacion,
+    responsable: document.getElementById('responsable').value,
     fecha,
-    contratista: document.getElementById('contratista').value,
-    inspector: document.getElementById('inspector').value,
-    supervisor: document.getElementById('supervisor').value,
-    obs_generales: document.getElementById('obs_generales').value,
+    hora: document.getElementById('hora').value,
+    obs: document.getElementById('obs_generales').value,
     state: JSON.parse(JSON.stringify(state))
   };
 
-  let history = JSON.parse(localStorage.getItem('checklists_history') || '[]');
-  history.unshift(dataToSave);
-  localStorage.setItem('checklists_history', JSON.stringify(history));
+  let history = JSON.parse(localStorage.getItem('synergo_checklists') || '[]');
+  history.unshift(registro);
+  localStorage.setItem('synergo_checklists', JSON.stringify(history));
 
-  showToast(' Checkbox guardado en registro local');
+  showToast('✅ Guardado con éxito');
   cargarListaHistorico();
 }
 
 function cargarListaHistorico() {
   const container = document.getElementById('history-list');
-  let history = JSON.parse(localStorage.getItem('checklists_history') || '[]');
+  let history = JSON.parse(localStorage.getItem('synergo_checklists') || '[]');
   
   if(history.length === 0) {
-    container.innerHTML = '<p style="font-size: 0.8rem; color: var(--muted);">No hay checklists guardados localmente.</p>';
+    container.innerHTML = '<p style="font-size: 0.8rem; color: var(--muted);">No hay revisiones guardadas en este dispositivo.</p>';
     return;
   }
 
@@ -403,104 +399,161 @@ function cargarListaHistorico() {
     div.innerHTML = `
       <div>
         <strong style="font-size: 0.85rem;">${item.estacion}</strong>
-        <br><span style="font-size: 0.75rem; color: var(--muted);">${item.fecha}</span>
+        <br><span style="font-size: 0.75rem; color: var(--muted);">${item.fecha} - ${item.hora || ''}</span>
       </div>
-      <button onclick="cargarRegistro(${item.id})" style="padding: 4px 8px; font-size: 0.75rem; background: var(--blue); color: white; border: none; border-radius: 4px; cursor: pointer;">Cargar</button>
+      <button onclick="cargarRegistro(${item.id})" style="padding: 4px 10px; font-size: 0.75rem; background: var(--blue); color: white; border: none; border-radius: 4px; cursor: pointer;">Cargar</button>
     `;
     container.appendChild(div);
   });
 }
 
 function cargarRegistro(id) {
-  let history = JSON.parse(localStorage.getItem('checklists_history') || '[]');
+  let history = JSON.parse(localStorage.getItem('synergo_checklists') || '[]');
   const item = history.find(x => x.id === id);
   if(!item) return;
 
   document.getElementById('estacion').value = item.estacion;
+  document.getElementById('responsable').value = item.responsable;
   document.getElementById('fecha').value = item.fecha;
-  document.getElementById('contratista').value = item.contratista;
-  document.getElementById('inspector').value = item.inspector;
-  document.getElementById('supervisor').value = item.supervisor;
-  document.getElementById('obs_generales').value = item.obs_generales;
+  document.getElementById('hora').value = item.hora;
+  document.getElementById('obs_generales').value = item.obs;
   state = item.state;
 
-  renderSection('sec-cableado', CABLEADO_ITEMS, 'cab');
-  renderSection('sec-cctv', CCTV_ITEMS, 'cctv');
-  showToast(' Checklist cargado');
+  renderSection('sec-A', SECCIONES.secA, 'secA');
+  renderSection('sec-B', SECCIONES.secB, 'secB');
+  renderSection('sec-C', SECCIONES.secC, 'secC');
+  renderSection('sec-D', SECCIONES.secD, 'secD');
+  renderSection('sec-E', SECCIONES.secE, 'secE');
+  renderSection('sec-F', SECCIONES.secF, 'secF');
+
+  showToast('📋 Datos cargados');
 }
 
-/* GENERACIÓN DE PDF */
-function generarPDF() {
+/* EXPORTAR A PDF FUNCIONAL */
+function exportarPDF() {
   const estacion = document.getElementById('estacion').value || 'Estacion';
-  
-  // Rellenar cabecera PDF
-  document.getElementById('pdf-datos').innerHTML = `
-    <div><strong>Estación:</strong> ${document.getElementById('estacion').value}</div>
-    <div><strong>Fecha:</strong> ${document.getElementById('fecha').value}</div>
-    <div><strong>Contratista:</strong> ${document.getElementById('contratista').value}</div>
-    <div><strong>Inspector:</strong> ${document.getElementById('inspector').value}</div>
+  const responsable = document.getElementById('responsable').value || '-';
+  const fecha = document.getElementById('fecha').value || '-';
+  const hora = document.getElementById('hora').value || '-';
+  const obs = document.getElementById('obs_generales').value || 'Sin observaciones';
+
+  // Crear contenedor temporal invisible formateado para PDF
+  const pdfWrapper = document.createElement('div');
+  pdfWrapper.style.padding = '20px';
+  pdfWrapper.style.fontFamily = 'Arial, sans-serif';
+  pdfWrapper.style.color = '#111';
+
+  let htmlStr = `
+    <div style="border-bottom: 2px solid #1F3864; padding-bottom: 8px; margin-bottom: 12px;">
+      <h2 style="color:#1F3864; margin:0; font-size:16pt;">SYNERGO · GERENCIA DE SISTEMAS</h2>
+      <p style="margin:2px 0 0 0; font-size:10pt; color:#555;">Recepción de Cableado y CCTV</p>
+    </div>
+    
+    <table style="width:100%; margin-bottom:15px; font-size:9pt; border-collapse:collapse;">
+      <tr>
+        <td style="padding:4px 0;"><strong>Estación/GOMART:</strong> ${estacion}</td>
+        <td style="padding:4px 0;"><strong>Responsable:</strong> ${responsable}</td>
+      </tr>
+      <tr>
+        <td style="padding:4px 0;"><strong>Fecha:</strong> ${fecha}</td>
+        <td style="padding:4px 0;"><strong>Hora:</strong> ${hora}</td>
+      </tr>
+    </table>
   `;
 
-  // Rellenar tablas
-  const populateTable = (tableId, items, prefix) => {
-    const tbody = document.getElementById(tableId).querySelector('tbody');
-    tbody.innerHTML = '';
-    items.forEach((item, i) => {
-      const key = `${prefix}_${i}`;
-      const st = state[key] || {val:'-', obs:''};
-      tbody.innerHTML += `<tr><td>${i+1}. ${item}</td><td><b>${st.val||'-'}</b></td><td>${st.obs}</td></tr>`;
+  const titulos = {
+    secA: "A. Nodos de red y contactos piso de venta",
+    secB: "B. Nodos de red y contactos eléctricos — equipo administrativo",
+    secC: "C. Nodos de red / registros — equipo de publicidad",
+    secD: "D. Nodos de red — torniquete y WiFi",
+    secE: "E. Adecuaciones para SITE de telecomunicaciones (rack/gabinete)",
+    secF: "F. Limpieza y acabados CCTV"
+  };
+
+  for (let secKey in SECCIONES) {
+    htmlStr += `<h4 style="color:#1F3864; margin:10px 0 4px 0; font-size:10pt;">${titulos[secKey]}</h4>`;
+    htmlStr += `<table style="width:100%; border-collapse:collapse; margin-bottom:8px; font-size:8pt;">
+      <thead>
+        <tr style="background:#1F3864; color:white;">
+          <th style="padding:4px; text-align:left;">Ítem</th>
+          <th style="padding:4px; width:50px; text-align:center;">Estado</th>
+          <th style="padding:4px; text-align:left;">Observación</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+    SECCIONES[secKey].forEach((item, idx) => {
+      const st = state[`${secKey}_${idx}`] || { val: '-', obs: '' };
+      htmlStr += `
+        <tr style="border-bottom:1px solid #ddd;">
+          <td style="padding:4px;">${idx + 1}. ${item}</td>
+          <td style="padding:4px; text-align:center;"><b>${st.val || '-'}</b></td>
+          <td style="padding:4px;">${st.obs || ''}</td>
+        </tr>
+      `;
     });
-  };
 
-  populateTable('pdf-tabla-cableado', CABLEADO_ITEMS, 'cab');
-  populateTable('pdf-tabla-cctv', CCTV_ITEMS, 'cctv');
-  document.getElementById('pdf-obs').innerText = document.getElementById('obs_generales').value || 'Sin observaciones.';
+    htmlStr += `</tbody></table>`;
+  }
 
-  const element = document.getElementById('pdf-content');
+  htmlStr += `
+    <div style="margin-top:12px; font-size:9pt;">
+      <strong>G. Observaciones generales:</strong>
+      <div style="border:1px solid #ccc; padding:6px; margin-top:4px; min-height:40px; border-radius:4px;">${obs}</div>
+    </div>
+  `;
+
+  pdfWrapper.innerHTML = htmlStr;
+
   const opt = {
-    margin:       10,
-    filename:     `Checklist_${estacion.replace(/ /g, '_')}.pdf`,
-    image:        { type: 'jpeg', quality: 0.98 },
-    html2canvas:  { scale: 2 },
-    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    margin: 8,
+    filename: `Checklist_${estacion.replace(/ /g, '_')}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
-  html2pdf().set(opt).from(element).save();
-  showToast('Descargando PDF...');
+  showToast('⏳ Generando PDF...');
+  html2pdf().set(opt).from(pdfWrapper).save().then(() => {
+    showToast('📄 PDF descargado con éxito');
+  });
 }
 
-/* EXCEL */
-function generarExcel() {
+/* EXPORTAR A EXCEL */
+function exportarExcel() {
   const estacion = document.getElementById('estacion').value || 'Estacion';
   const wb = XLSX.utils.book_new();
   
   const data = [
-    ["CHECKLIST DE RECEPCIÓN TÉCNICA"],
-    ["Estación", estacion],
-    ["Fecha", document.getElementById('fecha').value],
-    ["Contratista", document.getElementById('contratista').value],
-    ["Inspector", document.getElementById('inspector').value],
-    ["Supervisor", document.getElementById('supervisor').value],
+    ["SYNERGO - GERENCIA DE SISTEMAS"],
+    ["Checklist de Recepción de Cableado y CCTV"],
     [],
-    ["CÓDIGO", "CRITERIO / ÍTEM", "ESTADO", "OBSERVACIÓN"]
+    ["Estación/GOMART", estacion],
+    ["Responsable", document.getElementById('responsable').value],
+    ["Fecha", document.getElementById('fecha').value],
+    ["Hora", document.getElementById('hora').value],
+    [],
+    ["SECCIÓN", "CÓDIGO", "CRITERIO / ÍTEM", "ESTADO", "OBSERVACIÓN"]
   ];
 
-  CABLEADO_ITEMS.forEach((item, i) => {
-    const st = state[`cab_${i}`] || {val:'', obs:''};
-    data.push([`CAB-${i+1}`, item, st.val, st.obs]);
-  });
+  const titulos = {
+    secA: "Piso de venta", secB: "Equipo Administrativo", secC: "Publicidad",
+    secD: "Torniquete/WiFi", secE: "SITE / Rack", secF: "CCTV"
+  };
 
-  CCTV_ITEMS.forEach((item, i) => {
-    const st = state[`cctv_${i}`] || {val:'', obs:''};
-    data.push([`CCTV-${i+1}`, item, st.val, st.obs]);
-  });
+  for (let secKey in SECCIONES) {
+    SECCIONES[secKey].forEach((item, i) => {
+      const st = state[`${secKey}_${i}`] || { val: '', obs: '' };
+      data.push([titulos[secKey], `${secKey.toUpperCase()}-${i+1}`, item, st.val, st.obs]);
+    });
+  }
 
   data.push([], ["OBSERVACIONES GENERALES"], [document.getElementById('obs_generales').value]);
 
   const ws = XLSX.utils.aoa_to_sheet(data);
   XLSX.utils.book_append_sheet(wb, ws, "Checklist");
   XLSX.writeFile(wb, `Checklist_${estacion.replace(/ /g, '_')}.xlsx`);
-  showToast('Excel Descargado');
+  showToast('📊 Excel Descargado');
 }
 
 init();
