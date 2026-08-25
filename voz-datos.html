@@ -10,10 +10,10 @@
     body { font-family: Arial, sans-serif; margin: 0; padding: 10px; background: #fff; color: #000; font-size: 8pt; }
     
     .no-print { text-align: right; margin-bottom: 10px; }
-    .btn-action { background: #1b365d; color: white; border: none; padding: 8px 16px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+    .btn-action { background: #1b365d; color: white; border: none; padding: 10px 18px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+    .btn-action:hover { background: #0f2341; }
     @media print { .no-print { display: none !important; } body { padding: 0; } }
 
-    /* Encabezados amarillos principales */
     .main-title {
       background-color: #fce4d6;
       text-align: center;
@@ -26,7 +26,6 @@
       text-transform: uppercase;
     }
 
-    /* Estilos de Tablas Matriz */
     .matrix-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
     .matrix-table th, .matrix-table td { border: 1pt solid #000; padding: 2px 3px; text-align: center; vertical-align: middle; }
     
@@ -37,10 +36,6 @@
     .cell-chk { width: 30px; }
     .cell-chk input { transform: scale(0.9); cursor: pointer; }
 
-    /* Bloque Inferior */
-    .footer-section { width: 100%; border-collapse: collapse; margin-top: 5px; }
-    .footer-section td { vertical-align: top; }
-    
     .table-sub { width: 100%; border-collapse: collapse; }
     .table-sub td { border: 1pt solid #000; padding: 4px; font-size: 7.5pt; }
     
@@ -53,6 +48,7 @@
       justify-content: center;
       font-weight: bold;
       font-size: 10pt;
+      padding: 10px;
     }
 
     .obs-container { margin-top: 8px; border-bottom: 1pt solid #000; padding-bottom: 2px; }
@@ -66,12 +62,12 @@
 <body>
 
 <div class="no-print">
-  <button class="btn-action" onclick="validarYExportarMatriz()">🖨️ Exportar PDF / Imprimir</button>
+  <button class="btn-action" onclick="exportarFormato()">💾 Guardar como PDF / Imprimir</button>
 </div>
 
 <!-- TABLA 1: VOZ Y DATOS (24 NODOS) -->
 <div class="main-title">Recepción de Cableado de Voz y Datos en Tiendas y Estaciones</div>
-<table class="matrix-table" id="tabla-voz-datos">
+<table class="matrix-table">
   <thead>
     <tr class="bg-blue-top">
       <th rowspan="2" class="col-nodo"># NODO</th>
@@ -94,14 +90,12 @@
       <th>Transmisión</th>
     </tr>
   </thead>
-  <tbody id="body-voz-datos">
-    <!-- Generado dinámicamente con JS para mantener código limpio -->
-  </tbody>
+  <tbody id="body-voz-datos"></tbody>
 </table>
 
 <!-- TABLA 2: CCTV (16 NODOS) -->
 <div class="main-title">Recepción de CCTV en Tiendas y Estaciones</div>
-<table class="matrix-table" id="tabla-cctv">
+<table class="matrix-table">
   <thead>
     <tr class="bg-blue-top">
       <th rowspan="2" class="col-nodo"># NODO</th>
@@ -126,9 +120,7 @@
       <th>Transmisión</th>
     </tr>
   </thead>
-  <tbody id="body-cctv">
-    <!-- Generado dinámicamente con JS -->
-  </tbody>
+  <tbody id="body-cctv"></tbody>
 </table>
 
 <!-- PIE DE FORMATO Y FIRMAS -->
@@ -136,20 +128,22 @@
   <tr>
     <td style="width: 40%; vertical-align: top;">
       <table class="table-sub">
-        <tr><td style="background-color: #d9e1f2; font-weight: bold;">LIMPIEZA DEL SITE / GABINETE</td><td class="cell-chk"><input type="checkbox" id="chk-l1"></td></tr>
-        <tr><td style="background-color: #d9e1f2; font-weight: bold;">LIMPIEZA DE OFICINAS / AREA DE TRABAJO</td><td class="cell-chk"><input type="checkbox" id="chk-l2"></td></tr>
-        <tr><td style="background-color: #d9e1f2; font-weight: bold;">RACK A TIERRA FISICA / GABINETE</td><td class="cell-chk"><input type="checkbox" id="chk-l3"></td></tr>
+        <tr><td style="background-color: #d9e1f2; font-weight: bold;">LIMPIEZA DEL SITE / GABINETE</td><td class="cell-chk"><input type="checkbox"></td></tr>
+        <tr><td style="background-color: #d9e1f2; font-weight: bold;">LIMPIEZA DE OFICINAS / AREA DE TRABAJO</td><td class="cell-chk"><input type="checkbox"></td></tr>
+        <tr><td style="background-color: #d9e1f2; font-weight: bold;">RACK A TIERRA FISICA / GABINETE</td><td class="cell-chk"><input type="checkbox"></td></tr>
       </table>
     </td>
     <td style="width: 5%;"></td>
     <td style="width: 55%; vertical-align: top;">
-      <div class="project-box">PROYECTO: <input type="text" id="req-proyecto" style="border:none; background:transparent; font-weight:bold; font-size:10pt; margin-left:5px; width:60%;" placeholder="Nombre / Código"></div>
+      <div class="project-box">
+        PROYECTO: <input type="text" id="req-proyecto" style="border:none; border-bottom:1px solid #000; background:transparent; font-weight:bold; font-size:10pt; margin-left:5px; width:65%;" placeholder="Escriba el Proyecto...">
+      </div>
     </td>
   </tr>
 </table>
 
 <div class="obs-container">
-  <strong>OBSERVACIONES:</strong> <input type="text" id="obs-general" placeholder="Escriba aquí las observaciones...">
+  <strong>OBSERVACIONES:</strong> <input type="text" placeholder="Escriba aquí las observaciones...">
 </div>
 
 <table class="signatures-table">
@@ -169,41 +163,37 @@
 </table>
 
 <script>
-  // Renderizar filas dinámicamente para asegurar coincidencia exacta
-  function renderMatriz() {
-    // 24 Nodos Voz y Datos (10 casillas de verificación por fila)
+  // Construye la matriz visual
+  function inicializarMatriz() {
     const bodyVD = document.getElementById('body-voz-datos');
     for (let i = 1; i <= 24; i++) {
       let tr = document.createElement('tr');
-      tr.innerHTML = `<td class="col-nodo">${i}</td>` + 
-        Array(10).fill(0).map((_, c) => `<td class="cell-chk"><input type="checkbox" name="vd_${i}_${c}"></td>`).join('');
+      tr.innerHTML = `<td class="col-nodo">${i}</td>` + Array(10).fill('<td class="cell-chk"><input type="checkbox"></td>').join('');
       bodyVD.appendChild(tr);
     }
 
-    // 16 Nodos CCTV (12 casillas de verificación por fila)
     const bodyCCTV = document.getElementById('body-cctv');
     for (let i = 1; i <= 16; i++) {
       let tr = document.createElement('tr');
-      tr.innerHTML = `<td class="col-nodo">${i}</td>` + 
-        Array(12).fill(0).map((_, c) => `<td class="cell-chk"><input type="checkbox" name="cctv_${i}_${c}"></td>`).join('');
+      tr.innerHTML = `<td class="col-nodo">${i}</td>` + Array(12).fill('<td class="cell-chk"><input type="checkbox"></td>').join('');
       bodyCCTV.appendChild(tr);
     }
   }
 
-  function validarYExportarMatriz() {
+  // Valida y ejecuta la ventana nativa del navegador para guardar PDF
+  function exportarFormato() {
     const proyecto = document.getElementById('req-proyecto').value.trim();
     const fecha = document.getElementById('req-fecha').value;
 
     if (!proyecto || !fecha) {
-      alert("⚠️ Por favor ingrese el Nombre del Proyecto y la Fecha antes de exportar.");
+      alert("⚠️ Por favor completa el Nombre del Proyecto y la Fecha antes de exportar.");
       return;
     }
 
     window.print();
   }
 
-  // Inicializar tablas al cargar
-  window.onload = renderMatriz;
+  window.onload = inicializarMatriz;
 </script>
 
 </body>
