@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1F3864">
+<title>Checklist Recepción · Cableado & CCTV</title>
+
+<!-- PWA Manifest dinámico en línea (Gratis) -->
+<link rel="manifest" href='data:application/manifest+json,{"name":"Checklist Cableado","short_name":"Checklist","start_url":"./index.html","display":"standalone","background_color":"#1F3864","theme_color":"#1F3864","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/1048/1048953.png","sizes":"512x512","type":"image/png"}]}'>
+
+<!-- Librería Excel Gratuita CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+  :root{
+    --navy:#1F3864;
+    --navy-dark:#152747;
+    --blue:#2E75B6;
+    --bg:#EEF1F5;
+    --card:#FFFFFF;
+    --border:#DDE3EC;
+    --text:#1C2530;
+    --muted:#6B7686;
+    --ok:#1F8A46;
+    --ok-bg:#E3F5EA;
+    --bad:#C4372B;
+    --bad-bg:#FBE7E5;
+    --pending-bg:#F1F3F6;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    overscroll-behavior-y:none;}
+  body{padding-bottom:84px;}
+
+  header.topbar{
+    position:sticky;top:0;z-index:30;
+    background:linear-gradient(135deg,var(--navy) 0%,var(--navy-dark) 100%);
+    color:#fff;padding:14px 16px 12px;
+    box-shadow:0 2px 10px rgba(0,0,0,.15);
+  }
+  .brand{display:flex;align-items:center;justify-content:space-between;}
+  .brand-name{font-weight:800;font-size:13px;letter-spacing:.14em;opacity:.85;}
+  .brand-title{font-weight:700;font-size:17px;margin-top:2px;}
+  .brand-sub{font-size:12px;opacity:.75;margin-top:1px;}
+  .reset-btn{
+    background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);
+    color:#fff;font-size:11px;padding:7px 10px;border-radius:8px;
+  }
+
+  .infobox{background:var(--card);margin:12px;border-radius:14px;padding:12px 14px;
+    box-shadow:0 1px 3px rgba(20,30,50,.08);border:1px solid var(--border);}
+  .infogrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .field{display:flex;flex-direction:column;gap:3px;margin-bottom:8px;}
+  .field label{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+  .field input,.field textarea{
+    border:1.5px solid var(--border);border-radius:9px;padding:9px 10px;font-size:14.5px;
+    font-family:inherit;background:#fbfcfe;color:var(--text);
+  }
+
+  .tabbar{display:flex;gap:6px;margin:0 12px 12px;}
+  .tab{flex:1;background:var(--card);border:1.5px solid var(--border);border-radius:11px;
+    padding:9px 4px;text-align:center;font-size:12.5px;font-weight:700;color:var(--muted);
+    position:relative;}
+  .tab.active{background:var(--navy);border-color:var(--navy);color:#fff;}
+  .tab .prog{display:block;font-size:10px;font-weight:600;margin-top:2px;opacity:.85;}
+
+  .panel{display:none;padding:0 12px;}
+  .panel.active{display:block;}
+
+  .section-card{background:var(--card);border-radius:14px;margin-bottom:12px;overflow:hidden;
+    border:1px solid var(--border);box-shadow:0 1px 3px rgba(20,30,50,.06);}
+  .section-head{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;
+    background:#F7F9FC;cursor:pointer;}
+  .section-head .htxt{display:flex;align-items:baseline;gap:8px;}
+  .section-letter{background:var(--navy);color:#fff;font-weight:800;font-size:12px;
+    width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .section-title{font-weight:700;font-size:13.5px;line-height:1.25;}
+  .section-badge{font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap;}
+  .chevron{transition:transform .2s;color:var(--muted);margin-left:8px;flex-shrink:0;}
+  .section-card.open .chevron{transform:rotate(180deg);}
+  .section-body{display:none;padding:4px 12px 10px;}
+  .section-card.open .section-body{display:block;}
+
+  .item-row{padding:10px 2px;border-top:1px solid #EEF1F5;}
+  .item-row:first-child{border-top:none;}
+  .item-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+  .item-label{font-size:13.5px;line-height:1.35;flex:1;padding-top:4px;}
+  .seg{display:flex;flex-shrink:0;border-radius:9px;overflow:hidden;border:1.5px solid var(--border);}
+  .seg button{border:none;background:var(--pending-bg);color:var(--muted);font-size:12px;font-weight:700;
+    padding:8px 11px;font-family:inherit;}
+  .seg button.si.active{background:var(--ok-bg);color:var(--ok);}
+  .seg button.no.active{background:var(--bad-bg);color:var(--bad);}
+  .obs-toggle{font-size:11px;color:var(--blue);font-weight:600;margin-top:6px;display:inline-block;}
+  .obs-input{display:none;width:100%;margin-top:6px;border:1.5px solid var(--border);border-radius:8px;
+    padding:7px 9px;font-size:13px;font-family:inherit;background:#fbfcfe;}
+  .obs-input.show{display:block;}
+
+  .node-card{background:var(--card);border-radius:13px;margin-bottom:10px;border:1px solid var(--border);
+    overflow:hidden;box-shadow:0 1px 3px rgba(20,30,50,.06);}
+  .node-head{display:flex;align-items:center;gap:10px;padding:11px 13px;cursor:pointer;}
+  .node-num{width:30px;height:30px;border-radius:9px;background:var(--navy);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;}
+  .node-num.complete{background:var(--ok);}
+  .node-info{flex:1;}
+  .node-title{font-weight:700;font-size:13.5px;}
+  .node-status{font-size:11px;color:var(--muted);margin-top:1px;}
+  .node-body{display:none;padding:2px 13px 12px;}
+  .node-card.open .node-body{display:block;}
+  .node-card.open .chevron{transform:rotate(180deg);}
+
+  .grp{margin-top:8px;}
+  .grp-label{font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;}
+  .chip-row{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{display:flex;align-items:center;gap:6px;border:1.5px solid var(--border);border-radius:20px;
+    padding:7px 12px 7px 8px;font-size:12.5px;font-weight:600;background:#fbfcfe;color:var(--text);}
+  .chip .dot{width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid #C7CFDB;
+    display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;flex-shrink:0;}
+  .chip.ok{border-color:var(--ok);background:var(--ok-bg);}
+  .chip.ok .dot{background:var(--ok);border-color:var(--ok);}
+  .chip.bad{border-color:var(--bad);background:var(--bad-bg);}
+  .chip.bad .dot{background:var(--bad);border-color:var(--bad);}
+
+  .closeout{background:var(--card);border-radius:14px;padding:13px 14px;margin:4px 0 12px;border:1px solid var(--border);}
+  .closeout h4{margin:0 0 8px;font-size:12.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);}
+
+  .sign-block{background:var(--card);border-radius:14px;padding:13px 14px;margin-bottom:12px;border:1px solid var(--border);}
+  .sign-title{font-weight:700;font-size:13px;margin-bottom:8px;}
+  .sign-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  canvas.sigpad{width:100%;height:100px;background:#fbfcfe;border:1.5px dashed var(--border);border-radius:9px;touch-action:none;}
+  .sig-clear{font-size:10.5px;color:var(--blue);font-weight:700;margin-top:4px;display:inline-block;}
+
+  .bottomnav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);
+    display:flex;padding:8px 10px calc(8px + env(safe-area-inset-bottom));gap:8px;z-index:30;
+    box-shadow:0 -2px 10px rgba(20,30,50,.08);}
+  .navbtn{flex:1;border:none;border-radius:11px;padding:11px 6px;font-weight:700;font-size:12.5px;
+    font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;}
+  .navbtn.export{background:var(--navy);color:#fff;}
+  .navbtn.share{background:#F1F3F6;color:var(--text);border:1.5px solid var(--border);}
+
+  .toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--navy-dark);color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;
+    font-weight:600;opacity:0;transition:all .25s;pointer-events:none;z-index:50;white-space:nowrap;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .footer-note{font-size:10.5px;color:var(--muted);text-align:center;padding:10px 20px 4px;line-height:1.5;}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div>
+      <div class="brand-name">SYNERGO · GERENCIA DE SISTEMAS</div>
+      <div class="brand-title">Recepción de Cableado y CCTV</div>
+      <div class="brand-sub">Checklist ES / GoMart — Ver. 2.0</div>
+    </div>
+    <button class="reset-btn" onclick="nuevaVisita()">Nueva visita</button>
+  </div>
+</header>
+
+<div class="infobox">
+  <div class="infogrid">
+    <div class="field"><label>Estación / GoMart</label><input id="h_estacion" placeholder="Ej. ES Manglares" oninput="saveHeader()"></div>
+    <div class="field"><label>Responsable</label><input id="h_responsable" placeholder="Nombre" oninput="saveHeader()"></div>
+    <div class="field"><label>Fecha</label><input id="h_fecha" type="date" oninput="saveHeader()"></div>
+    <div class="field"><label>Hora</label><input id="h_hora" type="time" oninput="saveHeader()"></div>
+  </div>
+</div>
+
+<div class="tabbar">
+  <button class="tab active" data-tab="sitio" onclick="switchTab('sitio')">Sitio<span class="prog" id="prog_sitio">0%</span></button>
+  <button class="tab" data-tab="voz" onclick="switchTab('voz')">Voz y Datos<span class="prog" id="prog_voz">0%</span></button>
+  <button class="tab" data-tab="cctv" onclick="switchTab('cctv')">CCTV<span class="prog" id="prog_cctv">0%</span></button>
+</div>
+
+<div class="panel active" id="panel_sitio"></div>
+<div class="panel" id="panel_voz"></div>
+<div class="panel" id="panel_cctv"></div>
+
+<div class="footer-note">Web App 100% Gratuita. Tus datos se guardan en este dispositivo sin internet.</div>
+
+<div class="bottomnav">
+  <button class="navbtn share" onclick="shareResumen()">📋 Resumen</button>
+  <button class="navbtn export" onclick="exportarExcel()">⬇️ Exportar a Excel</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SITIO_SECTIONS = [
+  {id:'A', title:'Nodos de red y contactos piso de venta', items:[
+    'Canalizaciones / registros para datos en área de TPV',
+    'Canalizaciones / registros para micrófono y botón de pánico en área de TPV',
+    'Contactos doble NO regulados por cada TPV',
+    'Voltajes en contactos doble NO regulados por cada TPV',
+    'Pasos interiores en los muebles de los TPV',
+    'Pasos en la barra para los brazos de los TPV',
+  ]},
+  {id:'B', title:'Nodos de red y contactos eléctricos — equipo administrativo', items:[
+    'Canalizaciones / registros para datos',
+    'Contacto doble NO regulados',
+    'Voltajes en contactos doble NO regulados por cada TPV',
+    'Repisa de 90x60 cm mínimo',
+  ]},
+  {id:'C', title:'Nodos de red / registros — equipo de publicidad', items:[
+    'Canalizaciones / registros para datos',
+    'Contacto doble NO regulado',
+    'Voltajes en contactos doble NO regulados por cada TPV',
+    'Repisa de 90x60 cm mínimo',
+    'Gabinete estanca con puerta de 300x250x150 en bodega para guardar holgura (sobre cuarto frío)',
+  ]},
+  {id:'D', title:'Nodos de red — torniquete y WiFi', items:[
+    'Canalizaciones / registros para datos torniquete',
+  ]},
+  {id:'E', title:'Adecuaciones para SITE de telecomunicaciones (rack/gabinete)', items:[
+    'Todas las canalizaciones llegan al SITE / gabinete',
+    '1 contacto doble NO regulado',
+    'Voltajes en contactos doble NO regulados por cada TPV',
+    'Barra de tierra física',
+    'Acomodo del cableado',
+    'Limpieza del gabinete',
+    'Conexión a tierra física',
+    'Etiquetado de los patchcord',
+  ]},
+  {id:'F', title:'Limpieza y acabados CCTV', items:[
+    'Resanes bases y bajantes',
+    'Retoque de pintura en área de bases y bajantes de cámaras',
+    'Canalización y registro con tapa para cámaras de Beercave y cuarto frío',
+    'Tapas de los registros',
+    'Bajantes (ubicaciones)',
+  ]},
+];
+
+const VOZ_GROUPS = [
+  {label:'Cableado del nodo', keys:[['remFP','Rematado face plate'],['remPP','Rematado patch panel']]},
+  {label:'Etiquetado del nodo', keys:[['etqFP','Face plate'],['etqPP','Patch panel']]},
+  {label:'Etiquetado del patchcord', keys:[['etqPcPP','Patch panel'],['etqPcSW','Switch']]},
+  {label:'Organización del cableado', keys:[['orgV','Organizador vertical'],['orgH','Organizador horizontal']]},
+  {label:'Pruebas de comunicación', keys:[['contP','Continuidad'],['transP','Transmisión']]},
+];
+const VOZ_NODE_COUNT = 24;
+
+const CCTV_GROUPS = [
+  {label:'Cableado del nodo', keys:[['remPP','Rematado patch panel'],['etqPP','Etiquetado patch panel']]},
+  {label:'Etiquetado del patchcord', keys:[['pcPP','Patch panel'],['pcSW','Switch'],['pcNVR','NVR']]},
+  {label:'Organización del cableado', keys:[['orgV','Acomodo organizador vertical'],['orgH','Acomodo organizador horizontal']]},
+  {label:'Limpieza y acabados CCTV', keys:[['resanes','Resanes fijación de cámara'],['retoques','Retoques instalación de cámara'],['tapas','Tapas en los registros']]},
+  {label:'Pruebas de comunicación', keys:[['contP','Continuidad'],['transP','Transmisión']]},
+];
+const CCTV_NODE_COUNT = 16;
+const CLOSEOUT_ITEMS = [['limpiezaSite','Limpieza del SITE / gabinete'],['limpiezaOficinas','Limpieza de oficinas / área de trabajo'],['tierraFisica','Rack a tierra física / gabinete']];
+
+let STATE = {
+  header:{estacion:'',responsable:'',fecha:'',hora:''},
+  sitio:{items:{}, observaciones:''},
+  voz:{nodos:{}, cierre:{}, obs:'', firmas:{recibeNombre:'',recibeFecha:'',entregaNombre:'',entregaFecha:''}},
+  cctv:{nodos:{}, cierre:{}, obs:'', firmas:{recibeNombre:'',recibeFecha:'',entregaNombre:'',entregaFecha:''}},
+};
+
+function storGet(key){
+  try{ const r = localStorage.getItem(key); return r ? JSON.parse(r) : null; } catch(e){ return null; }
+}
+function storSet(key,val){
+  try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){}
+}
+
+let saveTimer=null;
+function queueSave(){
+  clearInterval(saveTimer);
+  saveTimer = setTimeout(()=>{
+    storSet('checklist:header', STATE.header);
+    storSet('checklist:sitio', STATE.sitio);
+    storSet('checklist:voz', STATE.voz);
+    storSet('checklist:cctv', STATE.cctv);
+    updateProgress();
+  }, 250);
+}
+
+function init(){
+  const h = storGet('checklist:header'); if(h) STATE.header = h;
+  const s = storGet('checklist:sitio'); if(s) STATE.sitio = s;
+  const v = storGet('checklist:voz'); if(v) STATE.voz = v;
+  const c = storGet('checklist:cctv'); if(c) STATE.cctv = c;
+
+  document.getElementById('h_estacion').value = STATE.header.estacion||'';
+  document.getElementById('h_responsable').value = STATE.header.responsable||'';
+  document.getElementById('h_fecha').value = STATE.header.fecha || new Date().toISOString().slice(0,10);
+  document.getElementById('h_hora').value = STATE.header.hora||'';
+  STATE.header.fecha = document.getElementById('h_fecha').value;
+
+  renderSitio();
+  renderNodes('voz', VOZ_GROUPS, VOZ_NODE_COUNT, 'Nodo');
+  renderNodes('cctv', CCTV_GROUPS, CCTV_NODE_COUNT, 'Cámara');
+  updateProgress();
+}
+
+function saveHeader(){
+  STATE.header.estacion = document.getElementById('h_estacion').value;
+  STATE.header.responsable = document.getElementById('h_responsable').value;
+  STATE.header.fecha = document.getElementById('h_fecha').value;
+  STATE.header.hora = document.getElementById('h_hora').value;
+  queueSave();
+}
+
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===tab));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active', p.id==='panel_'+tab));
+  window.scrollTo({top:0,behavior:'instant'});
+}
+
+function renderSitio(){
+  const panel = document.getElementById('panel_sitio');
+  panel.innerHTML = '';
+  SITIO_SECTIONS.forEach(sec=>{
+    const card = document.createElement('div');
+    card.className = 'section-card';
+    card.id = 'sec_'+sec.id;
+    const done = sec.items.filter((_,i)=> (STATE.sitio.items[sec.id+i]||{}).estado).length;
+    card.innerHTML = `
+      <div class="section-head" onclick="toggleSection('${sec.id}')">
+        <div class="htxt">
+          <div class="section-letter">${sec.id}</div>
+          <div class="section-title">${sec.title}</div>
+        </div>
+        <div style="display:flex;align-items:center;">
+          <div class="section-badge" id="secbadge_${sec.id}">${done}/${sec.items.length}</div>
+          <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+      <div class="section-body" id="secbody_${sec.id}"></div>
+    `;
+    panel.appendChild(card);
+    const body = card.querySelector('.section-body');
+    sec.items.forEach((label,i)=>{
+      const key = sec.id+i;
+      const rec = STATE.sitio.items[key] || {estado:null, obs:''};
+      const row = document.createElement('div');
+      row.className='item-row';
+      row.innerHTML = `
+        <div class="item-top">
+          <div class="item-label">${i+1}. ${label}</div>
+          <div class="seg">
+            <button class="si ${rec.estado==='si'?'active':''}" onclick="setSitioEstado('${key}','si')">SÍ</button>
+            <button class="no ${rec.estado==='no'?'active':''}" onclick="setSitioEstado('${key}','no')">NO</button>
+          </div>
+        </div>
+        <span class="obs-toggle" onclick="toggleObs('${key}')">${rec.obs? '✎ Ver observación' : '+ Añadir observación'}</span>
+        <textarea class="obs-input ${rec.obs?'show':''}" id="obsbox_${key}" rows="2" placeholder="Observación..." oninput="setSitioObs('${key}', this.value)">${rec.obs||''}</textarea>
+      `;
+      body.appendChild(row);
+    });
+  });
+
+  const g = document.createElement('div');
+  g.className='section-card open';
+  g.innerHTML = `
+    <div class="section-head"><div class="htxt"><div class="section-letter">G</div><div class="section-title">Observaciones generales</div></div></div>
+    <div class="section-body" style="display:block;padding:2px 12px 14px;">
+      <textarea class="obs-input show" rows="3" placeholder="Observaciones generales de la visita..." oninput="STATE.sitio.observaciones=this.value; queueSave();">${STATE.sitio.observaciones||''}</textarea>
+    </div>`;
+  panel.appendChild(g);
+}
+function toggleSection(id){ document.getElementById('sec_'+id).classList.toggle('open'); }
+function toggleObs(key){ document.getElementById('obsbox_'+key).classList.toggle('show'); }
+
+function setSitioEstado(key, val){
+  const cur = STATE.sitio.items[key] || {estado:null,obs:''};
+  cur.estado = (cur.estado===val)? null : val;
+  STATE.sitio.items[key] = cur;
+  renderSitio();
+  const secId = key.replace(/[0-9]/g,'');
+  document.getElementById('sec_'+secId)?.classList.add('open');
+  queueSave();
+}
+function setSitioObs(key,val){
+  const cur = STATE.sitio.items[key] || {estado:null,obs:''};
+  cur.obs = val;
+  STATE.sitio.items[key]=cur;
+  queueSave();
+}
+
+function renderNodes(tab, groups, count, nounSingular){
+  const panel = document.getElementById('panel_'+tab);
+  panel.innerHTML='';
+  for(let n=1;n<=count;n++){
+    const nodeData = STATE[tab].nodos[n] || {};
+    const totalFields = groups.reduce((a,g)=>a+g.keys.length,0);
+    const doneFields = groups.reduce((a,g)=>a+g.keys.filter(([k])=>nodeData[k]==='ok'||nodeData[k]==='bad').length,0);
+    const card = document.createElement('div');
+    card.className='node-card';
+    card.id = `${tab}_node_${n}`;
+    card.innerHTML = `
+      <div class="node-head" onclick="toggleNode('${tab}',${n})">
+        <div class="node-num ${doneFields===totalFields?'complete':''}">${n}</div>
+        <div class="node-info">
+          <div class="node-title">${nounSingular} ${n}</div>
+          <div class="node-status">${doneFields}/${totalFields} verificados</div>
+        </div>
+        <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="node-body"></div>
+    `;
+    panel.appendChild(card);
+    const body = card.querySelector('.node-body');
+    groups.forEach(g=>{
+      const grp = document.createElement('div');
+      grp.className='grp';
+      grp.innerHTML = `<div class="grp-label">${g.label}</div><div class="chip-row"></div>`;
+      const row = grp.querySelector('.chip-row');
+      g.keys.forEach(([k,label])=>{
+        const state = nodeData[k]||null;
+        const chip = document.createElement('div');
+        chip.className = 'chip ' + (state==='ok'?'ok':state==='bad'?'bad':'');
+        chip.innerHTML = `<span class="dot">${state==='ok'?'✓':state==='bad'?'✕':''}</span>${label}`;
+        chip.onclick = ()=>cycleNodeField(tab,n,k);
+        row.appendChild(chip);
+      });
+      body.appendChild(grp);
+    });
+  }
+
+  const co = document.createElement('div');
+  co.className='closeout';
+  const cierre = STATE[tab].cierre || {};
+  co.innerHTML = `<h4>Cierre y limpieza</h4>`;
+  CLOSEOUT_ITEMS.forEach(([k,label])=>{
+    const row = document.createElement('div');
+    row.className='item-row';
+    row.innerHTML = `<div class="item-top">
+        <div class="item-label">${label}</div>
+        <div class="seg">
+          <button class="si ${cierre[k]==='si'?'active':''}" onclick="setCierre('${tab}','${k}','si')">SÍ</button>
+          <button class="no ${cierre[k]==='no'?'active':''}" onclick="setCierre('${tab}','${k}','no')">NO</button>
+        </div></div>`;
+    co.appendChild(row);
+  });
+  panel.appendChild(co);
+
+  const obsCard = document.createElement('div');
+  obsCard.className='closeout';
+  obsCard.innerHTML = `<h4>Observaciones</h4>
+    <textarea class="obs-input show" rows="3" placeholder="Observaciones..." oninput="STATE['${tab}'].obs=this.value; queueSave();">${STATE[tab].obs||''}</textarea>`;
+  panel.appendChild(obsCard);
+
+  const sign = document.createElement('div');
+  sign.className='sign-block';
+  const f = STATE[tab].firmas || {};
+  sign.innerHTML = `
+    <div class="sign-title">Recibe Sistemas / Entrega Proveedor</div>
+    <div class="sign-pair">
+      <div class="field"><label>Recibe (nombre)</label><input id="${tab}_recibeNombre" value="${f.recibeNombre||''}" oninput="setFirmaField('${tab}','recibeNombre',this.value)"></div>
+      <div class="field"><label>Entrega (nombre)</label><input id="${tab}_entregaNombre" value="${f.entregaNombre||''}" oninput="setFirmaField('${tab}','entregaNombre',this.value)"></div>
+      <div class="field"><label>Fecha</label><input type="date" id="${tab}_recibeFecha" value="${f.recibeFecha||''}" oninput="setFirmaField('${tab}','recibeFecha',this.value)"></div>
+      <div class="field"><label>Fecha</label><input type="date" id="${tab}_entregaFecha" value="${f.entregaFecha||''}" oninput="setFirmaField('${tab}','entregaFecha',this.value)"></div>
+    </div>
+    <div class="sign-pair" style="margin-top:4px;">
+      <div>
+        <canvas class="sigpad" id="${tab}_sig1"></canvas>
+        <span class="sig-clear" onclick="clearSig('${tab}_sig1')">Borrar firma</span>
+      </div>
+      <div>
+        <canvas class="sigpad" id="${tab}_sig2"></canvas>
+        <span class="sig-clear" onclick="clearSig('${tab}_sig2')">Borrar firma</span>
+      </div>
+    </div>
+  `;
+  panel.appendChild(sign);
+  setTimeout(()=>{ setupSigPad(`${tab}_sig1`); setupSigPad(`${tab}_sig2`); }, 30);
+}
+
+function toggleNode(tab,n){ document.getElementById(`${tab}_node_${n}`).classList.toggle('open'); }
+
+function cycleNodeField(tab,n,key){
+  if(!STATE[tab].nodos[n]) STATE[tab].nodos[n]={};
+  const cur = STATE[tab].nodos[n][key]||null;
+  STATE[tab].nodos[n][key] = cur===null?'ok': cur==='ok'?'bad': null;
+  const wasOpen = document.getElementById(`${tab}_node_${n}`).classList.contains('open');
+  renderNodes(tab, tab==='voz'?VOZ_GROUPS:CCTV_GROUPS, tab==='voz'?VOZ_NODE_COUNT:CCTV_NODE_COUNT, tab==='voz'?'Nodo':'Cámara');
+  if(wasOpen) document.getElementById(`${tab}_node_${n}`).classList.add('open');
+  queueSave();
+}
+function setCierre(tab,k,val){
+  if(!STATE[tab].cierre) STATE[tab].cierre={};
+  STATE[tab].cierre[k] = STATE[tab].cierre[k]===val? null : val;
+  renderNodes(tab, tab==='voz'?VOZ_GROUPS:CCTV_GROUPS, tab==='voz'?VOZ_NODE_COUNT:CCTV_NODE_COUNT, tab==='voz'?'Nodo':'Cámara');
+  queueSave();
+}
+function setFirmaField(tab,field,val){
+  if(!STATE[tab].firmas) STATE[tab].firmas={};
+  STATE[tab].firmas[field]=val;
+  queueSave();
+}
+
+function setupSigPad(id){
+  const canvas = document.getElementById(id);
+  if(!canvas) return;
+  const ratio = window.devicePixelRatio||1;
+  canvas.width = canvas.clientWidth*ratio;
+  canvas.height = canvas.clientHeight*ratio;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(ratio,ratio);
+  ctx.strokeStyle = '#1F3864';
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  let drawing=false, last=null;
+  function pos(e){
+    const r = canvas.getBoundingClientRect();
+    const t = e.touches? e.touches[0]: e;
+    return {x:t.clientX-r.left, y:t.clientY-r.top};
+  }
+  function start(e){ drawing=true; last=pos(e); e.preventDefault(); }
+  function move(e){
+    if(!drawing) return;
+    const p = pos(e);
+    ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke();
+    last=p; e.preventDefault();
+  }
+  function end(){ drawing=false; }
+  canvas.addEventListener('mousedown',start); canvas.addEventListener('mousemove',move); window.addEventListener('mouseup',end);
+  canvas.addEventListener('touchstart',start,{passive:false}); canvas.addEventListener('touchmove',move,{passive:false}); canvas.addEventListener('touchend',end);
+}
+function clearSig(id){
+  const canvas = document.getElementById(id);
+  if(canvas) canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
+}
+
+function updateProgress(){
+  const sitioTotal = SITIO_SECTIONS.reduce((a,s)=>a+s.items.length,0);
+  const sitioDone = Object.values(STATE.sitio.items).filter(i=>i&&i.estado).length;
+  document.getElementById('prog_sitio').textContent = sitioTotal? Math.round(100*sitioDone/sitioTotal)+'%':'0%';
+
+  ['voz','cctv'].forEach(tab=>{
+    const groups = tab==='voz'?VOZ_GROUPS:CCTV_GROUPS;
+    const count = tab==='voz'?VOZ_NODE_COUNT:CCTV_NODE_COUNT;
+    const fieldsPerNode = groups.reduce((a,g)=>a+g.keys.length,0);
+    const total = fieldsPerNode*count + CLOSEOUT_ITEMS.length;
+    let done=0;
+    for(let n=1;n<=count;n++){
+      const nd = STATE[tab].nodos[n]||{};
+      groups.forEach(g=>g.keys.forEach(([k])=>{ if(nd[k]) done++; }));
+    }
+    const cierre = STATE[tab].cierre||{};
+    CLOSEOUT_ITEMS.forEach(([k])=>{ if(cierre[k]) done++; });
+    document.getElementById('prog_'+tab).textContent = total? Math.round(100*done/total)+'%':'0%';
+  });
+}
+
+function nuevaVisita(){
+  if(!confirm('¿Iniciar nueva visita? Se restablecerán los datos guardados.')) return;
+  localStorage.clear();
+  STATE = {
+    header:{estacion:'',responsable:'',fecha:new Date().toISOString().slice(0,10),hora:''},
+    sitio:{items:{}, observaciones:''},
+    voz:{nodos:{}, cierre:{}, obs:'', firmas:{}},
+    cctv:{nodos:{}, cierre:{}, obs:'', firmas:{}},
+  };
+  init();
+  showToast('Nueva visita iniciada');
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+function shareResumen(){
+  const est = STATE.header.estacion || '(sin estación)';
+  let lines = [`Checklist recepción cableado y CCTV`, `Estación: ${est}`, `Fecha: ${STATE.header.fecha||''}`, ``];
+  lines.push(`Sitio: ${document.getElementById('prog_sitio').textContent}`);
+  lines.push(`Voz y Datos: ${document.getElementById('prog_voz').textContent}`);
+  lines.push(`CCTV: ${document.getElementById('prog_cctv').textContent}`);
+
+  const text = lines.join('\n');
+  if(navigator.share) navigator.share({title:'Checklist recepción', text}).catch(()=>{});
+  else { navigator.clipboard?.writeText(text); showToast('Resumen copiado'); }
+}
+
+function exportarExcel(){
+  const wb = XLSX.utils.book_new();
+
+  const s1 = [];
+  s1.push(['GERENCIA DE SISTEMAS','','','','','','','','Ver. 2.0']);
+  s1.push(['CHECKLIST DE ADECUACIONES EN GOMART']);
+  s1.push([STATE.header.estacion||'']);
+  s1.push(['RESPONSABLE:', STATE.header.responsable||'']);
+  s1.push(['FECHA:', STATE.header.fecha||'', 'HORA:', STATE.header.hora||'']);
+  s1.push([]);
+  SITIO_SECTIONS.forEach(sec=>{
+    s1.push([sec.id]);
+    s1.push([sec.title,'','','','SI','NO','','OBSERVACIONES']);
+    sec.items.forEach((label,i)=>{
+      const rec = STATE.sitio.items[sec.id+i] || {};
+      s1.push([i+1, label, '', '', rec.estado==='si'?'X':'', rec.estado==='no'?'X':'', '', rec.obs||'']);
+    });
+    s1.push([]);
+  });
+  s1.push(['G']);
+  s1.push(['OBSERVACIONES']);
+  s1.push([STATE.sitio.observaciones||'']);
+  const ws1 = XLSX.utils.aoa_to_sheet(s1);
+  ws1['!cols'] = [{wch:5},{wch:55},{wch:6},{wch:6},{wch:6},{wch:6},{wch:4},{wch:40}];
+  XLSX.utils.book_append_sheet(wb, ws1, 'Formato Visita en sitio');
+
+  function buildNodeSheet(tab, groups, count, nounHeader){
+    const rows = [];
+    rows.push(['RECEPCION DE CABLEADO EN TIENDAS Y ESTACIONES — '+ (STATE.header.estacion||'')]);
+    rows.push(['Responsable:', STATE.header.responsable||'', 'Fecha:', STATE.header.fecha||'']);
+    rows.push([]);
+    const grpHeader = ['# '+nounHeader];
+    const subHeader = ['#'];
+    groups.forEach(g=>{
+      g.keys.forEach((k,idx)=>{ grpHeader.push(idx===0? g.label:''); subHeader.push(k[1]); });
+    });
+    rows.push(grpHeader); rows.push(subHeader);
+    for(let n=1;n<=count;n++){
+      const nd = STATE[tab].nodos[n]||{};
+      const row = [n];
+      groups.forEach(g=>g.keys.forEach(([k])=>{ row.push(nd[k]==='ok'?'OK':nd[k]==='bad'?'NO':''); }));
+      rows.push(row);
+    }
+    rows.push([]);
+    const cierre = STATE[tab].cierre||{};
+    CLOSEOUT_ITEMS.forEach(([k,label])=>{ rows.push([label, cierre[k]==='si'?'SI':cierre[k]==='no'?'NO':'']); });
+    rows.push([]);
+    rows.push(['OBSERVACIONES']);
+    rows.push([STATE[tab].obs||'']);
+    rows.push([]);
+    const f = STATE[tab].firmas||{};
+    rows.push(['RECIBE SISTEMAS','','','ENTREGA PROVEEDOR']);
+    rows.push([f.recibeNombre||'', '', '', f.entregaNombre||'']);
+    rows.push(['Fecha:', f.recibeFecha||'', '', 'Fecha:', f.entregaFecha||'']);
+    return rows;
+  }
+
+  const ws2 = XLSX.utils.aoa_to_sheet(buildNodeSheet('voz', VOZ_GROUPS, VOZ_NODE_COUNT, 'NODO'));
+  ws2['!cols'] = [{wch:6},...Array(10).fill({wch:16})];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Voz y Datos');
+
+  const ws3 = XLSX.utils.aoa_to_sheet(buildNodeSheet('cctv', CCTV_GROUPS, CCTV_NODE_COUNT, 'CAMARA'));
+  ws3['!cols'] = [{wch:6},...Array(12).fill({wch:16})];
+  XLSX.utils.book_append_sheet(wb, ws3, 'CCTV');
+
+  const estacionSlug = (STATE.header.estacion||'checklist').replace(/[^a-z0-9]+/gi,'_');
+  const filename = `Checklist_${estacionSlug}_${STATE.header.fecha||'2026'}.xlsx`;
+  XLSX.writeFile(wb, filename);
+  showToast('Excel descargado: '+filename);
+}
+
+init();
+</script>
+</body>
+</html>
