@@ -57,7 +57,7 @@
   .chip.ok { border-color: var(--ok); background: var(--ok-bg); color: var(--ok); }
   .chip.bad { border-color: var(--bad); background: var(--bad-bg); color: var(--bad); }
 
-  .obs-input { width: 100%; margin-top: 6px; border: 1.5px solid var(--border); border-radius: 8px; padding: 8px; font-size: 12.5px; background: #FBFCFE; font-family: inherit; display: none; }
+  .obs-input { width: 100%; margin-top: 6px; border: 1.5px solid var(--border); border-radius: 8px; padding: 8px; font-size: 12.5px; background: #FBFCFE; font-family: inherit; }
   .obs-toggle { font-size: 11px; color: var(--blue); font-weight: 600; margin-top: 4px; display: inline-block; cursor: pointer; }
 
   .bottomnav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid var(--border); display: flex; padding: 8px; gap: 6px; z-index: 30; }
@@ -95,7 +95,7 @@
 </div>
 
 <div class="tabbar">
-  <button type="button" class="tab active" data-tab="sitio">Sitio <span class="prog" id="prog_sitio">0%</span></button>
+  <button type="button" class="tab active" data-tab="sitio">Visita en Sitio <span class="prog" id="prog_sitio">0%</span></button>
   <button type="button" class="tab" data-tab="voz">Voz y Datos <span class="prog" id="prog_voz">0%</span></button>
   <button type="button" class="tab" data-tab="cctv">CCTV <span class="prog" id="prog_cctv">0%</span></button>
 </div>
@@ -107,7 +107,7 @@
 <div class="bottomnav">
   <button type="button" class="navbtn save" id="btnGuardar">💾 Guardar</button>
   <button type="button" class="navbtn view" id="btnVerDatos">🔍 Ver Datos</button>
-  <button type="button" class="navbtn export" id="btnExportar">📊 Excel</button>
+  <button type="button" class="navbtn export" id="btnExportar">📊 Exportar CSV</button>
 </div>
 
 <div class="modal-overlay" id="modalData">
@@ -118,7 +118,7 @@
     </div>
     <div class="modal-body">
       <div style="font-size:14px;font-weight:800;margin-bottom:8px;">Avance Total: <span id="lblAvanceTotal" style="color:var(--blue);">0%</span></div>
-      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;">Objeto de Datos (JSON)</div>
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;">Estructura JSON Generada</div>
       <pre id="jsonPreview"></pre>
     </div>
   </div>
@@ -192,7 +192,7 @@ function renderApp() {
 
   renderSitio();
   renderNodos('voz', CHIPS_VOZ, 24, 'Nodo');
-  renderNodos('cctv', CHIPS_CCTV, 16, 'Cámara');
+  renderNodos('cctv', CHIPS_CCTV, 24, 'Cámara');
 }
 
 function renderSitio() {
@@ -325,7 +325,7 @@ function configurarEventosGlobales() {
       const rowSitio = e.target.closest('.item-row[data-key]');
       if (rowSitio) {
         const key = rowSitio.dataset.key;
-        if (!appData.sitio[key]) appData.sitio[key] = { status: '', obs: '' }; me
+        if (!appData.sitio[key]) appData.sitio[key] = { status: '', obs: '' };
         const targetStatus = btnSi ? 'si' : 'no';
         appData.sitio[key].status = appData.sitio[key].status === targetStatus ? '' : targetStatus;
         guardarDatos();
@@ -341,7 +341,7 @@ function configurarEventosGlobales() {
         const targetStatus = btnSi ? 'si' : 'no';
         appData[tab].cierre[key] = appData[tab].cierre[key] === targetStatus ? '' : targetStatus;
         guardarDatos();
-        renderNodos(tab, tab === 'voz' ? CHIPS_VOZ : CHIPS_CCTV, tab === 'voz' ? 24 : 16, tab === 'voz' ? 'Nodo' : 'Cámara');
+        renderNodos(tab, tab === 'voz' ? CHIPS_VOZ : CHIPS_CCTV, 24, tab === 'voz' ? 'Nodo' : 'Cámara');
         return;
       }
     }
@@ -368,7 +368,7 @@ function configurarEventosGlobales() {
       appData[tab].nodos[nodo][key] = nextState;
 
       guardarDatos();
-      renderNodos(tab, tab === 'voz' ? CHIPS_VOZ : CHIPS_CCTV, tab === 'voz' ? 24 : 16, tab === 'voz' ? 'Nodo' : 'Cámara');
+      renderNodos(tab, tab === 'voz' ? CHIPS_VOZ : CHIPS_CCTV, 24, tab === 'voz' ? 'Nodo' : 'Cámara');
       return;
     }
   });
@@ -440,7 +440,7 @@ function calcularProgreso() {
   };
 
   const vozM = countChips('voz', 24, CHIPS_VOZ);
-  const cctvM = countChips('cctv', 16, CHIPS_CCTV);
+  const cctvM = countChips('cctv', 24, CHIPS_CCTV);
 
   const pctSitio = Math.round((doneSitio / totalSitio) * 100) || 0;
   const pctVoz = Math.round((vozM.done / vozM.total) * 100) || 0;
