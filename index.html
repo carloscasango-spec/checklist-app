@@ -346,9 +346,10 @@ const CLOSEOUT_ITEMS = [
 ];
 
 /* ============================================================
-   STATE & PERSISTENCE
+   STATE & PERSISTENCE MULTI-HOJA
    ============================================================ */
 let STATE = {
+  id: '',
   header:{estacion:'',responsable:'',fecha:'',hora:''},
   sitio:{items:{}, observaciones:''},
   voz:{nodos:{}, cierre:{}, obs:'', firmas:{recibeNombre:'',recibeFecha:'',entregaNombre:'',entregaFecha:''}},
@@ -372,14 +373,26 @@ function safeGetStorage(key) {
   }
 }
 
+function getRegistroId() {
+  if (!STATE.id) {
+    STATE.id = 'chk_' + Date.now();
+  }
+  return STATE.id;
+}
+
 let saveTimer = null;
 function queueSave(){
   clearInterval(saveTimer);
   saveTimer = setTimeout(()=>{
-    safeSetStorage('checklist:header', STATE.header);
-    safeSetStorage('checklist:sitio', STATE.sitio);
-    safeSetStorage('checklist:voz', STATE.voz);
-    safeSetStorage('checklist:cctv', STATE.cctv);
+    const regId = getRegistroId();
+    safeSetStorage(`checklist_data_${regId}`, STATE);
+    safeSetStorage('checklist_last_active_id', regId);
+    
+    let index = safeGetStorage('checklist_index') || [];
+    if (!index.includes(regId)) {
+      index.push(regId);
+      safeSetStorage('checklist_index', index);
+    }
     updateProgress();
   }, 200);
 }
@@ -478,11 +491,6 @@ function calcularMetricas() {
 }
 
 function verDatosGuardados() {
-  const h = safeGetStorage('checklist:header') || STATE.header;
-  const s = safeGetStorage('checklist:sitio') || STATE.sitio;
-  const v = safeGetStorage('checklist:voz') || STATE.voz;
-  const c = safeGetStorage('checklist:cctv') || STATE.cctv;
-
   const m = calcularMetricas();
 
   document.getElementById('totalPct').textContent = m.pctTotal + '%';
@@ -503,8 +511,7 @@ function verDatosGuardados() {
     });
   }
 
-  const resumen = { Encabezado: h, Sitio: s, VozYDatos: v, CCTV: c };
-  document.getElementById('jsonPreview').textContent = JSON.stringify(resumen, null, 2);
+  document.getElementById('jsonPreview').textContent = JSON.stringify(STATE, null, 2);
   document.getElementById('modalData').classList.add('open');
 }
 
@@ -522,10 +529,15 @@ function copiarJson() {
    INIT / RENDER
    ============================================================ */
 function init(){
-  const h = safeGetStorage('checklist:header'); if(h) STATE.header = h;
-  const s = safeGetStorage('checklist:sitio'); if(s) STATE.sitio = s;
-  const v = safeGetStorage('checklist:voz'); if(v) STATE.voz = v;
-  const c = safeGetStorage('checklist:cctv'); if(c) STATE.cctv = c;
+  const lastId = safeGetStorage('checklist_last_active_id');
+  if(lastId) {
+    const data = safeGetStorage(`checklist_data_${lastId}`);
+    if(data) STATE = data;
+  }
+
+  if(!STATE.id) {
+    STATE.id = 'chk_' + Date.now();
+  }
 
   document.getElementById('h_estacion').value = STATE.header.estacion||'';
   document.getElementById('h_responsable').value = STATE.header.responsable||'';
@@ -758,9 +770,32 @@ function showToast(msg){
 }
 
 function nuevaVisita(){
-  if(confirm('¿Deseas reiniciar el checklist y borrar los datos locales?')){
-    localStorage.clear();
-    location.reload();
+  if(confirm('¿Deseas iniciar una nueva hoja de checklist? Se guardará el avance de la hoja actual.')){
+    // Guardar avance actual antes de crear una nueva
+    guardarProgresoManual();
+
+    // Crear un nuevo estado independiente
+    STATE = {
+      id: 'chk_' + Date.now(),
+      header: {estacion:'', responsable:'', fecha: new Date().toISOString().slice(0,10), hora:''},
+      sitio: {items:{}, observaciones:''},
+      voz: {nodos:{}, cierre:{}, obs:'', firmas:{recibeNombre:'',recibeFecha:'',entregaNombre:'',entregaFecha:''}},
+      cctv: {nodos:{}, cierre:{}, obs:'', firmas:{recibeNombre:'',recibeFecha:'',entregaNombre:'',entregaFecha:''}}
+    };
+
+    // Resetear formulario
+    document.getElementById('h_estacion').value = '';
+    document.getElementById('h_responsable').value = '';
+    document.getElementById('h_fecha').value = STATE.header.fecha;
+    document.getElementById('h_hora').value = '';
+
+    // Renderizar hojas limpias
+    renderSitio();
+    renderNodes('voz', VOZ_GROUPS, VOZ_NODE_COUNT, 'Nodo');
+    renderNodes('cctv', CCTV_GROUPS, CCTV_NODE_COUNT, 'Cámara');
+    updateProgress();
+
+    showToast('📝 Nueva hoja iniciada');
   }
 }
 
