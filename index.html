@@ -45,7 +45,7 @@
   .brand-sub{font-size:12px;opacity:.75;margin-top:1px;}
   .reset-btn{
     background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);
-    color:#fff;font-size:11px;padding:7px 10px;border-radius:8px;
+    color:#fff;font-size:11px;padding:7px 10px;border-radius:8px;cursor:pointer;
   }
 
   /* Header info form */
@@ -135,9 +135,6 @@
     border:1px solid var(--border);}
   .sign-title{font-weight:700;font-size:13px;margin-bottom:8px;}
   .sign-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-  canvas.sigpad{width:100%;height:100px;background:#fbfcfe;border:1.5px dashed var(--border);
-    border-radius:9px;touch-action:none;}
-  .sig-clear{font-size:10.5px;color:var(--blue);font-weight:700;margin-top:4px;display:inline-block;cursor:pointer;}
 
   /* Bottom nav */
   .bottomnav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);
@@ -155,7 +152,7 @@
     font-weight:600;opacity:0;transition:all .25s;pointer-events:none;z-index:50;white-space:nowrap;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
-  /* Modal de datos guardados y métricas */
+  /* Modal de datos guardados */
   .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);
     display:none;align-items:center;justify-content:center;z-index:100;padding:16px;}
   .modal-overlay.open{display:flex;}
@@ -198,23 +195,23 @@
       <div class="brand-title">Recepción de Cableado y CCTV</div>
       <div class="brand-sub">Checklist ES / GoMart — Ver. 2.0</div>
     </div>
-    <button class="reset-btn" onclick="nuevaVisita()">Nueva visita</button>
+    <button type="button" class="reset-btn" onclick="nuevaVisita(event)">Nueva visita</button>
   </div>
 </header>
 
 <div class="infobox">
   <div class="infogrid">
-    <div class="field"><label>Estación / GoMart</label><input id="h_estacion" placeholder="Ej. ES Manglares" oninput="saveHeader()"></div>
-    <div class="field"><label>Responsable</label><input id="h_responsable" placeholder="Nombre" oninput="saveHeader()"></div>
+    <div class="field"><label>Estación / GoMart</label><input id="h_estacion" type="text" placeholder="Ej. ES Manglares" oninput="saveHeader()"></div>
+    <div class="field"><label>Responsable</label><input id="h_responsable" type="text" placeholder="Nombre" oninput="saveHeader()"></div>
     <div class="field"><label>Fecha</label><input id="h_fecha" type="date" oninput="saveHeader()"></div>
     <div class="field"><label>Hora</label><input id="h_hora" type="time" oninput="saveHeader()"></div>
   </div>
 </div>
 
 <div class="tabbar">
-  <button class="tab active" data-tab="sitio" onclick="switchTab('sitio')">Sitio<span class="prog" id="prog_sitio">0%</span></button>
-  <button class="tab" data-tab="voz" onclick="switchTab('voz')">Voz y Datos<span class="prog" id="prog_voz">0%</span></button>
-  <button class="tab" data-tab="cctv" onclick="switchTab('cctv')">CCTV<span class="prog" id="prog_cctv">0%</span></button>
+  <button type="button" class="tab active" data-tab="sitio" onclick="switchTab('sitio')">Sitio<span class="prog" id="prog_sitio">0%</span></button>
+  <button type="button" class="tab" data-tab="voz" onclick="switchTab('voz')">Voz y Datos<span class="prog" id="prog_voz">0%</span></button>
+  <button type="button" class="tab" data-tab="cctv" onclick="switchTab('cctv')">CCTV<span class="prog" id="prog_cctv">0%</span></button>
 </div>
 
 <div class="panel active" id="panel_sitio"></div>
@@ -224,22 +221,21 @@
 <div class="footer-note">Tus respuestas se guardan automáticamente en este dispositivo.</div>
 
 <div class="bottomnav">
-  <button class="navbtn save" onclick="guardarProgresoManual()">💾 Guardar</button>
-  <button class="navbtn view" onclick="verDatosGuardados()">🔍 Ver datos</button>
-  <button class="navbtn pdf" onclick="exportarPDF()">📄 PDF</button>
-  <button class="navbtn export" onclick="exportarExcel()">📊 Excel</button>
+  <button type="button" class="navbtn save" onclick="guardarProgresoManual(event)">💾 Guardar</button>
+  <button type="button" class="navbtn view" onclick="verDatosGuardados(event)">🔍 Ver datos</button>
+  <button type="button" class="navbtn pdf" onclick="exportarPDF(event)">📄 PDF</button>
+  <button type="button" class="navbtn export" onclick="exportarExcel(event)">📊 Excel</button>
 </div>
 
-<!-- Modal para ver datos guardados y métricas -->
+<!-- Modal de Datos -->
 <div class="modal-overlay" id="modalData">
   <div class="modal-card">
     <div class="modal-head">
       <span>Estado del Registro Guardado</span>
-      <button class="modal-close" onclick="cerrarModal()">✕</button>
+      <button type="button" class="modal-close" onclick="cerrarModal()">✕</button>
     </div>
     <div class="modal-body">
       
-      <!-- Avance General -->
       <div class="stat-card">
         <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;">Avance Total</div>
         <div class="stat-main" id="totalPct">0%</div>
@@ -253,20 +249,18 @@
         </div>
       </div>
 
-      <!-- Pendientes -->
       <div class="missing-section">
         <div class="missing-title">Lo que falta por capturar:</div>
         <ul class="missing-list" id="missingList"></ul>
       </div>
 
-      <!-- JSON crudo -->
       <div style="font-size:11px;font-weight:700;color:var(--muted);margin-top:14px;text-transform:uppercase;">Objeto de Datos (JSON)</div>
       <pre id="jsonPreview"></pre>
 
     </div>
     <div class="modal-foot">
-      <button class="modal-btn" onclick="copiarJson()">📋 Copiar JSON</button>
-      <button class="modal-btn primary" onclick="cerrarModal()">Cerrar</button>
+      <button type="button" class="modal-btn" onclick="copiarJson()">📋 Copiar JSON</button>
+      <button type="button" class="modal-btn primary" onclick="cerrarModal()">Cerrar</button>
     </div>
   </div>
 </div>
@@ -274,9 +268,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-/* ============================================================
-   DATA MODEL
-   ============================================================ */
+/* DATA MODEL */
 const SITIO_SECTIONS = [
   {id:'A', title:'Nodos de red y contactos piso de venta', items:[
     'Canalizaciones / registros para datos en área de TPV',
@@ -345,9 +337,7 @@ const CLOSEOUT_ITEMS = [
   ['tierraFisica','Rack a tierra física / gabinete'],
 ];
 
-/* ============================================================
-   STATE & PERSISTENCE MULTI-HOJA
-   ============================================================ */
+/* STATE */
 let STATE = {
   id: '',
   header:{estacion:'',responsable:'',fecha:'',hora:''},
@@ -360,7 +350,7 @@ function safeSetStorage(key, val) {
   try {
     localStorage.setItem(key, JSON.stringify(val));
   } catch(e) {
-    console.warn('Storage no disponible localmente', e);
+    console.warn('Storage no disponible', e);
   }
 }
 
@@ -380,33 +370,36 @@ function getRegistroId() {
   return STATE.id;
 }
 
+function guardarEnStorageDirecto() {
+  const regId = getRegistroId();
+  safeSetStorage(`checklist_data_${regId}`, STATE);
+  safeSetStorage('checklist_last_active_id', regId);
+  
+  let index = safeGetStorage('checklist_index') || [];
+  if (!index.includes(regId)) {
+    index.push(regId);
+    safeSetStorage('checklist_index', index);
+  }
+}
+
 let saveTimer = null;
 function queueSave(){
   clearInterval(saveTimer);
   saveTimer = setTimeout(()=>{
-    const regId = getRegistroId();
-    safeSetStorage(`checklist_data_${regId}`, STATE);
-    safeSetStorage('checklist_last_active_id', regId);
-    
-    let index = safeGetStorage('checklist_index') || [];
-    if (!index.includes(regId)) {
-      index.push(regId);
-      safeSetStorage('checklist_index', index);
-    }
+    guardarEnStorageDirecto();
     updateProgress();
-  }, 200);
+  }, 100);
 }
 
-function guardarProgresoManual() {
-  queueSave();
-  showToast('💾 Datos guardados en el dispositivo');
+function guardarProgresoManual(e) {
+  if(e) e.preventDefault();
+  guardarEnStorageDirecto();
+  updateProgress();
+  showToast('💾 Datos guardados correctamente');
 }
 
-/* ============================================================
-   CÁLCULO DE MÉTRICAS Y VER DATOS EN PANTALLA
-   ============================================================ */
+/* CÁLCULO DE MÉTRICAS */
 function calcularMetricas() {
-  // Sitio
   const sitioTotal = SITIO_SECTIONS.reduce((a,s)=>a+s.items.length,0);
   let sitioDone = 0;
   let sitioMissing = [];
@@ -415,7 +408,7 @@ function calcularMetricas() {
     let secMissing = 0;
     sec.items.forEach((item,i)=>{
       const key = sec.id+i;
-      if(STATE.sitio.items[key] && STATE.sitio.items[key].estado) {
+      if(STATE.sitio && STATE.sitio.items && STATE.sitio.items[key] && STATE.sitio.items[key].estado) {
         sitioDone++;
       } else {
         secMissing++;
@@ -426,14 +419,13 @@ function calcularMetricas() {
     }
   });
 
-  // Voz y Datos
   const vozNodeFields = VOZ_GROUPS.reduce((a,g)=>a+g.keys.length,0);
   const vozTotal = (vozNodeFields * VOZ_NODE_COUNT) + CLOSEOUT_ITEMS.length;
   let vozDone = 0;
   let vozIncompleteList = [];
 
   for(let n=1; n<=VOZ_NODE_COUNT; n++){
-    const nd = STATE.voz.nodos[n] || {};
+    const nd = (STATE.voz && STATE.voz.nodos) ? (STATE.voz.nodos[n] || {}) : {};
     let nDone = 0;
     VOZ_GROUPS.forEach(g => g.keys.forEach(([k]) => { 
       if(nd[k] === 'ok' || nd[k] === 'bad') nDone++; 
@@ -443,20 +435,19 @@ function calcularMetricas() {
       vozIncompleteList.push(`Nodo ${n}`);
     }
   }
-  const vozCierre = STATE.voz.cierre || {};
+  const vozCierre = (STATE.voz && STATE.voz.cierre) ? STATE.voz.cierre : {};
   CLOSEOUT_ITEMS.forEach(([k]) => { if(vozCierre[k]) vozDone++; });
   if(vozIncompleteList.length > 0) {
     sitioMissing.push(`Voz y Datos: Incompleto en (${vozIncompleteList.join(', ')})`);
   }
 
-  // CCTV
   const cctvNodeFields = CCTV_GROUPS.reduce((a,g)=>a+g.keys.length,0);
   const cctvTotal = (cctvNodeFields * CCTV_NODE_COUNT) + CLOSEOUT_ITEMS.length;
   let cctvDone = 0;
   let cctvIncompleteList = [];
 
   for(let n=1; n<=CCTV_NODE_COUNT; n++){
-    const nd = STATE.cctv.nodos[n] || {};
+    const nd = (STATE.cctv && STATE.cctv.nodos) ? (STATE.cctv.nodos[n] || {}) : {};
     let nDone = 0;
     CCTV_GROUPS.forEach(g => g.keys.forEach(([k]) => { 
       if(nd[k] === 'ok' || nd[k] === 'bad') nDone++; 
@@ -466,20 +457,19 @@ function calcularMetricas() {
       cctvIncompleteList.push(`Cámara ${n}`);
     }
   }
-  const cctvCierre = STATE.cctv.cierre || {};
+  const cctvCierre = (STATE.cctv && STATE.cctv.cierre) ? STATE.cctv.cierre : {};
   CLOSEOUT_ITEMS.forEach(([k]) => { if(cctvCierre[k]) cctvDone++; });
   if(cctvIncompleteList.length > 0) {
     sitioMissing.push(`CCTV: Incompleto en (${cctvIncompleteList.join(', ')})`);
   }
 
-  // Totales generales
   const grandTotal = sitioTotal + vozTotal + cctvTotal;
   const grandDone = sitioDone + vozDone + cctvDone;
 
-  const pctSitio = Math.round((sitioDone / sitioTotal) * 100);
-  const pctVoz = Math.round((vozDone / vozTotal) * 100);
-  const pctCctv = Math.round((cctvDone / cctvTotal) * 100);
-  const pctTotal = Math.round((grandDone / grandTotal) * 100);
+  const pctSitio = sitioTotal > 0 ? Math.round((sitioDone / sitioTotal) * 100) : 0;
+  const pctVoz = vozTotal > 0 ? Math.round((vozDone / vozTotal) * 100) : 0;
+  const pctCctv = cctvTotal > 0 ? Math.round((cctvDone / cctvTotal) * 100) : 0;
+  const pctTotal = grandTotal > 0 ? Math.round((grandDone / grandTotal) * 100) : 0;
 
   return {
     pctTotal,
@@ -490,7 +480,9 @@ function calcularMetricas() {
   };
 }
 
-function verDatosGuardados() {
+function verDatosGuardados(e) {
+  if(e) e.preventDefault();
+  guardarEnStorageDirecto();
   const m = calcularMetricas();
 
   document.getElementById('totalPct').textContent = m.pctTotal + '%';
@@ -525,9 +517,7 @@ function copiarJson() {
   showToast('📋 Datos copiados al portapapeles');
 }
 
-/* ============================================================
-   INIT / RENDER
-   ============================================================ */
+/* INIT & RENDER */
 function init(){
   const lastId = safeGetStorage('checklist_last_active_id');
   if(lastId) {
@@ -565,7 +555,6 @@ function switchTab(tab){
   window.scrollTo({top:0,behavior:'instant'});
 }
 
-/* ---------- Sitio tab ---------- */
 function renderSitio(){
   const panel = document.getElementById('panel_sitio');
   panel.innerHTML = '';
@@ -598,8 +587,8 @@ function renderSitio(){
         <div class="item-top">
           <div class="item-label">${i+1}. ${label}</div>
           <div class="seg">
-            <button class="si ${rec.estado==='si'?'active':''}" onclick="setSitioEstado('${key}','si')">SÍ</button>
-            <button class="no ${rec.estado==='no'?'active':''}" onclick="setSitioEstado('${key}','no')">NO</button>
+            <button type="button" class="si ${rec.estado==='si'?'active':''}" onclick="setSitioEstado('${key}','si')">SÍ</button>
+            <button type="button" class="no ${rec.estado==='no'?'active':''}" onclick="setSitioEstado('${key}','no')">NO</button>
           </div>
         </div>
         <span class="obs-toggle" onclick="toggleObs('${key}')">${rec.obs? '✎ Ver observación' : '+ Añadir observación'}</span>
@@ -618,6 +607,7 @@ function renderSitio(){
     </div>`;
   panel.appendChild(g);
 }
+
 function toggleSection(id){ document.getElementById('sec_'+id).classList.toggle('open'); }
 function toggleObs(key){
   const box = document.getElementById('obsbox_'+key);
@@ -643,7 +633,6 @@ function reopenAfterRender(key){
   if(el) el.classList.add('open');
 }
 
-/* ---------- Node tabs (Voz/Datos + CCTV) ---------- */
 function renderNodes(tab, groups, count, nounSingular){
   const panel = document.getElementById('panel_'+tab);
   panel.innerHTML='';
@@ -694,8 +683,8 @@ function renderNodes(tab, groups, count, nounSingular){
     row.innerHTML = `<div class="item-top">
         <div class="item-label">${label}</div>
         <div class="seg">
-          <button class="si ${cierre[k]==='si'?'active':''}" onclick="setCierre('${tab}','${k}','si')">SÍ</button>
-          <button class="no ${cierre[k]==='no'?'active':''}" onclick="setCierre('${tab}','${k}','no')">NO</button>
+          <button type="button" class="si ${cierre[k]==='si'?'active':''}" onclick="setCierre('${tab}','${k}','si')">SÍ</button>
+          <button type="button" class="no ${cierre[k]==='no'?'active':''}" onclick="setCierre('${tab}','${k}','no')">NO</button>
         </div></div>`;
     co.appendChild(row);
   });
@@ -769,12 +758,11 @@ function showToast(msg){
   setTimeout(()=>t.classList.remove('show'), 2500);
 }
 
-function nuevaVisita(){
+function nuevaVisita(e){
+  if(e) e.preventDefault();
   if(confirm('¿Deseas iniciar una nueva hoja de checklist? Se guardará el avance de la hoja actual.')){
-    // Guardar avance actual antes de crear una nueva
-    guardarProgresoManual();
+    guardarEnStorageDirecto();
 
-    // Crear un nuevo estado independiente
     STATE = {
       id: 'chk_' + Date.now(),
       header: {estacion:'', responsable:'', fecha: new Date().toISOString().slice(0,10), hora:''},
@@ -783,13 +771,13 @@ function nuevaVisita(){
       cctv: {nodos:{}, cierre:{}, obs:'', firmas:{recibeNombre:'',recibeFecha:'',entregaNombre:'',entregaFecha:''}}
     };
 
-    // Resetear formulario
+    guardarEnStorageDirecto();
+
     document.getElementById('h_estacion').value = '';
     document.getElementById('h_responsable').value = '';
     document.getElementById('h_fecha').value = STATE.header.fecha;
     document.getElementById('h_hora').value = '';
 
-    // Renderizar hojas limpias
     renderSitio();
     renderNodes('voz', VOZ_GROUPS, VOZ_NODE_COUNT, 'Nodo');
     renderNodes('cctv', CCTV_GROUPS, CCTV_NODE_COUNT, 'Cámara');
@@ -799,7 +787,8 @@ function nuevaVisita(){
   }
 }
 
-function exportarExcel(){
+function exportarExcel(e){
+  if(e) e.preventDefault();
   const m = calcularMetricas();
   const wb = XLSX.utils.book_new();
   const dataHeader = [
@@ -816,11 +805,11 @@ function exportarExcel(){
   XLSX.writeFile(wb, `Checklist_${STATE.header.estacion||'General'}.xlsx`);
 }
 
-function exportarPDF(){
+function exportarPDF(e){
+  if(e) e.preventDefault();
   window.print();
 }
 
-// Inicializar al cargar ventana
 window.onload = init;
 </script>
 </body>
