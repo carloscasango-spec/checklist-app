@@ -3,109 +3,313 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Visita en Sitio - Gomart</title>
+  <title>Recepción de Voz, Datos y CCTV</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; margin: 0; padding: 15px; background: #fff; color: #000; font-size: 9pt; }
-    .no-print { text-align: right; margin-bottom: 15px; }
-    .btn-action { background: #1b365d; color: white; border: none; padding: 10px 18px; font-weight: bold; border-radius: 4px; cursor: pointer; }
-    .btn-action:hover { background: #0f2341; }
+    body { font-family: Arial, sans-serif; margin: 0; padding: 15px; background: #fff; color: #000; font-size: 8pt; }
     
-    .header-table, .info-table, .section-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
-    .header-table td, .info-table td { border: 1.5pt solid #000; padding: 6px; font-size: 9.5pt; }
-    .section-table th, .section-table td { border: 1pt solid #000; padding: 5px; font-size: 8.5pt; }
-    .section-header { background: #d9e1f2; font-weight: bold; }
-    .col-opt { width: 35px; text-align: center; }
-    .col-obs input, .info-table input { width: 100%; border: none; outline: none; background: transparent; font-size: 9pt; }
-    .error-row { background-color: #ffe6e6 !important; }
+    /* Panel de Control Superior (No sale en el PDF) */
+    .no-print {
+      background: #f4f6f9;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .panel-group { display: flex; align-items: center; gap: 8px; }
+    .btn-action { background: #1b365d; color: white; border: none; padding: 8px 14px; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 8.5pt; }
+    .btn-action:hover { background: #0f2341; }
+    .btn-success { background: #2e7d32; }
+    .btn-success:hover { background: #1b5e20; }
+    .btn-secondary { background: #555; }
+    .btn-secondary:hover { background: #333; }
+    select { padding: 6px; font-size: 8.5pt; border-radius: 4px; border: 1px solid #ccc; }
+
+    /* Estilos del Formato Matricial */
+    .main-title {
+      background-color: #fce4d6;
+      text-align: center;
+      font-weight: bold;
+      font-size: 10pt;
+      padding: 5px;
+      border: 1pt solid #000;
+      margin-top: 10px;
+      margin-bottom: 2px;
+      text-transform: uppercase;
+    }
+
+    .matrix-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+    .matrix-table th, .matrix-table td { border: 1pt solid #000; padding: 2px 3px; text-align: center; vertical-align: middle; }
+    
+    .bg-blue-top { background-color: #bdd7ee; font-weight: bold; font-size: 7.5pt; text-transform: uppercase; }
+    .bg-blue-sub { background-color: #d9e1f2; font-weight: bold; font-size: 7pt; text-transform: uppercase; }
+    
+    .col-nodo { width: 45px; font-weight: bold; background-color: #f2f2f2; }
+    .cell-chk { width: 30px; }
+    .cell-chk input { transform: scale(0.9); cursor: pointer; }
+
+    .table-sub { width: 100%; border-collapse: collapse; }
+    .table-sub td { border: 1pt solid #000; padding: 4px; font-size: 7.5pt; }
+    
+    .project-box {
+      border: 1pt solid #000;
+      background-color: #bdd7ee;
+      padding: 10px;
+      font-weight: bold;
+      font-size: 10pt;
+    }
+
+    .obs-container { margin-top: 8px; border-bottom: 1pt solid #000; padding-bottom: 2px; }
+    .obs-container input { width: 85%; border: none; outline: none; font-size: 8pt; }
+
+    .signatures-table { width: 100%; margin-top: 25px; border-collapse: collapse; }
+    .signatures-table td { text-align: center; font-size: 8pt; vertical-align: bottom; }
+    .line-sig { border-top: 1pt solid #000; width: 70%; margin: 0 auto 3px auto; }
   </style>
 </head>
 <body>
 
+<!-- PANEL DE CONTROL NO IMPRESO -->
 <div class="no-print">
-  <button class="btn-action" onclick="descargarVisitaPDF()">📥 Descargar PDF</button>
+  <div class="panel-group">
+    <button class="btn-action btn-secondary" onclick="nuevoProyecto()">➕ Nuevo Proyecto</button>
+    <button class="btn-action btn-success" onclick="guardarProgreso()">💾 Guardar Cambios</button>
+  </div>
+  
+  <div class="panel-group">
+    <label for="select-proyectos"><strong>Proyectos Guardados:</strong></label>
+    <select id="select-proyectos" onchange="cargarProyecto(this.value)">
+      <option value="">-- Seleccionar Borrador --</option>
+    </select>
+  </div>
+
+  <div class="panel-group">
+    <button class="btn-action" onclick="descargarPDF()">📥 Descargar PDF</button>
+  </div>
 </div>
 
-<div id="formato-visita">
-  <table class="header-table">
-    <tr>
-      <td style="width: 25%;"><strong>SYNERGO</strong></td>
-      <td style="text-align: center; width: 50%;"><strong>GERENCIA DE SISTEMAS</strong><br><small>CHECKLIST VISITA EN SITIO</small></td>
-      <td style="text-align: right; width: 25%;"><strong>Ver. 1.0</strong></td>
-    </tr>
-  </table>
+<!-- CONTENEDOR EXPORTABLE -->
+<div id="formato-pdf">
 
-  <table class="info-table">
-    <tr>
-      <td style="width: 20%; background: #f2f4f8;"><strong>SUCURSAL / GOMART:</strong></td>
-      <td colspan="3"><input type="text" id="req-gomart" placeholder="Nombre del Gomart / Sucursal"></td>
-    </tr>
-    <tr>
-      <td style="background: #f2f4f8;"><strong>RESPONSABLE:</strong></td>
-      <td style="width: 45%;"><input type="text" id="req-responsable" placeholder="Nombre completo"></td>
-      <td style="background: #f2f4f8; width: 10%;"><strong>FECHA:</strong></td>
-      <td><input type="date" id="req-fecha"></td>
-    </tr>
-  </table>
-
-  <table class="section-table">
+  <!-- TABLA 1: VOZ Y DATOS (24 NODOS) -->
+  <div class="main-title">Recepción de Cableado de Voz y Datos en Tiendas y Estaciones</div>
+  <table class="matrix-table">
     <thead>
-      <tr class="section-header">
-        <th colspan="2">A. ADECUACIONES Y REVISIÓN EN SITIO</th>
-        <th class="col-opt">SI</th>
-        <th class="col-opt">NO</th>
-        <th class="col-opt">N/A</th>
-        <th style="width: 35%;">OBSERVACIONES</th>
+      <tr class="bg-blue-top">
+        <th rowspan="2" class="col-nodo"># NODO</th>
+        <th colspan="2">Cableado del Nodo</th>
+        <th colspan="2">Etiquetado del Nodo</th>
+        <th colspan="2">Etiquetado del Patchcord</th>
+        <th colspan="2">Organización del Cableado</th>
+        <th colspan="2">Pruebas de Comunicación</th>
+      </tr>
+      <tr class="bg-blue-sub">
+        <th>Rematado Face Plate</th>
+        <th>Rematado Patch Pannel</th>
+        <th>Face Plate</th>
+        <th>Patch Pannel</th>
+        <th>Patch Pannel</th>
+        <th>Switch</th>
+        <th>Organizador Vertical</th>
+        <th>Organizador Horizontal</th>
+        <th>Continuidad</th>
+        <th>Transmisión</th>
       </tr>
     </thead>
-    <tbody>
-      <tr id="row-a1"><td>1</td><td>Verificación de alimentaciones eléctricas y contactos de red</td><td class="col-opt"><input type="radio" name="a1"></td><td class="col-opt"><input type="radio" name="a1"></td><td class="col-opt"><input type="radio" name="a1"></td><td class="col-obs"><input type="text"></td></tr>
-      <tr id="row-a2"><td>2</td><td>Revisión de Rack de comunicaciones y gabinete</td><td class="col-opt"><input type="radio" name="a2"></td><td class="col-opt"><input type="radio" name="a2"></td><td class="col-opt"><input type="radio" name="a2"></td><td class="col-obs"><input type="text"></td></tr>
-      <tr id="row-a3"><td>3</td><td>Pruebas de energía ininterrumpida (UPS / No-Break)</td><td class="col-opt"><input type="radio" name="a3"></td><td class="col-opt"><input type="radio" name="a3"></td><td class="col-opt"><input type="radio" name="a3"></td><td class="col-obs"><input type="text"></td></tr>
-      <tr id="row-a4"><td>4</td><td>Revisión de cableado de puntos de venta (TPV)</td><td class="col-opt"><input type="radio" name="a4"></td><td class="col-opt"><input type="radio" name="a4"></td><td class="col-opt"><input type="radio" name="a4"></td><td class="col-obs"><input type="text"></td></tr>
-      <tr id="row-a5"><td>5</td><td>Limpieza y orden general de área de trabajo / Site</td><td class="col-opt"><input type="radio" name="a5"></td><td class="col-opt"><input type="radio" name="a5"></td><td class="col-opt"><input type="radio" name="a5"></td><td class="col-obs"><input type="text"></td></tr>
-    </tbody>
+    <tbody id="body-voz-datos"></tbody>
   </table>
+
+  <!-- TABLA 2: CCTV (16 NODOS) -->
+  <div class="main-title">Recepción de CCTV en Tiendas y Estaciones</div>
+  <table class="matrix-table">
+    <thead>
+      <tr class="bg-blue-top">
+        <th rowspan="2" class="col-nodo"># NODO</th>
+        <th colspan="2">Cableado del Nodo</th>
+        <th colspan="3">Etiquetado del Patchcord</th>
+        <th colspan="2">Organización del Cableado</th>
+        <th colspan="3">Limpieza y Acabados CCTV</th>
+        <th colspan="2">Pruebas de Comunicación</th>
+      </tr>
+      <tr class="bg-blue-sub">
+        <th>Rematado Patch Pannel</th>
+        <th>Etiquetado Patch Pannel</th>
+        <th>Patch Pannel</th>
+        <th>Switch</th>
+        <th>NVR</th>
+        <th>Acomodo en Organizador Vertical</th>
+        <th>Acomodo en Organizador Horizontal</th>
+        <th>Resanes Fijación de Cámara</th>
+        <th>Retoques Instalación de Cámara</th>
+        <th>Tapas en los Registros</th>
+        <th>Continuidad</th>
+        <th>Transmisión</th>
+      </tr>
+    </thead>
+    <tbody id="body-cctv"></tbody>
+  </table>
+
+  <!-- PIE DE FORMATO Y FIRMAS -->
+  <table style="width: 100%;">
+    <tr>
+      <td style="width: 40%; vertical-align: top;">
+        <table class="table-sub">
+          <tr><td style="background-color: #d9e1f2; font-weight: bold;">LIMPIEZA DEL SITE / GABINETE</td><td class="cell-chk"><input type="checkbox" id="chk-site"></td></tr>
+          <tr><td style="background-color: #d9e1f2; font-weight: bold;">LIMPIEZA DE OFICINAS / AREA DE TRABAJO</td><td class="cell-chk"><input type="checkbox" id="chk-oficinas"></td></tr>
+          <tr><td style="background-color: #d9e1f2; font-weight: bold;">RACK A TIERRA FISICA / GABINETE</td><td class="cell-chk"><input type="checkbox" id="chk-tierra"></td></tr>
+        </table>
+      </td>
+      <td style="width: 5%;"></td>
+      <td style="width: 55%; vertical-align: top;">
+        <div class="project-box">
+          PROYECTO: <input type="text" id="req-proyecto" style="border:none; border-bottom:1px solid #000; background:transparent; font-weight:bold; font-size:10pt; width:65%;" placeholder="Nombre único del proyecto">
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <div class="obs-container">
+    <strong>OBSERVACIONES:</strong> <input type="text" id="req-obs" placeholder="Escriba aquí las observaciones...">
+  </div>
+
+  <table class="signatures-table">
+    <tr>
+      <td style="width: 35%;">
+        <div class="line-sig"></div>
+        <strong>RECIBE SISTEMAS</strong><br><small>Nombre y firma</small>
+      </td>
+      <td style="width: 35%;">
+        <div class="line-sig"></div>
+        <strong>ENTREGA PROVEEDOR</strong><br><small>Nombre y firma</small>
+      </td>
+      <td style="width: 30%; text-align: right;">
+        Fecha: <input type="date" id="req-fecha" style="border:none; border-bottom:1pt solid #000; font-size:8pt;">
+      </td>
+    </tr>
+  </table>
+
 </div>
 
 <script>
-  function descargarVisitaPDF() {
-    const gomart = document.getElementById('req-gomart').value.trim();
-    const responsable = document.getElementById('req-responsable').value.trim();
-    const fecha = document.getElementById('req-fecha').value;
+  window.onload = function() {
+    generarFilas();
+    actualizarSelector();
+  };
 
-    if (!gomart || !responsable || !fecha) {
-      alert("⚠️ Por favor completa los datos generales (Gomart, Responsable y Fecha) antes de descargar.");
+  function generarFilas() {
+    const bodyVD = document.getElementById('body-voz-datos');
+    bodyVD.innerHTML = '';
+    for (let i = 1; i <= 24; i++) {
+      let tr = document.createElement('tr');
+      tr.innerHTML = `<td class="col-nodo">${i}</td>` + Array(10).fill(0).map((_, c) => `<td class="cell-chk"><input type="checkbox" id="vd_${i}_${c}"></td>`).join('');
+      bodyVD.appendChild(tr);
+    }
+
+    const bodyCCTV = document.getElementById('body-cctv');
+    bodyCCTV.innerHTML = '';
+    for (let i = 1; i <= 16; i++) {
+      let tr = document.createElement('tr');
+      tr.innerHTML = `<td class="col-nodo">${i}</td>` + Array(12).fill(0).map((_, c) => `<td class="cell-chk"><input type="checkbox" id="cctv_${i}_${c}"></td>`).join('');
+      bodyCCTV.appendChild(tr);
+    }
+  }
+
+  // Guardar en el almacenamiento del navegador
+  function guardarProgreso() {
+    const nombreProyecto = document.getElementById('req-proyecto').value.trim();
+    if (!nombreProyecto) {
+      alert("⚠️ Escribe un Nombre de Proyecto para poder guardarlo.");
       return;
     }
 
-    const radioGroups = ['a1', 'a2', 'a3', 'a4', 'a5'];
-    let faltanRadios = false;
+    const estado = {
+      proyecto: nombreProyecto,
+      fecha: document.getElementById('req-fecha').value,
+      observaciones: document.getElementById('req-obs').value,
+      chkSite: document.getElementById('chk-site').checked,
+      chkOficinas: document.getElementById('chk-oficinas').checked,
+      chkTierra: document.getElementById('chk-tierra').checked,
+      checkboxes: {}
+    };
 
-    radioGroups.forEach(group => {
-      const checked = document.querySelector(`input[name="${group}"]:checked`);
-      const fila = document.getElementById(`row-${group}`);
-      if (!checked) {
-        faltanRadios = true;
-        if (fila) fila.classList.add('error-row');
-      } else {
-        if (fila) fila.classList.remove('error-row');
-      }
+    document.querySelectorAll('#formato-pdf input[type="checkbox"]').forEach(chk => {
+      if (chk.id) estado.checkboxes[chk.id] = chk.checked;
     });
 
-    if (faltanRadios) {
-      alert("⚠️ Falta responder algunos ítems del checklist. Se han marcado en rojo.");
+    let proyectos = JSON.parse(localStorage.getItem('proyectos_voz_datos') || '{}');
+    proyectos[nombreProyecto] = estado;
+    localStorage.setItem('proyectos_voz_datos', JSON.stringify(proyectos));
+
+    alert(`✅ Proyecto "${nombreProyecto}" guardado exitosamente.`);
+    actualizarSelector(nombreProyecto);
+  }
+
+  // Cargar un proyecto guardado anteriormente
+  function cargarProyecto(nombreProyecto) {
+    if (!nombreProyecto) return;
+    let proyectos = JSON.parse(localStorage.getItem('proyectos_voz_datos') || '{}');
+    const estado = proyectos[nombreProyecto];
+
+    if (!estado) return;
+
+    document.getElementById('req-proyecto').value = estado.proyecto;
+    document.getElementById('req-fecha').value = estado.fecha;
+    document.getElementById('req-obs').value = estado.observaciones;
+    document.getElementById('chk-site').checked = estado.chkSite;
+    document.getElementById('chk-oficinas').checked = estado.chkOficinas;
+    document.getElementById('chk-tierra').checked = estado.chkTierra;
+
+    Object.keys(estado.checkboxes).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.checked = estado.checkboxes[id];
+    });
+  }
+
+  // Limpiar el formulario para uno nuevo
+  function nuevoProyecto() {
+    document.getElementById('req-proyecto').value = '';
+    document.getElementById('req-fecha').value = '';
+    document.getElementById('req-obs').value = '';
+    document.querySelectorAll('#formato-pdf input[type="checkbox"]').forEach(chk => chk.checked = false);
+    document.getElementById('select-proyectos').value = '';
+  }
+
+  // Actualizar la lista desplegable de borradores guardados
+  function actualizarSelector(seleccionado = '') {
+    const select = document.getElementById('select-proyectos');
+    let proyectos = JSON.parse(localStorage.getItem('proyectos_voz_datos') || '{}');
+    select.innerHTML = '<option value="">-- Seleccionar Borrador --</option>';
+
+    Object.keys(proyectos).forEach(nombre => {
+      let opt = document.createElement('option');
+      opt.value = nombre;
+      opt.textContent = nombre;
+      if (nombre === seleccionado) opt.selected = true;
+      select.appendChild(opt);
+    });
+  }
+
+  // Descarga del PDF
+  function descargarPDF() {
+    const proyecto = document.getElementById('req-proyecto').value.trim();
+    if (!proyecto) {
+      alert("⚠️ El proyecto debe tener un nombre antes de descargar.");
       return;
     }
 
-    const elemento = document.getElementById('formato-visita');
+    const elemento = document.getElementById('formato-pdf');
     const opciones = {
-      margin:       10,
-      filename:     `Visita_Sitio_${gomart}.pdf`,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2 },
-      jsPDF:        { unit: 'mm', format: 'letter', orientation: 'portrait' }
+      margin: 5,
+      filename: `Recepcion_Voz_Datos_${proyecto}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'letter', orientation: 'landscape' }
     };
 
     html2pdf().set(opciones).from(elemento).save();
