@@ -1,214 +1,23 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#1F3864">
-<title>Recepción de Proyectos | Cableado & CCTV</title>
-<style>
-:root{--navy:#1F3864;--blue:#2E75B6;--bg:#EEF1F5;--card:#fff;--border:#DDE3EC;--text:#1C2530;--muted:#6B7686;--ok:#1F8A46;--okbg:#E3F5EA;--bad:#C4372B;--badbg:#FBE7E5}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif;padding-bottom:85px}
-header{position:sticky;top:0;z-index:20;background:var(--navy);color:white;padding:14px 15px;box-shadow:0 2px 10px #0002}
-.brand{font-size:11px;font-weight:800;letter-spacing:.12em;opacity:.85}.title{font-size:18px;font-weight:800;margin-top:3px}.sub{font-size:11px;opacity:.75}
-.top{display:flex;justify-content:space-between;gap:10px;align-items:center}.new{background:#ffffff1f;color:#fff;border:1px solid #ffffff44;border-radius:8px;padding:8px;font-weight:700}
-.card{background:var(--card);border:1px solid var(--border);border-radius:14px;margin:12px;padding:13px;box-shadow:0 1px 3px #14203a12}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.full{grid-column:1/-1}
-label{display:block;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
-input,textarea{width:100%;border:1.5px solid var(--border);border-radius:9px;padding:10px;font-size:14px;background:#fbfcfe;color:var(--text)}
-.tabs{display:flex;gap:6px;margin:0 12px 12px}.tab{flex:1;border:1px solid var(--border);background:white;border-radius:10px;padding:9px 3px;font-weight:800;color:var(--muted)}.tab.active{background:var(--navy);color:#fff}.pct{display:block;font-size:10px;margin-top:2px}
-.panel{display:none}.panel.active{display:block}
-.section,.node{background:white;border:1px solid var(--border);border-radius:13px;margin:10px 12px;overflow:hidden}.head{padding:12px;display:flex;align-items:center;gap:9px;background:#f7f9fc;font-weight:800}.letter,.num{background:var(--navy);color:#fff;min-width:25px;height:25px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px}.head .grow{flex:1}.status{font-size:10px;color:var(--muted)}.body{padding:4px 12px 10px}.row{padding:10px 0;border-top:1px solid #eef1f5}.row:first-child{border-top:0}.rowtop{display:flex;gap:8px;align-items:flex-start}.item{flex:1;font-size:13px;line-height:1.35;padding-top:5px}.seg{display:flex}.seg button{border:1px solid var(--border);background:#f1f3f6;padding:8px 10px;font-weight:800}.seg .yes.active{background:var(--okbg);color:var(--ok)}.seg .no.active{background:var(--badbg);color:var(--bad)}.obs{display:none;margin-top:6px}.obs.show{display:block}.obslink{font-size:11px;color:var(--blue);font-weight:700;margin-top:6px;display:inline-block}
-.nodehead{display:flex;align-items:center;gap:10px;padding:11px}.nodehead .grow{flex:1}.nodebody{display:none;padding:0 12px 12px}.node.open .nodebody{display:block}.node.complete .num{background:var(--ok)}
-.group{margin-top:9px}.glabel{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:6px}.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{border:1.5px solid var(--border);border-radius:20px;background:#fbfcfe;padding:8px 10px;font-size:12px;font-weight:700}.chip.ok{background:var(--okbg);border-color:var(--ok);color:var(--ok)}.chip.bad{background:var(--badbg);border-color:var(--bad);color:var(--bad)}
-.bottom{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);padding:8px;display:flex;gap:7px;z-index:30}.bottom button{flex:1;border:0;border-radius:10px;padding:12px;font-weight:800}.export{background:var(--navy);color:#fff}.share{background:#f1f3f6}
-.history{position:fixed;inset:0;background:#0008;z-index:60;display:none;padding:45px 12px 20px}
-.history.show{display:block}.historybox{background:#fff;border-radius:15px;max-height:90vh;overflow:auto;padding:14px}
-.historyitem{border:1px solid var(--border);border-radius:10px;padding:10px;margin:7px 0;background:#fbfcfe}
-.historyitem b{display:block}.historyactions{display:flex;gap:6px;margin-top:8px}.historyactions button{flex:1;border:0;border-radius:8px;padding:8px;font-weight:700}
-.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#152747;color:white;padding:10px 16px;border-radius:20px;display:none;z-index:70;font-size:13px}.toast.show{display:block}
-@media print{
-  header,.tabs,.bottom,.toast,.history{display:none!important}
-  body{background:#fff;padding:0;font-family:Arial,sans-serif}
-  .panel{display:block!important}
-  .section,.node,.card{break-inside:avoid;box-shadow:none;margin:7px 0;border:1px solid #aaa}
-  .nodebody{display:block!important}
-  .body{display:block!important}
-  .seg button{border:1px solid #777}
-}
-.signgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.sig{width:100%;height:100px;border:1.5px dashed var(--border);border-radius:9px;background:#fbfcfe;touch-action:none}
-.smallbtn{font-size:10px;color:var(--blue);font-weight:800;margin-top:4px}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Synergo - Gerencia de Sistemas</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f6f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+    .card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; max-width: 400px; width: 90%; }
+    h1 { color: #1b365d; font-size: 20px; margin-bottom: 20px; }
+    .btn { display: block; background: #1b365d; color: white; text-decoration: none; padding: 12px; margin: 10px 0; border-radius: 5px; font-weight: bold; transition: 0.2s; }
+    .btn:hover { background: #0f2341; }
+  </style>
 </head>
 <body>
-
-<header>
-  <div class="top">
-    <div><div class="brand">GERENCIA DE SISTEMAS</div><div class="title">Recepción de Cableado y CCTV</div><div class="sub">Checklist móvil · Ver. 3.0</div></div>
-    <div style="display:flex;gap:5px">
-      <button class="new" onclick="mostrarHistorial()">Historial</button>
-      <button class="new" onclick="nuevaVisita()">Nueva</button>
-    </div>
+  <div class="card">
+    <h1>SYNERGO - GERENCIA DE SISTEMAS</h1>
+    <p>Selecciona el formato a diligenciar:</p>
+    <a href="visita-sitio.html" class="btn">1. Visita en Sitio (Gomart)</a>
+    <a href="voz-datos.html" class="btn">2. Voz y Datos</a>
   </div>
-</header>
-
-<div class="card">
-  <div class="grid">
-    <div><label>Estación / GoMart</label><input id="estacion" placeholder="Ej. ES Manglares"></div>
-    <div><label>Responsable</label><input id="responsable" placeholder="Nombre"></div>
-    <div><label>Fecha</label><input id="fecha" type="date"></div>
-    <div><label>Hora</label><input id="hora" type="time"></div>
-    <div class="full"><label>Proveedor / proyecto</label><input id="proyecto" placeholder="Opcional"></div>
-  </div>
-</div>
-
-<div class="tabs">
-  <button class="tab active" onclick="tab('sitio')">Sitio<span class="pct" id="p-sitio">0%</span></button>
-  <button class="tab" onclick="tab('voz')">Voz/Datos<span class="pct" id="p-voz">0%</span></button>
-  <button class="tab" onclick="tab('cctv')">CCTV<span class="pct" id="p-cctv">0%</span></button>
-</div>
-
-<main>
-  <section id="sitio" class="panel active"></section>
-  <section id="voz" class="panel"></section>
-  <section id="cctv" class="panel"></section>
-</main>
-
-<div class="bottom">
-  <button class="share" onclick="resumen()">📋 Resumen</button>
-  <button class="share" onclick="guardarRecepcion()">💾 Guardar</button>
-  <button class="export" onclick="exportarPDF()">📄 PDF</button>
-</div>
-<div id="history" class="history">
-  <div class="historybox">
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <h3 style="margin:0">Recepciones guardadas</h3>
-      <button onclick="cerrarHistorial()" style="border:0;background:#eee;border-radius:8px;padding:7px 10px">✕</button>
-    </div>
-    <div id="historyList"></div>
-  </div>
-</div>
-<div id="toast" class="toast"></div>
-
-<script>
-const SITIO=[
-['A','Nodos de red y contactos piso de venta',[
-'Canalizaciones / registros para datos en área de TPV',
-'Canalizaciones / registros para micrófono y botón de pánico en área de TPV',
-'Contactos doble NO regulados por cada TPV',
-'Voltajes en contactos doble NO regulados por cada TPV',
-'Pasos interiores en los muebles de los TPV',
-'Pasos en la barra para los brazos de los TPV']],
-['B','Nodos de red y contactos eléctricos — equipo administrativo',[
-'Canalizaciones / registros para datos','Contacto doble NO regulados',
-'Voltajes en contactos doble NO regulados por cada TPV','Repisa de 90x60 cm mínimo']],
-['C','Nodos de red / registros — equipo de publicidad',[
-'Canalizaciones / registros para datos','Contacto doble NO regulado',
-'Voltajes en contactos doble NO regulados por cada TPV','Repisa de 90x60 cm mínimo',
-'Gabinete estanca con puerta de 300x250x150 en bodega para guardar holgura (sobre cuarto frío)']],
-['D','Nodos de red — torniquete y WiFi',['Canalizaciones / registros para datos torniquete']],
-['E','Adecuaciones para SITE de telecomunicaciones (rack/gabinete)',[
-'Todas las canalizaciones llegan al SITE / gabinete','1 contacto doble NO regulado',
-'Voltajes en contactos doble NO regulados por cada TPV','Barra de tierra física',
-'Acomodo del cableado','Limpieza del gabinete','Conexión a tierra física','Etiquetado de los patchcord']],
-['F','Limpieza y acabados CCTV',[
-'Resanes bases y bajantes','Retoque de pintura en área de bases y bajantes de cámaras',
-'Canalización y registro con tapa para cámaras de Beercave y cuarto frío','Tapas de los registros','Bajantes (ubicaciones)']]
-];
-
-const VOZ=[
-['Cableado del nodo',[['remFP','Rematado face plate'],['remPP','Rematado patch panel']]],
-['Etiquetado del nodo',[['etqFP','Face plate'],['etqPP','Patch panel']]],
-['Etiquetado del patchcord',[['etqPcPP','Patch panel'],['etqPcSW','Switch']]],
-['Organización del cableado',[['orgV','Organizador vertical'],['orgH','Organizador horizontal']]],
-['Pruebas de comunicación',[['contP','Continuidad'],['transP','Transmisión']]]
-];
-
-const CCTV=[
-['Cableado del nodo',[['remPP','Rematado patch panel'],['etqPP','Etiquetado patch panel']]],
-['Etiquetado del patchcord',[['pcPP','Patch panel'],['pcSW','Switch'],['pcNVR','NVR']]],
-['Organización del cableado',[['orgV','Acomodo organizador vertical'],['orgH','Acomodo organizador horizontal']]],
-['Limpieza y acabados CCTV',[['resanes','Resanes fijación de cámara'],['retoques','Retoques instalación de cámara'],['tapas','Tapas en los registros']]],
-['Pruebas de comunicación',[['contP','Continuidad'],['transP','Transmisión']]]
-];
-
-const CIERRE=[['limpiezaSite','Limpieza del SITE / gabinete'],['limpiezaOficinas','Limpieza de oficinas / área de trabajo'],['tierraFisica','Rack a tierra física / gabinete']];
-
-let S=JSON.parse(localStorage.getItem('recepcionCCTV')||'null')||{
- header:{estacion:'',responsable:'',fecha:new Date().toISOString().slice(0,10),hora:'',proyecto:''},
- sitio:{},voz:{nodos:{},cierre:{},obs:''},cctv:{nodos:{},cierre:{},obs:''}
-};
-
-function save(){localStorage.setItem('recepcionCCTV',JSON.stringify(S));update();}
-function toast(x){let t=document.getElementById('toast');t.textContent=x;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)}
-function tab(id){document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('active',x.id===id));document.querySelectorAll('.tab').forEach((x,i)=>x.classList.toggle('active',['sitio','voz','cctv'][i]===id));scrollTo(0,0)}
-
-function renderSitio(){
- let el=document.getElementById('sitio');el.innerHTML='';
- SITIO.forEach(([id,title,items])=>{
-  let done=items.filter((_,i)=>S.sitio[id+i]).length;
-  let sec=document.createElement('div');sec.className='section';
-  sec.innerHTML=`<div class="head" onclick="this.nextElementSibling.hidden=!this.nextElementSibling.hidden"><span class="letter">${id}</span><span class="grow">${title}</span><span class="status">${done}/${items.length}</span>⌄</div>`;
-  let body=document.createElement('div');body.className='body';
-  items.forEach((label,i)=>{
-   let k=id+i,r=S.sitio[k]||{};
-   let row=document.createElement('div');row.className='row';
-   row.innerHTML=`<div class="rowtop"><div class="item">${i+1}. ${label}</div><div class="seg">
-   <button class="yes ${r.estado==='si'?'active':''}" onclick="sitioEstado('${k}','si')">SÍ</button>
-   <button class="no ${r.estado==='no'?'active':''}" onclick="sitioEstado('${k}','no')">NO</button></div></div>
-   <span class="obslink" onclick="document.getElementById('o${k}').classList.toggle('show')">${r.obs?'✎ Ver observación':'+ Observación'}</span>
-   <textarea id="o${k}" class="obs ${r.obs?'show':''}" placeholder="Observación..." oninput="S.sitio['${k}'].obs=this.value;save()">${r.obs||''}</textarea>`;
-   body.appendChild(row);
-  });
-  sec.appendChild(body);el.appendChild(sec);
- });
- let g=document.createElement('div');g.className='card';g.innerHTML='<label>Observaciones generales</label><textarea rows="4" placeholder="Observaciones de la visita..." oninput="S.sitio.general=this.value;save()">'+(S.sitio.general||'')+'</textarea>';el.appendChild(g);
-}
-function sitioEstado(k,v){S.sitio[k]=S.sitio[k]||{obs:''};S.sitio[k].estado=S.sitio[k].estado===v?null:v;save();renderSitio()}
-
-function renderNodes(type,groups,count,noun){
- let el=document.getElementById(type);el.innerHTML='';
- for(let n=1;n<=count;n++){
-  let nd=S[type].nodos[n]||{},total=groups.reduce((a,g)=>a+g[1].length,0),done=groups.reduce((a,g)=>a+g[1].filter(x=>nd[x[0]]).length,0);
-  let card=document.createElement('div');card.className='node '+(done===total?'complete':'');
-  card.innerHTML=`<div class="nodehead" onclick="this.parentElement.classList.toggle('open')"><span class="num">${n}</span><span class="grow"><b>${noun} ${n}</b><div class="status">${done}/${total} verificados</div></span>⌄</div><div class="nodebody"></div>`;
-  let body=card.querySelector('.nodebody');
-  groups.forEach(g=>{let d=document.createElement('div');d.className='group';d.innerHTML=`<div class="glabel">${g[0]}</div><div class="chips"></div>`;let chips=d.querySelector('.chips');
-   g[1].forEach(([k,label])=>{let c=document.createElement('button');c.className='chip '+(nd[k]==='ok'?'ok':nd[k]==='bad'?'bad':'');c.textContent=(nd[k]==='ok'?'✓ ':nd[k]==='bad'?'✕ ':'')+label;c.onclick=()=>cycle(type,n,k,groups,count,noun);chips.appendChild(c)});body.appendChild(d);
-  });
-  el.appendChild(card);
- }
- let c=document.createElement('div');c.className='card';c.innerHTML='<b>Cierre y limpieza</b>';
- CIERRE.forEach(([k,label])=>{let r=document.createElement('div');r.className='row';r.innerHTML=`<div class="rowtop"><div class="item">${label}</div><div class="seg"><button class="yes ${S[type].cierre[k]==='si'?'active':''}" onclick="cierre('${type}','${k}','si')">SÍ</button><button class="no ${S[type].cierre[k]==='no'?'active':''}" onclick="cierre('${type}','${k}','no')">NO</button></div></div>`;c.appendChild(r)});
- c.innerHTML+='<label style="margin-top:12px">Observaciones</label><textarea rows="3" oninput="S[\''+type+'\'].obs=this.value;save()">'+(S[type].obs||'')+'</textarea>';
- el.appendChild(c);
-}
-function cycle(type,n,k,groups,count,noun){S[type].nodos[n]=S[type].nodos[n]||{};let x=S[type].nodos[n][k]||null;S[type].nodos[n][k]=x===null?'ok':x==='ok'?'bad':null;save();renderNodes(type,groups,count,noun)}
-function cierre(type,k,v){S[type].cierre[k]=S[type].cierre[k]===v?null:v;save();renderNodes(type,type==='voz'?VOZ:CCTV,type==='voz'?24:16,type==='voz'?'Nodo':'Cámara')}
-
-function update(){
- ['estacion','responsable','fecha','hora','proyecto'].forEach(id=>{let x=document.getElementById(id);if(x&&x.value!==S.header[id])S.header[id]=x.value});
- let total=SITIO.reduce((a,s)=>a+s[2].length,0),done=Object.values(S.sitio).filter(x=>x&&x.estado).length;document.getElementById('p-sitio').textContent=Math.round(done/total*100)+'%';
- [['voz',VOZ,24],['cctv',CCTV,16]].forEach(([t,g,n])=>{let fields=g.reduce((a,x)=>a+x[1].length,0),d=0;for(let i=1;i<=n;i++)g.forEach(x=>x[1].forEach(([k])=>{if(S[t].nodos[i]&&S[t].nodos[i][k])d++}));Object.values(S[t].cierre).forEach(x=>{if(x)d++});document.getElementById('p-'+t).textContent=Math.round(d/(fields*n+3)*100)+'%'});
-}
-['estacion','responsable','fecha','hora','proyecto'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{S.header[id]=document.getElementById(id).value;save()}));
-
-function csvEscape(v){v=String(v??'');return '"'+v.replaceAll('"','""')+'"'}
-function exportar(){
- let rows=[['CHECKLIST RECEPCIÓN DE CABLEADO Y CCTV'],['Estación',S.header.estacion],['Responsable',S.header.responsable],['Proyecto',S.header.proyecto],['Fecha',S.header.fecha],['Hora',S.header.hora],[]];
- SITIO.forEach(([id,title,items])=>{rows.push([id,title]);items.forEach((label,i)=>{let r=S.sitio[id+i]||{};rows.push([id+'.'+(i+1),label,r.estado||'',r.obs||''])})});
- [['voz',VOZ,24,'Nodo'],['cctv',CCTV,16,'Cámara']].forEach(([t,g,n,noun])=>{rows.push([],[],[noun]);let h=['#'];g.forEach(x=>x[1].forEach(y=>h.push(y[1])));rows.push(h);for(let i=1;i<=n;i++){let r=[i],nd=S[t].nodos[i]||{};g.forEach(x=>x[1].forEach(([k])=>r.push(nd[k]==='ok'?'OK':nd[k]==='bad'?'NO':'')));rows.push(r)}rows.push([]);CIERRE.forEach(([k,l])=>rows.push([l,S[t].cierre[k]||'']));rows.push(['Observaciones',S[t].obs||''])});
- let blob=new Blob(['\ufeff'+rows.map(r=>r.map(csvEscape).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});
- let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Checklist_'+(S.header.estacion||'Recepcion')+'_'+(S.header.fecha||'')+'.csv';a.click();URL.revokeObjectURL(a.href);toast('Archivo CSV generado');
-}
-function resumen(){
- let lines=['CHECKLIST RECEPCIÓN DE CABLEADO Y CCTV','Estación: '+(S.header.estacion||'-'),'Responsable: '+(S.header.responsable||'-'),'Proyecto: '+(S.header.proyecto||'-'),'Fecha: '+(S.header.fecha||'-'),'','Sitio: '+document.getElementById('p-sitio').textContent,'Voz/Datos: '+document.getElementById('p-voz').textContent,'CCTV: '+document.getElementById('p-cctv').textContent];
- let falt=[];SITIO.forEach(([id,t,it])=>it.forEach((x,i)=>{let r=S.sitio[id+i];if(r&&r.estado==='no')falt.push(id+'.'+(i+1)+' '+x+(r.obs?' — '+r.obs:''))}));if(falt.length)lines.push('','PENDIENTES:',...falt.map(x=>'• '+x));
- let text=lines.join('\n');if(navigator.share)navigator.share({title:'Checklist recepción',text}).catch(()=>{});else navigator.clipboard?.writeText(text).then(()=>toast('Resumen copiado'));
-}
-function nuevaVisita(){if(!confirm('¿Iniciar una nueva recepción? Se borrarán las respuestas guardadas en este dispositivo.'))return;S={header:{estacion:'',responsable:'',fecha:new Date().toISOString().slice(0,10),hora:'',proyecto:''},sitio:{},voz:{nodos:{},cierre:{},obs:''},cctv:{nodos:{},cierre:{},obs:''}};localStorage.removeItem('recepcionCCTV');init();toast('Nueva recepción iniciada')}
-function init(){['estacion','responsable','fecha','hora','proyecto'].forEach(id=>document.getElementById(id).value=S.header[id]||'');renderSitio();renderNodes('voz',VOZ,24,'Nodo');renderNodes('cctv',CCTV,16,'Cámara');update()}
-init();
-</script>
 </body>
 </html>
