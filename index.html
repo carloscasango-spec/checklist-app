@@ -5,9 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Checklist Recepción · Cableado & CCTV</title>
 
-<!-- Librerías Externas -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
 <style>
   :root{
     --navy:#1F3864; --navy-dark:#152747; --blue:#2E75B6; --bg:#EEF1F5;
@@ -17,13 +14,11 @@
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   body{margin:0;padding:0 0 84px 0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
 
-  /* Header Bar */
   header.topbar{position:sticky;top:0;z-index:30;background:linear-gradient(135deg,var(--navy),var(--navy-dark));color:#fff;padding:12px 16px;}
   .brand{display:flex;align-items:center;justify-content:space-between;}
   .brand-title{font-weight:800;font-size:15px;letter-spacing:.02em;}
   .reset-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;font-size:11px;padding:6px 12px;border-radius:6px;cursor:pointer;font-weight:600;}
 
-  /* Header Form */
   .infobox{background:var(--card);margin:12px;border-radius:12px;padding:12px;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,0.05);}
   .infogrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
   .field{display:flex;flex-direction:column;gap:3px;}
@@ -31,17 +26,14 @@
   .field input{border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;outline:none;}
   .field input:focus{border-color:var(--blue);}
 
-  /* Tabs */
   .tabbar{display:flex;gap:6px;margin:0 12px 12px;}
   .tab{flex:1;background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:10px 4px;text-align:center;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;}
   .tab.active{background:var(--navy);border-color:var(--navy);color:#fff;}
   .tab .prog{display:block;font-size:10px;margin-top:2px;opacity:.9;}
 
-  /* Content Panels */
   .panel{display:none;padding:0 12px;}
   .panel.active{display:block;}
 
-  /* Cards & Sections */
   .section-card,.node-card,.closeout-card{background:var(--card);border-radius:12px;margin-bottom:10px;border:1px solid var(--border);overflow:hidden;}
   .section-head,.node-head{display:flex;align-items:center;justify-content:space-between;padding:12px;background:#F7F9FC;cursor:pointer;user-select:none;}
   .section-body,.node-body{display:none;padding:8px 12px 12px;}
@@ -49,7 +41,6 @@
   .chevron{transition:transform .2s;color:var(--muted);}
   .section-card.open .chevron,.node-card.open .chevron{transform:rotate(180deg);}
 
-  /* Items & Segmented Controls */
   .item-row{padding:10px 0;border-bottom:1px solid #EEF1F5;}
   .item-row:last-child{border-bottom:none;}
   .item-top{display:flex;align-items:center;justify-content:space-between;gap:10px;}
@@ -59,25 +50,21 @@
   .seg button.si.active{background:var(--ok-bg);color:var(--ok);}
   .seg button.no.active{background:var(--bad-bg);color:var(--bad);}
 
-  /* Chips for Nodes */
   .grp-label{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;margin:10px 0 6px;}
   .chip-row{display:flex;flex-wrap:wrap;gap:6px;}
   .chip{display:flex;align-items:center;gap:6px;border:1.5px solid var(--border);border-radius:16px;padding:6px 10px;font-size:11.5px;font-weight:600;background:#FBFCFE;cursor:pointer;}
   .chip.ok{border-color:var(--ok);background:var(--ok-bg);color:var(--ok);}
   .chip.bad{border-color:var(--bad);background:var(--bad-bg);color:var(--bad);}
 
-  /* Inputs & Textareas */
   .obs-input{width:100%;margin-top:6px;border:1.5px solid var(--border);border-radius:8px;padding:8px;font-size:12.5px;background:#FBFCFE;font-family:inherit;}
   .obs-toggle{font-size:11px;color:var(--blue);font-weight:600;margin-top:4px;display:inline-block;cursor:pointer;}
 
-  /* Bottom Actions */
   .bottomnav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);display:flex;padding:8px;gap:6px;z-index:30;}
   .navbtn{flex:1;border:none;border-radius:10px;padding:12px 4px;font-weight:700;font-size:12px;color:#fff;cursor:pointer;}
   .navbtn.save{background:var(--navy);}
   .navbtn.view{background:var(--blue);}
   .navbtn.export{background:var(--ok);}
 
-  /* Modal */
   .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:100;padding:16px;}
   .modal-overlay.open{display:flex;}
   .modal-card{background:#fff;border-radius:14px;width:100%;max-width:550px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;}
@@ -122,7 +109,6 @@
   <button type="button" class="navbtn export" id="btnExportar">📊 Excel</button>
 </div>
 
-<!-- Modal Datos -->
 <div class="modal-overlay" id="modalData">
   <div class="modal-card">
     <div class="modal-head">
@@ -142,7 +128,6 @@
 <div class="toast" id="toast"></div>
 
 <script>
-/* ESTRUCTURAS DE DATOS */
 const SITIO_SECTIONS = [
   {id:'A', title:'Nodos de red y contactos piso de venta', items:['Canalizaciones / registros para datos en área de TPV','Canalizaciones / registros para micrófono y botón de pánico en área de TPV','Contactos doble NO regulados por cada TPV','Voltajes en contactos doble NO regulados por cada TPV','Pasos interiores en los muebles de los TPV','Pasos en la barra para los brazos de los TPV']},
   {id:'B', title:'Nodos de red y contactos eléctricos — equipo administrativo', items:['Canalizaciones / registros para datos','Contacto doble NO regulado','Voltajes en contactos doble NO regulados por cada TPV','Repisa de 90x60 cm mínimo']},
@@ -174,8 +159,8 @@ const CLOSEOUT_ITEMS = [
   ['tierraFisica','Rack a tierra física / gabinete']
 ];
 
-/* ESTADO GLOBAL UNIFICADO */
-let STATE = {
+// ESTADO GLOBAL
+window.STATE = {
   id: '',
   header: {estacion:'', responsable:'', fecha:'', hora:''},
   sitio: {items:{}, obs:''},
@@ -183,77 +168,71 @@ let STATE = {
   cctv: {nodos:{}, cierre:{}, obs:'', recibe:'', entrega:''}
 };
 
-/* MOTOR DE PERSISTENCIA Y REGLAS */
 function getIdAuditoria() {
-  if (!STATE.id) STATE.id = 'chk_' + Date.now();
-  return STATE.id;
+  if (!window.STATE.id) window.STATE.id = 'chk_' + Date.now();
+  return window.STATE.id;
 }
 
 function persistir() {
-  const id = getIdAuditoria();
-  localStorage.setItem(`checklist_data_${id}`, JSON.stringify(STATE));
-  localStorage.setItem('checklist_last_id', id);
-
-  let index = JSON.parse(localStorage.getItem('checklist_index') || '[]');
-  if (!index.includes(id)) {
-    index.push(id);
-    localStorage.setItem('checklist_index', JSON.stringify(index));
-  }
+  try {
+    const id = getIdAuditoria();
+    localStorage.setItem(`checklist_data_${id}`, JSON.stringify(window.STATE));
+    localStorage.setItem('checklist_last_id', id);
+  } catch(e) { console.error(e); }
   actualizarMetricas();
 }
 
 function cargar() {
-  const lastId = localStorage.getItem('checklist_last_id');
-  if (lastId) {
-    const raw = localStorage.getItem(`checklist_data_${lastId}`);
-    if (raw) STATE = JSON.parse(raw);
-  }
-  if (!STATE.id) STATE.id = 'chk_' + Date.now();
+  try {
+    const lastId = localStorage.getItem('checklist_last_id');
+    if (lastId) {
+      const raw = localStorage.getItem(`checklist_data_${lastId}`);
+      if (raw) window.STATE = JSON.parse(raw);
+    }
+  } catch(e) { console.error(e); }
+  
+  if (!window.STATE.id) window.STATE.id = 'chk_' + Date.now();
+  if (!window.STATE.sitio) window.STATE.sitio = {items:{}, obs:''};
+  if (!window.STATE.voz) window.STATE.voz = {nodos:{}, cierre:{}, obs:'', recibe:'', entrega:''};
+  if (!window.STATE.cctv) window.STATE.cctv = {nodos:{}, cierre:{}, obs:'', recibe:'', entrega:''};
 }
 
-/* MÉTRICAS DE PROGRESSO */
 function calcularMetricas() {
-  // 1. Sitio
-  let totalSitio = 0, doneSitio = 0;
-  let faltantes = [];
+  let totalSitio = 0, doneSitio = 0, faltantes = [];
   SITIO_SECTIONS.forEach(s => {
     let secFaltan = 0;
     s.items.forEach((_, i) => {
       totalSitio++;
-      if (STATE.sitio.items[s.id + i]?.estado) doneSitio++;
+      if (window.STATE.sitio.items[s.id + i]?.estado) doneSitio++;
       else secFaltan++;
     });
     if (secFaltan > 0) faltantes.push(`Sitio - Sección ${s.id}: Faltan ${secFaltan} reactivos`);
   });
 
-  // 2. Voz
   const vFields = VOZ_GROUPS.reduce((a,g)=>a+g.keys.length,0);
-  let totalVoz = (vFields * 24) + CLOSEOUT_ITEMS.length;
-  let doneVoz = 0;
+  let totalVoz = (vFields * 24) + CLOSEOUT_ITEMS.length, doneVoz = 0;
   for(let n=1; n<=24; n++){
-    const nd = STATE.voz.nodos[n] || {};
+    const nd = window.STATE.voz.nodos[n] || {};
     VOZ_GROUPS.forEach(g => g.keys.forEach(([k]) => { if(nd[k]) doneVoz++; }));
   }
-  CLOSEOUT_ITEMS.forEach(([k]) => { if(STATE.voz.cierre[k]) doneVoz++; });
+  CLOSEOUT_ITEMS.forEach(([k]) => { if(window.STATE.voz.cierre[k]) doneVoz++; });
 
-  // 3. CCTV
   const cFields = CCTV_GROUPS.reduce((a,g)=>a+g.keys.length,0);
-  let totalCctv = (cFields * 16) + CLOSEOUT_ITEMS.length;
-  let doneCctv = 0;
+  let totalCctv = (cFields * 16) + CLOSEOUT_ITEMS.length, doneCctv = 0;
   for(let n=1; n<=16; n++){
-    const nd = STATE.cctv.nodos[n] || {};
+    const nd = window.STATE.cctv.nodos[n] || {};
     CCTV_GROUPS.forEach(g => g.keys.forEach(([k]) => { if(nd[k]) doneCctv++; }));
   }
-  CLOSEOUT_ITEMS.forEach(([k]) => { if(STATE.cctv.cierre[k]) doneCctv++; });
+  CLOSEOUT_ITEMS.forEach(([k]) => { if(window.STATE.cctv.cierre[k]) doneCctv++; });
 
   const gTotal = totalSitio + totalVoz + totalCctv;
   const gDone = doneSitio + doneVoz + doneCctv;
 
   return {
-    pctSitio: Math.round((doneSitio / totalSitio) * 100),
-    pctVoz: Math.round((doneVoz / totalVoz) * 100),
-    pctCctv: Math.round((doneCctv / totalCctv) * 100),
-    pctTotal: Math.round((gDone / gTotal) * 100),
+    pctSitio: Math.round((doneSitio / totalSitio) * 100) || 0,
+    pctVoz: Math.round((doneVoz / totalVoz) * 100) || 0,
+    pctCctv: Math.round((doneCctv / totalCctv) * 100) || 0,
+    pctTotal: Math.round((gDone / gTotal) * 100) || 0,
     faltantes
   };
 }
@@ -265,15 +244,14 @@ function actualizarMetricas() {
   document.getElementById('prog_cctv').textContent = m.pctCctv + '%';
 }
 
-/* RENDERIZADO DE INTERFAZ */
 function init() {
   cargar();
-  
-  // Header Binding
   ['estacion','responsable','fecha','hora'].forEach(f => {
     const el = document.getElementById(`h_${f}`);
-    el.value = STATE.header[f] || '';
-    el.addEventListener('input', e => { STATE.header[f] = e.target.value; persistir(); });
+    if (el) {
+      el.value = window.STATE.header[f] || '';
+      el.oninput = e => { window.STATE.header[f] = e.target.value; persistir(); };
+    }
   });
 
   renderSitio();
@@ -297,7 +275,7 @@ function renderSitio() {
       <div class="section-body">
         ${sec.items.map((item, i) => {
           const k = sec.id + i;
-          const rec = STATE.sitio.items[k] || {};
+          const rec = window.STATE.sitio.items[k] || {};
           return `
             <div class="item-row">
               <div class="item-top">
@@ -307,8 +285,8 @@ function renderSitio() {
                   <button type="button" class="no ${rec.estado==='no'?'active':''}" onclick="setSitioVal('${k}','no')">NO</button>
                 </div>
               </div>
-              <span class="obs-toggle" onclick="this.nextElementSibling.classList.toggle('show')">${rec.obs ? '✎ Observación' : '+ Obs'}</span>
-              <textarea class="obs-input ${rec.obs?'show':''}" style="display:${rec.obs?'block':'none'}" rows="2" placeholder="Notas..." oninput="setSitioObs('${k}',this.value)">${rec.obs||''}</textarea>
+              <span class="obs-toggle" onclick="toggleObs(this)">${rec.obs ? '✎ Observación' : '+ Obs'}</span>
+              <textarea class="obs-input" style="display:${rec.obs?'block':'none'}" rows="2" placeholder="Notas..." oninput="setSitioObs('${k}',this.value)">${rec.obs||''}</textarea>
             </div>`;
         }).join('')}
       </div>`;
@@ -317,18 +295,23 @@ function renderSitio() {
   });
 }
 
+// FUNCIONES GLOBALES DE ACCIÓN EN VENTANA
+window.toggleObs = (el) => {
+  const input = el.nextElementSibling;
+  input.style.display = input.style.display === 'none' ? 'block' : 'none';
+};
+
 window.setSitioVal = (k, val) => {
-  const cur = STATE.sitio.items[k] || {};
+  if(!window.STATE.sitio.items[k]) window.STATE.sitio.items[k] = {};
+  const cur = window.STATE.sitio.items[k];
   cur.estado = cur.estado === val ? null : val;
-  STATE.sitio.items[k] = cur;
   persistir();
   renderSitio();
 };
 
 window.setSitioObs = (k, val) => {
-  const cur = STATE.sitio.items[k] || {};
-  cur.obs = val;
-  STATE.sitio.items[k] = cur;
+  if(!window.STATE.sitio.items[k]) window.STATE.sitio.items[k] = {};
+  window.STATE.sitio.items[k].obs = val;
   persistir();
 };
 
@@ -339,7 +322,7 @@ function renderNodos(tab, groups, total, labelSingular) {
   for (let n = 1; n <= total; n++) {
     const card = document.createElement('div');
     card.className = 'node-card';
-    const nData = STATE[tab].nodos[n] || {};
+    const nData = window.STATE[tab].nodos[n] || {};
     
     card.innerHTML = `
       <div class="node-head">
@@ -361,7 +344,6 @@ function renderNodos(tab, groups, total, labelSingular) {
     panel.appendChild(card);
   }
 
-  // Cierre y Firmas
   const cierreCard = document.createElement('div');
   cierreCard.className = 'closeout-card';
   cierreCard.style.padding = '12px';
@@ -372,34 +354,34 @@ function renderNodos(tab, groups, total, labelSingular) {
         <div class="item-top">
           <div class="item-label">${l}</div>
           <div class="seg">
-            <button type="button" class="si ${STATE[tab].cierre[k]==='si'?'active':''}" onclick="setCierre('${tab}','${k}','si')">SÍ</button>
-            <button type="button" class="no ${STATE[tab].cierre[k]==='no'?'active':''}" onclick="setCierre('${tab}','${k}','no')">NO</button>
+            <button type="button" class="si ${window.STATE[tab].cierre[k]==='si'?'active':''}" onclick="setCierre('${tab}','${k}','si')">SÍ</button>
+            <button type="button" class="no ${window.STATE[tab].cierre[k]==='no'?'active':''}" onclick="setCierre('${tab}','${k}','no')">NO</button>
           </div>
         </div>
       </div>`).join('')}
-    <div class="field" style="margin-top:10px;"><label>Recibe (Sistemas)</label><input value="${STATE[tab].recibe||''}" oninput="STATE['${tab}'].recibe=this.value; persistir();"></div>
-    <div class="field" style="margin-top:6px;"><label>Entrega (Proveedor)</label><input value="${STATE[tab].entrega||''}" oninput="STATE['${tab}'].entrega=this.value; persistir();"></div>
+    <div class="field" style="margin-top:10px;"><label>Recibe (Sistemas)</label><input value="${window.STATE[tab].recibe||''}" oninput="window.STATE['${tab}'].recibe=this.value; persistir();"></div>
+    <div class="field" style="margin-top:6px;"><label>Entrega (Proveedor)</label><input value="${window.STATE[tab].entrega||''}" oninput="window.STATE['${tab}'].entrega=this.value; persistir();"></div>
   `;
   panel.appendChild(cierreCard);
 }
 
 window.cycleChip = (tab, n, k) => {
-  if (!STATE[tab].nodos[n]) STATE[tab].nodos[n] = {};
-  const cur = STATE[tab].nodos[n][k];
-  STATE[tab].nodos[n][k] = !cur ? 'ok' : cur === 'ok' ? 'bad' : null;
+  if (!window.STATE[tab].nodos[n]) window.STATE[tab].nodos[n] = {};
+  const cur = window.STATE[tab].nodos[n][k];
+  window.STATE[tab].nodos[n][k] = !cur ? 'ok' : cur === 'ok' ? 'bad' : null;
   persistir();
   const groups = tab === 'voz' ? VOZ_GROUPS : CCTV_GROUPS;
   renderNodos(tab, groups, tab === 'voz' ? 24 : 16, tab === 'voz' ? 'Nodo' : 'Cámara');
 };
 
 window.setCierre = (tab, k, val) => {
-  STATE[tab].cierre[k] = STATE[tab].cierre[k] === val ? null : val;
+  if(!window.STATE[tab].cierre) window.STATE[tab].cierre = {};
+  window.STATE[tab].cierre[k] = window.STATE[tab].cierre[k] === val ? null : val;
   persistir();
   const groups = tab === 'voz' ? VOZ_GROUPS : CCTV_GROUPS;
   renderNodos(tab, groups, tab === 'voz' ? 24 : 16, tab === 'voz' ? 'Nodo' : 'Cámara');
 };
 
-/* NAVEGACIÓN Y EVENTOS */
 function bindEvents() {
   document.querySelectorAll('.tab').forEach(t => {
     t.onclick = (e) => {
@@ -424,7 +406,7 @@ function bindEvents() {
     document.getElementById('lblAvanceTotal').textContent = m.pctTotal + '%';
     const ul = document.getElementById('missingList');
     ul.innerHTML = m.faltantes.map(f => `<li>${f}</li>`).join('') || '<li style="color:var(--ok)">Checklist completado</li>';
-    document.getElementById('jsonPreview').textContent = JSON.stringify(STATE, null, 2);
+    document.getElementById('jsonPreview').textContent = JSON.stringify(window.STATE, null, 2);
     document.getElementById('modalData').classList.add('open');
   };
 
@@ -437,7 +419,7 @@ function bindEvents() {
     e.preventDefault();
     if (confirm('¿Crear una nueva hoja? Se conservará el registro anterior.')) {
       persistir();
-      STATE = { id: 'chk_' + Date.now(), header: {estacion:'', responsable:'', fecha:'', hora:''}, sitio: {items:{}, obs:''}, voz: {nodos:{}, cierre:{}, obs:'', recibe:'', entrega:''}, cctv: {nodos:{}, cierre:{}, obs:'', recibe:'', entrega:''} };
+      window.STATE = { id: 'chk_' + Date.now(), header: {estacion:'', responsable:'', fecha:'', hora:''}, sitio: {items:{}, obs:''}, voz: {nodos:{}, cierre:{}, obs:'', recibe:'', entrega:''}, cctv: {nodos:{}, cierre:{}, obs:'', recibe:'', entrega:''} };
       persistir();
       location.reload();
     }
@@ -445,10 +427,28 @@ function bindEvents() {
 
   document.getElementById('btnExportar').onclick = e => {
     e.preventDefault();
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet([STATE.header]);
-    XLSX.utils.book_append_sheet(wb, ws, "Resumen");
-    XLSX.writeFile(wb, `Checklist_${STATE.header.estacion||'General'}.xlsx`);
+    let csv = "\uFEFFMódulo,Categoría / Nodo,Elemento,Estado,Observación\n";
+    
+    csv += `HEADER,Estación,${window.STATE.header.estacion||''},,\n`;
+    csv += `HEADER,Responsable,${window.STATE.header.responsable||''},,\n`;
+    csv += `HEADER,Fecha,${window.STATE.header.fecha||''},,\n`;
+    csv += `HEADER,Hora,${window.STATE.header.hora||''},,\n`;
+
+    SITIO_SECTIONS.forEach(s => {
+      s.items.forEach((item, i) => {
+        const k = s.id + i;
+        const rec = window.STATE.sitio.items[k] || {};
+        csv += `"Sitio","Sección ${s.id}","${item.replace(/"/g, '""')}","${rec.estado||'PENDIENTE'}","${(rec.obs||'').replace(/"/g, '""')}"\n`;
+      });
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute("download", `Checklist_${window.STATE.header.estacion || 'General'}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 }
 
