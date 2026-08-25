@@ -31,7 +31,6 @@
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     overscroll-behavior-y:none;}
   body{padding-bottom:84px;}
-  .mono{font-variant-numeric:tabular-nums;letter-spacing:.02em;}
 
   /* Top bar */
   header.topbar{
@@ -54,7 +53,6 @@
     box-shadow:0 1px 3px rgba(20,30,50,.08);border:1px solid var(--border);}
   .infogrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
   .field{display:flex;flex-direction:column;gap:3px;margin-bottom:8px;}
-  .field.full{grid-column:1/-1;}
   .field label{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
   .field input,.field textarea,.field select{
     border:1.5px solid var(--border);border-radius:9px;padding:9px 10px;font-size:14.5px;
@@ -102,7 +100,7 @@
     padding:7px 9px;font-size:13px;font-family:inherit;background:#fbfcfe;}
   .obs-input.show{display:block;}
 
-  /* Node cards (Voz/Datos + CCTV) */
+  /* Node cards */
   .node-card{background:var(--card);border-radius:13px;margin-bottom:10px;border:1px solid var(--border);
     overflow:hidden;box-shadow:0 1px 3px rgba(20,30,50,.06);}
   .node-head{display:flex;align-items:center;gap:10px;padding:11px 13px;cursor:pointer;}
@@ -143,19 +141,50 @@
 
   /* Bottom nav */
   .bottomnav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);
-    display:flex;padding:8px 10px calc(8px + env(safe-area-inset-bottom));gap:6px;z-index:30;
+    display:flex;padding:8px 10px calc(8px + env(safe-area-inset-bottom));gap:4px;z-index:30;
     box-shadow:0 -2px 10px rgba(20,30,50,.08);}
-  .navbtn{flex:1;border:none;border-radius:11px;padding:10px 4px;font-weight:700;font-size:11.5px;
+  .navbtn{flex:1;border:none;border-radius:11px;padding:10px 2px;font-weight:700;font-size:11px;
     font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;}
   .navbtn.save{background:#1F3864;color:#fff;}
+  .navbtn.view{background:#2E75B6;color:#fff;}
   .navbtn.pdf{background:#C4372B;color:#fff;}
   .navbtn.export{background:#1D6F42;color:#fff;}
-  .navbtn.share{background:#F1F3F6;color:var(--text);border:1.5px solid var(--border);}
 
   .toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%) translateY(20px);
     background:var(--navy-dark);color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;
     font-weight:600;opacity:0;transition:all .25s;pointer-events:none;z-index:50;white-space:nowrap;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* Modal de datos guardados y métricas */
+  .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);
+    display:none;align-items:center;justify-content:center;z-index:100;padding:16px;}
+  .modal-overlay.open{display:flex;}
+  .modal-card{background:#fff;border-radius:14px;width:100%;max-width:600px;max-height:85vh;
+    display:flex;flex-direction:column;box-shadow:0 4px 20px rgba(0,0,0,0.2);overflow:hidden;}
+  .modal-head{background:var(--navy);color:#fff;padding:12px 16px;display:flex;
+    justify-content:space-between;align-items:center;font-weight:700;font-size:14px;}
+  .modal-close{background:none;border:none;color:#fff;font-size:18px;cursor:pointer;}
+  .modal-body{padding:16px;overflow-y:auto;flex:1;}
+  
+  .stat-card{background:#F7F9FC;border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;}
+  .stat-main{font-size:22px;font-weight:800;color:var(--navy);margin-bottom:4px;}
+  .stat-bar-bg{background:#E3E8F0;height:10px;border-radius:5px;overflow:hidden;margin:8px 0;}
+  .stat-bar-fill{background:var(--ok);height:100%;width:0%;transition:width 0.3s;}
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;font-size:11px;text-align:center;margin-top:8px;}
+  .stat-box{background:#fff;padding:6px;border-radius:6px;border:1px solid var(--border);}
+  .stat-box-val{font-weight:700;font-size:13px;color:var(--navy);}
+
+  .missing-section{margin-top:10px;}
+  .missing-title{font-size:12px;font-weight:800;color:var(--navy);margin-bottom:6px;text-transform:uppercase;}
+  .missing-list{list-style:none;padding:0;margin:0;font-size:12px;color:var(--bad);}
+  .missing-list li{padding:4px 0;border-bottom:1px solid #EEF1F5;display:flex;align-items:center;gap:6px;}
+  .missing-list li::before{content:"•";color:var(--bad);font-weight:bold;}
+
+  .modal-body pre{background:#F7F9FC;border:1px solid var(--border);padding:10px;border-radius:8px;
+    font-size:10.5px;white-space:pre-wrap;word-break:break-all;margin-top:12px;max-height:150px;overflow-y:auto;}
+  .modal-foot{padding:10px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+  .modal-btn{padding:8px 14px;border-radius:8px;font-size:12px;font-weight:700;border:none;cursor:pointer;}
+  .modal-btn.primary{background:var(--navy);color:#fff;}
 
   .footer-note{font-size:10.5px;color:var(--muted);text-align:center;padding:10px 20px 4px;line-height:1.5;}
 </style>
@@ -196,9 +225,50 @@
 
 <div class="bottomnav">
   <button class="navbtn save" onclick="guardarProgresoManual()">💾 Guardar</button>
+  <button class="navbtn view" onclick="verDatosGuardados()">🔍 Ver datos</button>
   <button class="navbtn pdf" onclick="exportarPDF()">📄 PDF</button>
-  <button class="navbtn share" onclick="shareResumen()">📋 Resumen</button>
   <button class="navbtn export" onclick="exportarExcel()">📊 Excel</button>
+</div>
+
+<!-- Modal para ver datos guardados y métricas -->
+<div class="modal-overlay" id="modalData">
+  <div class="modal-card">
+    <div class="modal-head">
+      <span>Estado del Registro Guardado</span>
+      <button class="modal-close" onclick="cerrarModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      
+      <!-- Avance General -->
+      <div class="stat-card">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;">Avance Total</div>
+        <div class="stat-main" id="totalPct">0%</div>
+        <div class="stat-bar-bg">
+          <div class="stat-bar-fill" id="totalBar"></div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-box"><div>Sitio</div><div class="stat-box-val" id="pctSitio">0%</div></div>
+          <div class="stat-box"><div>Voz y Datos</div><div class="stat-box-val" id="pctVoz">0%</div></div>
+          <div class="stat-box"><div>CCTV</div><div class="stat-box-val" id="pctCctv">0%</div></div>
+        </div>
+      </div>
+
+      <!-- Pendientes -->
+      <div class="missing-section">
+        <div class="missing-title">Lo que falta por capturar:</div>
+        <ul class="missing-list" id="missingList"></ul>
+      </div>
+
+      <!-- JSON crudo -->
+      <div style="font-size:11px;font-weight:700;color:var(--muted);margin-top:14px;text-transform:uppercase;">Objeto de Datos (JSON)</div>
+      <pre id="jsonPreview"></pre>
+
+    </div>
+    <div class="modal-foot">
+      <button class="modal-btn" onclick="copiarJson()">📋 Copiar JSON</button>
+      <button class="modal-btn primary" onclick="cerrarModal()">Cerrar</button>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -218,7 +288,7 @@ const SITIO_SECTIONS = [
   ]},
   {id:'B', title:'Nodos de red y contactos eléctricos — equipo administrativo', items:[
     'Canalizaciones / registros para datos',
-    'Contacto doble NO regulados',
+    'Contacto doble NO regulado',
     'Voltajes en contactos doble NO regulados por cada TPV',
     'Repisa de 90x60 cm mínimo',
   ]},
@@ -276,7 +346,7 @@ const CLOSEOUT_ITEMS = [
 ];
 
 /* ============================================================
-   STATE & PERSISTENCE (PERSISTENCIA TOTALMENTE COMPATIBLE)
+   STATE & PERSISTENCE
    ============================================================ */
 let STATE = {
   header:{estacion:'',responsable:'',fecha:'',hora:''},
@@ -317,6 +387,127 @@ function queueSave(){
 function guardarProgresoManual() {
   queueSave();
   showToast('💾 Datos guardados en el dispositivo');
+}
+
+/* ============================================================
+   CÁLCULO DE MÉTRICAS Y VER DATOS EN PANTALLA
+   ============================================================ */
+function calcularMetricas() {
+  // Sitio
+  const sitioTotal = SITIO_SECTIONS.reduce((a,s)=>a+s.items.length,0);
+  let sitioDone = 0;
+  let sitioMissing = [];
+
+  SITIO_SECTIONS.forEach(sec=>{
+    let secMissing = 0;
+    sec.items.forEach((item,i)=>{
+      const key = sec.id+i;
+      if(STATE.sitio.items[key] && STATE.sitio.items[key].estado) {
+        sitioDone++;
+      } else {
+        secMissing++;
+      }
+    });
+    if(secMissing > 0) {
+      sitioMissing.push(`Sitio - Sección ${sec.id} (${sec.title}): Faltan ${secMissing} reactivos`);
+    }
+  });
+
+  // Voz y Datos
+  const vozNodeFields = VOZ_GROUPS.reduce((a,g)=>a+g.keys.length,0);
+  const vozTotal = (vozNodeFields * VOZ_NODE_COUNT) + CLOSEOUT_ITEMS.length;
+  let vozDone = 0;
+  let vozIncompleteNodes = 0;
+
+  for(let n=1; n<=VOZ_NODE_COUNT; n++){
+    const nd = STATE.voz.nodos[n] || {};
+    let nDone = 0;
+    VOZ_GROUPS.forEach(g => g.keys.forEach(([k]) => { if(nd[k]) nDone++; }));
+    vozDone += nDone;
+    if(nDone < vozNodeFields) vozIncompleteNodes++;
+  }
+  const vozCierre = STATE.voz.cierre || {};
+  CLOSEOUT_ITEMS.forEach(([k]) => { if(vozCierre[k]) vozDone++; });
+  if(vozIncompleteNodes > 0) {
+    sitioMissing.push(`Voz y Datos: ${vozIncompleteNodes} nodos sin completar todos sus parámetros`);
+  }
+
+  // CCTV
+  const cctvNodeFields = CCTV_GROUPS.reduce((a,g)=>a+g.keys.length,0);
+  const cctvTotal = (cctvNodeFields * CCTV_NODE_COUNT) + CLOSEOUT_ITEMS.length;
+  let cctvDone = 0;
+  let cctvIncompleteNodes = 0;
+
+  for(let n=1; n<=CCTV_NODE_COUNT; n++){
+    const nd = STATE.cctv.nodos[n] || {};
+    let nDone = 0;
+    CCTV_GROUPS.forEach(g => g.keys.forEach(([k]) => { if(nd[k]) nDone++; }));
+    cctvDone += nDone;
+    if(nDone < cctvNodeFields) cctvIncompleteNodes++;
+  }
+  const cctvCierre = STATE.cctv.cierre || {};
+  CLOSEOUT_ITEMS.forEach(([k]) => { if(cctvCierre[k]) cctvDone++; });
+  if(cctvIncompleteNodes > 0) {
+    sitioMissing.push(`CCTV: ${cctvIncompleteNodes} cámaras sin completar todos sus parámetros`);
+  }
+
+  // Totales generales
+  const grandTotal = sitioTotal + vozTotal + cctvTotal;
+  const grandDone = sitioDone + vozDone + cctvDone;
+
+  const pctSitio = Math.round((sitioDone / sitioTotal) * 100);
+  const pctVoz = Math.round((vozDone / vozTotal) * 100);
+  const pctCctv = Math.round((cctvDone / cctvTotal) * 100);
+  const pctTotal = Math.round((grandDone / grandTotal) * 100);
+
+  return {
+    pctTotal,
+    pctSitio,
+    pctVoz,
+    pctCctv,
+    sitioMissing
+  };
+}
+
+function verDatosGuardados() {
+  const h = safeGetStorage('checklist:header') || STATE.header;
+  const s = safeGetStorage('checklist:sitio') || STATE.sitio;
+  const v = safeGetStorage('checklist:voz') || STATE.voz;
+  const c = safeGetStorage('checklist:cctv') || STATE.cctv;
+
+  const m = calcularMetricas();
+
+  document.getElementById('totalPct').textContent = m.pctTotal + '%';
+  document.getElementById('totalBar').style.width = m.pctTotal + '%';
+  document.getElementById('pctSitio').textContent = m.pctSitio + '%';
+  document.getElementById('pctVoz').textContent = m.pctVoz + '%';
+  document.getElementById('pctCctv').textContent = m.pctCctv + '%';
+
+  const missingList = document.getElementById('missingList');
+  missingList.innerHTML = '';
+  if(m.sitioMissing.length === 0 && m.pctTotal === 100) {
+    missingList.innerHTML = '<li style="color:var(--ok);">¡Excelente! El checklist está 100% completado.</li>';
+  } else {
+    m.sitioMissing.forEach(txt => {
+      const li = document.createElement('li');
+      li.textContent = txt;
+      missingList.appendChild(li);
+    });
+  }
+
+  const resumen = { Encabezado: h, Sitio: s, VozYDatos: v, CCTV: c };
+  document.getElementById('jsonPreview').textContent = JSON.stringify(resumen, null, 2);
+  document.getElementById('modalData').classList.add('open');
+}
+
+function cerrarModal() {
+  document.getElementById('modalData').classList.remove('open');
+}
+
+function copiarJson() {
+  const txt = document.getElementById('jsonPreview').textContent;
+  navigator.clipboard.writeText(txt);
+  showToast('📋 Datos copiados al portapapeles');
 }
 
 /* ============================================================
@@ -593,24 +784,10 @@ function clearSig(id){
 
 /* ---------- Progress ---------- */
 function updateProgress(){
-  const sitioTotal = SITIO_SECTIONS.reduce((a,s)=>a+s.items.length,0);
-  const sitioDone = Object.values(STATE.sitio.items).filter(i=>i&&i.estado).length;
-  document.getElementById('prog_sitio').textContent = sitioTotal? Math.round(100*sitioDone/sitioTotal)+'%':'0%';
-
-  ['voz','cctv'].forEach(tab=>{
-    const groups = tab==='voz'?VOZ_GROUPS:CCTV_GROUPS;
-    const count = tab==='voz'?VOZ_NODE_COUNT:CCTV_NODE_COUNT;
-    const fieldsPerNode = groups.reduce((a,g)=>a+g.keys.length,0);
-    const total = fieldsPerNode*count + CLOSEOUT_ITEMS.length;
-    let done=0;
-    for(let n=1;n<=count;n++){
-      const nd = STATE[tab].nodos[n]||{};
-      groups.forEach(g=>g.keys.forEach(([k])=>{ if(nd[k]) done++; }));
-    }
-    const cierre = STATE[tab].cierre||{};
-    CLOSEOUT_ITEMS.forEach(([k])=>{ if(cierre[k]) done++; });
-    document.getElementById('prog_'+tab).textContent = total? Math.round(100*done/total)+'%':'0%';
-  });
+  const m = calcularMetricas();
+  document.getElementById('prog_sitio').textContent = m.pctSitio + '%';
+  document.getElementById('prog_voz').textContent = m.pctVoz + '%';
+  document.getElementById('prog_cctv').textContent = m.pctCctv + '%';
 }
 
 /* ---------- Reset ---------- */
@@ -646,33 +823,6 @@ function showToast(msg){
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'), 2500);
-}
-
-/* ---------- Resumen / share ---------- */
-function shareResumen(){
-  const est = STATE.header.estacion || '(sin estación)';
-  const resp = STATE.header.responsable || '(sin responsable)';
-  let lines = [`Checklist recepción cableado y CCTV`, `Estación: ${est}`, `Responsable: ${resp}`, `Fecha: ${STATE.header.fecha||''}`, ``];
-  lines.push(`Sitio: ${document.getElementById('prog_sitio').textContent} completado`);
-  lines.push(`Voz y Datos: ${document.getElementById('prog_voz').textContent} completado`);
-  lines.push(`CCTV: ${document.getElementById('prog_cctv').textContent} completado`);
-
-  const faltantesSitio = [];
-  SITIO_SECTIONS.forEach(sec=>sec.items.forEach((label,i)=>{
-    const rec = STATE.sitio.items[sec.id+i];
-    if(rec && rec.estado==='no') faltantesSitio.push(`${sec.id}.${i+1} ${label}`);
-  }));
-  if(faltantesSitio.length){
-    lines.push('', 'Pendientes marcados NO:');
-    faltantesSitio.forEach(f=>lines.push('• '+f));
-  }
-  const text = lines.join('\n');
-  if(navigator.share){
-    navigator.share({title:'Checklist recepción', text}).catch(()=>{});
-  } else {
-    navigator.clipboard?.writeText(text);
-    showToast('Resumen copiado al portapapeles');
-  }
 }
 
 /* ============================================================
