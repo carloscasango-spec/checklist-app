@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Recepción Voz, Datos y CCTV - Móvil</title>
+  <title>Voz y Datos - Synergo Sistemas</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 10px; background: #f4f6f9; color: #333; font-size: 14px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 10px; background: #f4f6f9; color: #333; font-size: 13px; }
 
-    /* Barra Superior de Control Fija */
+    /* Barra Superior de Control */
     .top-bar {
       position: sticky;
       top: 0;
@@ -18,41 +18,40 @@
       padding: 10px;
       border-radius: 8px;
       z-index: 1000;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.15);
       margin-bottom: 15px;
     }
     .top-bar-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-    .btn { border: none; padding: 10px 14px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 13px; flex: 1; text-align: center; }
+    .btn { border: none; padding: 10px 12px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 13px; flex: 1; text-align: center; }
     .btn-save { background: #2e7d32; color: white; }
     .btn-new { background: #555; color: white; }
     .btn-pdf { background: #d32f2f; color: white; }
-    select { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 14px; background: #fff; }
-
-    /* Tarjetas Adaptables */
-    .card { background: white; border-radius: 8px; padding: 12px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .card-title { font-weight: bold; font-size: 15px; color: #1b365d; border-bottom: 2px solid #bdd7ee; padding-bottom: 4px; margin-bottom: 10px; }
     
-    .input-field { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; margin-top: 4px; }
+    select, input[type="text"], input[type="date"], textarea { 
+      width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 13px; background: #fff; font-family: inherit;
+    }
+
+    /* Tarjetas */
+    .card { background: white; border-radius: 8px; padding: 12px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .card-title { font-weight: bold; font-size: 14px; color: #1b365d; border-bottom: 2px solid #bdd7ee; padding-bottom: 4px; margin-bottom: 10px; }
+    
+    .form-group { margin-bottom: 10px; }
+    .form-group label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 3px; color: #555; text-transform: uppercase; }
 
     /* Acordeón de Nodos */
-    details { background: #fafafa; border: 1px solid #e0e0e0; border-radius: 6px; margin-bottom: 8px; padding: 6px 10px; }
-    summary { font-weight: bold; cursor: pointer; padding: 6px 0; color: #0f2341; display: flex; justify-content: space-between; align-items: center; }
-    
-    .chk-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee; }
-    .chk-item { display: flex; align-items: center; gap: 8px; font-size: 12px; background: #fff; padding: 6px; border-radius: 4px; border: 1px solid #eee; }
-    .chk-item input { transform: scale(1.3); }
+    details { background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; margin-bottom: 8px; padding: 6px 10px; }
+    summary { font-weight: bold; cursor: pointer; padding: 6px 0; color: #1b365d; display: flex; justify-content: space-between; align-items: center; }
 
-    /* Ocultar elementos en la exportación */
     @media print { .top-bar { display: none; } }
   </style>
 </head>
 <body>
 
 <div class="top-bar">
-  <div style="font-weight: bold; font-size: 14px;">☁️ Proyectos Sincronizados</div>
+  <div style="font-weight: bold; font-size: 14px;">☁️ Proyectos Sincronizados (Voz y Datos)</div>
   <div style="margin-top: 5px;">
     <select id="select-proyectos" onchange="cargarProyecto(this.value)">
-      <option value="">⏳ Cargando desde la nube...</option>
+      <option value="">⏳ Cargando borradores...</option>
     </select>
   </div>
   <div class="top-bar-controls">
@@ -63,44 +62,24 @@
 </div>
 
 <div id="formato-app">
-  <!-- Datos Generales -->
+
   <div class="card">
-    <div class="card-title">📌 Datos del Proyecto</div>
-    <label><strong>Nombre del Proyecto / Sucursal:</strong></label>
-    <input type="text" id="req-proyecto" class="input-field" placeholder="Ej: Gomart Mirador">
-    
-    <div style="margin-top: 10px;">
-      <label><strong>Fecha de Inspección:</strong></label>
-      <input type="date" id="req-fecha" class="input-field">
+    <div class="form-group">
+      <label>Nombre del Proyecto / Sucursal:</label>
+      <input type="text" id="req-proyecto" placeholder="Ej: Gomart Mirador">
+    </div>
+
+    <div class="form-group">
+      <label>Fecha de Inspección:</label>
+      <input type="date" id="req-fecha">
     </div>
   </div>
 
-  <!-- Nodos Voz y Datos -->
   <div class="card">
     <div class="card-title">🌐 Voz y Datos (24 Nodos)</div>
-    <div id="container-vd"></div>
+    <div id="contenedor-nodos"></div>
   </div>
 
-  <!-- Nodos CCTV -->
-  <div class="card">
-    <div class="card-title">📹 CCTV (16 Nodos)</div>
-    <div id="container-cctv"></div>
-  </div>
-
-  <!-- Limpieza y Observaciones -->
-  <div class="card">
-    <div class="card-title">📋 Revisiones Generales</div>
-    <div class="chk-grid" style="grid-template-columns: 1fr;">
-      <label class="chk-item"><input type="checkbox" id="chk-site"> Limpieza del Site / Gabinete</label>
-      <label class="chk-item"><input type="checkbox" id="chk-oficinas"> Limpieza de Oficinas / Área de Trabajo</label>
-      <label class="chk-item"><input type="checkbox" id="chk-tierra"> Rack a Tierra Física / Gabinete</label>
-    </div>
-    
-    <div style="margin-top: 12px;">
-      <label><strong>Observaciones:</strong></label>
-      <input type="text" id="req-obs" class="input-field" placeholder="Agregar notas u observaciones...">
-    </div>
-  </div>
 </div>
 
 <script>
@@ -108,62 +87,63 @@
   const API_KEY = "$2a$10$5BDKoNaJb98nczPxrHl1Uuow.tck.XjCTrl6Cc7b.aZ3RbBRtHr4e";
   const URL_NUBE = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
-  const opcionesVD = ["Rematado Face Plate", "Rematado Patch Panel", "Face Plate Etq.", "Patch Panel Etq.", "Patchcord Etq.", "Switch Etq.", "Org. Vertical", "Org. Horizontal", "Continuidad", "Transmisión"];
-  const opcionesCCTV = ["Rematado Patch Panel", "Etiquetado Patch Panel", "Patchcord Patch Panel", "Patchcord Switch", "Patchcord NVR", "Org. Vertical", "Org. Horizontal", "Resanes Cámara", "Retoques Cámara", "Tapas Registros", "Continuidad", "Transmisión"];
-
   window.onload = function() {
     renderizarNodos();
     cargarProyectosDesdeNube();
   };
 
   function renderizarNodos() {
-    const vdContainer = document.getElementById('container-vd');
-    vdContainer.innerHTML = '';
-    for (let i = 1; i <= 24; i++) {
-      let det = document.createElement('details');
-      det.innerHTML = `<summary>Nodo #${i} <span>▼</span></summary>
-        <div class="chk-grid">
-          ${opcionesVD.map((op, c) => `<label class="chk-item"><input type="checkbox" id="vd_${i}_${c}"> ${op}</label>`).join('')}
-        </div>`;
-      vdContainer.appendChild(det);
-    }
+    const contenedor = document.getElementById('contenedor-nodos');
+    contenedor.innerHTML = '';
 
-    const cctvContainer = document.getElementById('container-cctv');
-    cctvContainer.innerHTML = '';
-    for (let i = 1; i <= 16; i++) {
-      let det = document.createElement('details');
-      det.innerHTML = `<summary>Cam / Nodo #${i} <span>▼</span></summary>
-        <div class="chk-grid">
-          ${opcionesCCTV.map((op, c) => `<label class="chk-item"><input type="checkbox" id="cctv_${i}_${c}"> ${op}</label>`).join('')}
-        </div>`;
-      cctvContainer.appendChild(det);
+    for (let i = 1; i <= 24; i++) {
+      const details = document.createElement('details');
+      details.innerHTML = `
+        <summary>Nodo #${i} <span>▼</span></summary>
+        <div style="padding-top: 8px;">
+          <div class="form-group">
+            <label>Ubicación / Área:</label>
+            <input type="text" id="nodo_ubi_${i}" placeholder="Ej: Caja 1 / Bóveda / Oficina">
+          </div>
+          <div class="form-group">
+            <label>Estado / Medición:</label>
+            <input type="text" id="nodo_est_${i}" placeholder="Ej: Correcto / Pendiente / 100Mbps">
+          </div>
+          <div class="form-group">
+            <label>Observaciones:</label>
+            <input type="text" id="nodo_obs_${i}" placeholder="Notas sobre el nodo...">
+          </div>
+        </div>
+      `;
+      contenedor.appendChild(details);
     }
   }
 
   async function guardarProgreso() {
-    const nombre = document.getElementById('req-proyecto').value.trim();
-    if (!nombre) { alert("⚠️ Escribe un Nombre de Proyecto para guardar."); return; }
+    const proyecto = document.getElementById('req-proyecto').value.trim();
+    if (!proyecto) { alert("⚠️ Escribe el Nombre del Proyecto para guardar."); return; }
 
     const estado = {
-      proyecto: nombre,
+      tipo: "VOZ_DATOS",
+      proyecto: proyecto,
       fecha: document.getElementById('req-fecha').value,
-      observaciones: document.getElementById('req-obs').value,
-      chkSite: document.getElementById('chk-site').checked,
-      chkOficinas: document.getElementById('chk-oficinas').checked,
-      chkTierra: document.getElementById('chk-tierra').checked,
-      checkboxes: {}
+      nodos: {}
     };
 
-    document.querySelectorAll('#formato-app input[type="checkbox"]').forEach(chk => {
-      if (chk.id) estado.checkboxes[chk.id] = chk.checked;
-    });
+    for (let i = 1; i <= 24; i++) {
+      estado.nodos[`nodo_${i}`] = {
+        ubicacion: document.getElementById(`nodo_ubi_${i}`).value,
+        estado: document.getElementById(`nodo_est_${i}`).value,
+        observaciones: document.getElementById(`nodo_obs_${i}`).value
+      };
+    }
 
     try {
       let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
       let data = await res.json();
       let proyectos = data.record.proyectos || {};
 
-      proyectos[nombre] = estado;
+      proyectos[proyecto] = estado;
 
       await fetch(URL_NUBE, {
         method: "PUT",
@@ -174,10 +154,10 @@
         body: JSON.stringify({ proyectos: proyectos })
       });
 
-      alert(`☁️ Proyecto "${nombre}" guardado en la nube exitosamente.`);
-      cargarProyectosDesdeNube(nombre);
+      alert(`☁️ Proyecto "${proyecto}" guardado en la nube exitosamente.`);
+      cargarProyectosDesdeNube(proyecto);
     } catch (err) {
-      alert("❌ Error al conectar con la nube. Revisa tu conexión.");
+      alert("❌ Error al conectar con la nube.");
       console.error(err);
     }
   }
@@ -192,54 +172,66 @@
       window.proyectosNube = data.record.proyectos || {};
 
       select.innerHTML = '<option value="">-- Cargar Borrador Guardado --</option>';
-      Object.keys(window.proyectosNube).forEach(nombre => {
-        let opt = document.createElement('option');
-        opt.value = nombre;
-        opt.textContent = nombre;
-        if (nombre === seleccionado) opt.selected = true;
-        select.appendChild(opt);
+      Object.keys(window.proyectosNube).forEach(clave => {
+        let item = window.proyectosNube[clave];
+
+        // FILTRO: Solo proyectos de Voz y Datos
+        const esVozDatos = item.tipo === "VOZ_DATOS" || (!clave.startsWith("VISITA_") && item.tipo !== "VISITA_GOMART");
+
+        if (esVozDatos) {
+          let opt = document.createElement('option');
+          opt.value = clave;
+          opt.textContent = item.proyecto || item.tienda || clave;
+          if (clave === seleccionado) opt.selected = true;
+          select.appendChild(opt);
+        }
       });
     } catch (err) {
       select.innerHTML = '<option value="">❌ Error al cargar borradores</option>';
     }
   }
 
-  function cargarProyecto(nombre) {
-    if (!nombre || !window.proyectosNube) return;
-    const estado = window.proyectosNube[nombre];
+  function cargarProyecto(clave) {
+    if (!clave || !window.proyectosNube) return;
+    const estado = window.proyectosNube[clave];
     if (!estado) return;
 
-    document.getElementById('req-proyecto').value = estado.proyecto;
-    document.getElementById('req-fecha').value = estado.fecha;
-    document.getElementById('req-obs').value = estado.observaciones;
-    document.getElementById('chk-site').checked = estado.chkSite;
-    document.getElementById('chk-oficinas').checked = estado.chkOficinas;
-    document.getElementById('chk-tierra').checked = estado.chkTierra;
+    document.getElementById('req-proyecto').value = estado.proyecto || clave;
+    document.getElementById('req-fecha').value = estado.fecha || '';
 
-    Object.keys(estado.checkboxes).forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.checked = estado.checkboxes[id];
-    });
+    if (estado.nodos) {
+      for (let i = 1; i <= 24; i++) {
+        const datosNodo = estado.nodos[`nodo_${i}`];
+        if (datosNodo) {
+          document.getElementById(`nodo_ubi_${i}`).value = datosNodo.ubicacion || '';
+          document.getElementById(`nodo_est_${i}`).value = datosNodo.estado || '';
+          document.getElementById(`nodo_obs_${i}`).value = datosNodo.observaciones || '';
+        }
+      }
+    }
   }
 
   function nuevoProyecto() {
     document.getElementById('req-proyecto').value = '';
     document.getElementById('req-fecha').value = '';
-    document.getElementById('req-obs').value = '';
-    document.querySelectorAll('#formato-app input[type="checkbox"]').forEach(chk => chk.checked = false);
+    for (let i = 1; i <= 24; i++) {
+      document.getElementById(`nodo_ubi_${i}`).value = '';
+      document.getElementById(`nodo_est_${i}`).value = '';
+      document.getElementById(`nodo_obs_${i}`).value = '';
+    }
     document.getElementById('select-proyectos').value = '';
   }
 
   function descargarPDF() {
     const proyecto = document.getElementById('req-proyecto').value.trim();
-    if (!proyecto) { alert("⚠️ Asigna un nombre al proyecto."); return; }
+    if (!proyecto) { alert("⚠️ Asigna un nombre al Proyecto."); return; }
 
     const elemento = document.getElementById('formato-app');
     document.querySelectorAll('details').forEach(d => d.open = true);
 
     const opciones = {
       margin: 8,
-      filename: `Recepcion_${proyecto}.pdf`,
+      filename: `Voz_y_Datos_${proyecto}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { scale: 2 },
       jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
