@@ -118,31 +118,24 @@
   <!-- Contenedor del Checklist -->
   <div class="card">
 
-    <!-- SECCIÓN A -->
     <div class="section-title">A. NODOS DE RED Y CONTACTOS PISO DE VENTA</div>
     <div id="sec-a"></div>
 
-    <!-- SECCIÓN B -->
     <div class="section-title">B. NODOS DE RED Y CONTACTOS ELÉCTRICOS EQUIPO ADMINISTRATIVO</div>
     <div id="sec-b"></div>
 
-    <!-- SECCIÓN C -->
     <div class="section-title">C. NODOS DE RED REGISTROS EQUIPO DE PUBLICIDAD</div>
     <div id="sec-c"></div>
 
-    <!-- SECCIÓN D -->
     <div class="section-title">D. NODOS DE RED TORNIQUETE Y WIFI</div>
     <div id="sec-d"></div>
 
-    <!-- SECCIÓN E -->
     <div class="section-title">E. ADECUACIONES PARA SITE TELECOMUNICACIONES (RACK/GABINETE)</div>
     <div id="sec-e"></div>
 
-    <!-- SECCIÓN F -->
     <div class="section-title">F. LIMPIEZA Y ACABADOS CCTV</div>
     <div id="sec-f"></div>
 
-    <!-- SECCIÓN G -->
     <div class="section-title">G. OBSERVACIONES GENERALES</div>
     <div class="form-group" style="margin-top: 10px;">
       <textarea id="req-observaciones-generales" rows="4" placeholder="Escriba aquí las observaciones generales del proyecto..."></textarea>
@@ -157,7 +150,6 @@
   const API_KEY = "$2a$10$5BDKoNaJb98nczPxrHl1Uuow.tck.XjCTrl6Cc7b.aZ3RbBRtHr4e";
   const URL_NUBE = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
-  // Estructura idéntica al formato original
   const datosChecklist = {
     "sec-a": [
       "Canalizaciones / Registros para datos en area de TPV",
@@ -249,7 +241,6 @@
       observaciones: {}
     };
 
-    // Guardar radios y observaciones
     Object.keys(datosChecklist).forEach(secId => {
       datosChecklist[secId].forEach((_, idx) => {
         const itemNum = idx + 1;
@@ -298,11 +289,16 @@
 
       select.innerHTML = '<option value="">-- Seleccionar Visita Guardada --</option>';
       Object.keys(window.proyectosNube).forEach(clave => {
-        if (clave.startsWith("VISITA_") || window.proyectosNube[clave].tipo === "VISITA_GOMART") {
-          let item = window.proyectosNube[clave];
+        let item = window.proyectosNube[clave];
+
+        // FILTRO: Solo mostrar proyectos de Visita en Sitio
+        const esVisita = clave.startsWith("VISITA_") || item.tipo === "VISITA_GOMART";
+
+        if (esVisita) {
           let opt = document.createElement('option');
           opt.value = clave;
-          opt.textContent = item.gomart || clave;
+          let nombreLimpio = item.gomart || item.tienda || clave.replace("VISITA_", "");
+          opt.textContent = nombreLimpio;
           if (clave === seleccionado) opt.selected = true;
           select.appendChild(opt);
         }
@@ -324,11 +320,9 @@
     document.getElementById('req-hora').value = estado.hora || '';
     document.getElementById('req-observaciones-generales').value = estado.observacionesGenerales || '';
 
-    // Limpiar previo
     document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
     document.querySelectorAll('.check-row input[type="text"]').forEach(i => i.value = '');
 
-    // Cargar respuestas
     if (estado.respuestas) {
       Object.keys(estado.respuestas).forEach(itemId => {
         const val = estado.respuestas[itemId];
@@ -337,7 +331,6 @@
       });
     }
 
-    // Cargar observaciones
     if (estado.observaciones) {
       Object.keys(estado.observaciones).forEach(itemId => {
         const obsInput = document.getElementById(`obs_${itemId}`);
