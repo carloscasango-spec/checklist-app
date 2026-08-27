@@ -3,197 +3,227 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Recepción de Voz, Datos y CCTV</title>
+  <title>Recepción Voz, Datos y CCTV - Móvil</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
-    @page { size: letter landscape; margin: 8mm; }
     *, *::before, *::after { box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; margin: 0; padding: 10px; background: #fff; color: #000; font-size: 8pt; }
-    
-    .no-print { text-align: right; margin-bottom: 10px; }
-    .btn-action { background: #1b365d; color: white; border: none; padding: 10px 18px; font-weight: bold; border-radius: 4px; cursor: pointer; }
-    .btn-action:hover { background: #0f2341; }
-    @media print { .no-print { display: none !important; } body { padding: 0; } }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 10px; background: #f4f6f9; color: #333; font-size: 14px; }
 
-    .main-title {
-      background-color: #fce4d6;
-      text-align: center;
-      font-weight: bold;
-      font-size: 11pt;
-      padding: 5px;
-      border: 1pt solid #000;
-      margin-top: 10px;
-      margin-bottom: 2px;
-      text-transform: uppercase;
-    }
-
-    .matrix-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-    .matrix-table th, .matrix-table td { border: 1pt solid #000; padding: 2px 3px; text-align: center; vertical-align: middle; }
-    
-    .bg-blue-top { background-color: #bdd7ee; font-weight: bold; font-size: 7.5pt; text-transform: uppercase; }
-    .bg-blue-sub { background-color: #d9e1f2; font-weight: bold; font-size: 7pt; text-transform: uppercase; }
-    
-    .col-nodo { width: 45px; font-weight: bold; background-color: #f2f2f2; }
-    .cell-chk { width: 30px; }
-    .cell-chk input { transform: scale(0.9); cursor: pointer; }
-
-    .table-sub { width: 100%; border-collapse: collapse; }
-    .table-sub td { border: 1pt solid #000; padding: 4px; font-size: 7.5pt; }
-    
-    .project-box {
-      border: 1pt solid #000;
-      background-color: #bdd7ee;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      font-size: 10pt;
+    /* Barra Superior de Control Fija */
+    .top-bar {
+      position: sticky;
+      top: 0;
+      background: #1b365d;
+      color: white;
       padding: 10px;
+      border-radius: 8px;
+      z-index: 1000;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      margin-bottom: 15px;
     }
+    .top-bar-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .btn { border: none; padding: 10px 14px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 13px; flex: 1; text-align: center; }
+    .btn-save { background: #2e7d32; color: white; }
+    .btn-new { background: #555; color: white; }
+    .btn-pdf { background: #d32f2f; color: white; }
+    select { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 14px; background: #fff; }
 
-    .obs-container { margin-top: 8px; border-bottom: 1pt solid #000; padding-bottom: 2px; }
-    .obs-container input { width: 85%; border: none; outline: none; font-size: 8pt; }
+    /* Tarjetas Adaptables */
+    .card { background: white; border-radius: 8px; padding: 12px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .card-title { font-weight: bold; font-size: 15px; color: #1b365d; border-bottom: 2px solid #bdd7ee; padding-bottom: 4px; margin-bottom: 10px; }
+    
+    .input-field { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; margin-top: 4px; }
 
-    .signatures-table { width: 100%; margin-top: 25px; border-collapse: collapse; }
-    .signatures-table td { text-align: center; font-size: 8pt; vertical-align: bottom; }
-    .line-sig { border-top: 1pt solid #000; width: 70%; margin: 0 auto 3px auto; }
+    /* Acordeón de Nodos */
+    details { background: #fafafa; border: 1px solid #e0e0e0; border-radius: 6px; margin-bottom: 8px; padding: 6px 10px; }
+    summary { font-weight: bold; cursor: pointer; padding: 6px 0; color: #0f2341; display: flex; justify-content: space-between; align-items: center; }
+    
+    .chk-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee; }
+    .chk-item { display: flex; align-items: center; gap: 8px; font-size: 12px; background: #fff; padding: 6px; border-radius: 4px; border: 1px solid #eee; }
+    .chk-item input { transform: scale(1.3); }
+
+    /* Ocultar elementos en la exportación */
+    @media print { .top-bar { display: none; } }
   </style>
 </head>
 <body>
 
-<div class="no-print">
-  <button class="btn-action" onclick="exportarFormato()">💾 Guardar como PDF / Imprimir</button>
+<div class="top-bar">
+  <div style="font-weight: bold; font-size: 14px;">📁 Gestión de Proyectos</div>
+  <div style="margin-top: 5px;">
+    <select id="select-proyectos" onchange="cargarProyecto(this.value)">
+      <option value="">-- Cargar Borrador Guardado --</option>
+    </select>
+  </div>
+  <div class="top-bar-controls">
+    <button class="btn btn-save" onclick="guardarProgreso()">💾 Guardar</button>
+    <button class="btn btn-new" onclick="nuevoProyecto()">➕ Nuevo</button>
+    <button class="btn btn-pdf" onclick="descargarPDF()">📥 Exportar PDF</button>
+  </div>
 </div>
 
-<!-- TABLA 1: VOZ Y DATOS (24 NODOS) -->
-<div class="main-title">Recepción de Cableado de Voz y Datos en Tiendas y Estaciones</div>
-<table class="matrix-table">
-  <thead>
-    <tr class="bg-blue-top">
-      <th rowspan="2" class="col-nodo"># NODO</th>
-      <th colspan="2">Cableado del Nodo</th>
-      <th colspan="2">Etiquetado del Nodo</th>
-      <th colspan="2">Etiquetado del Patchcord</th>
-      <th colspan="2">Organización del Cableado</th>
-      <th colspan="2">Pruebas de Comunicación</th>
-    </tr>
-    <tr class="bg-blue-sub">
-      <th>Rematado Face Plate</th>
-      <th>Rematado Patch Pannel</th>
-      <th>Face Plate</th>
-      <th>Patch Pannel</th>
-      <th>Patch Pannel</th>
-      <th>Switch</th>
-      <th>Organizador Vertical</th>
-      <th>Organizador Horizontal</th>
-      <th>Continuidad</th>
-      <th>Transmisión</th>
-    </tr>
-  </thead>
-  <tbody id="body-voz-datos"></tbody>
-</table>
+<div id="formato-app">
+  <!-- Datos Generales -->
+  <div class="card">
+    <div class="card-title">📌 Datos del Proyecto</div>
+    <label><strong>Nombre del Proyecto / Sucursal:</strong></label>
+    <input type="text" id="req-proyecto" class="input-field" placeholder="Ej: Gomart Mirador">
+    
+    <div style="margin-top: 10px;">
+      <label><strong>Fecha de Inspección:</strong></label>
+      <input type="date" id="req-fecha" class="input-field">
+    </div>
+  </div>
 
-<!-- TABLA 2: CCTV (16 NODOS) -->
-<div class="main-title">Recepción de CCTV en Tiendas y Estaciones</div>
-<table class="matrix-table">
-  <thead>
-    <tr class="bg-blue-top">
-      <th rowspan="2" class="col-nodo"># NODO</th>
-      <th colspan="2">Cableado del Nodo</th>
-      <th colspan="3">Etiquetado del Patchcord</th>
-      <th colspan="2">Organización del Cableado</th>
-      <th colspan="3">Limpieza y Acabados CCTV</th>
-      <th colspan="2">Pruebas de Comunicación</th>
-    </tr>
-    <tr class="bg-blue-sub">
-      <th>Rematado Patch Pannel</th>
-      <th>Etiquetado Patch Pannel</th>
-      <th>Patch Pannel</th>
-      <th>Switch</th>
-      <th>NVR</th>
-      <th>Acomodo en Organizador Vertical</th>
-      <th>Acomodo en Organizador Horizontal</th>
-      <th>Resanes Fijación de Cámara</th>
-      <th>Retoques Instalación de Cámara</th>
-      <th>Tapas en los Registros</th>
-      <th>Continuidad</th>
-      <th>Transmisión</th>
-    </tr>
-  </thead>
-  <tbody id="body-cctv"></tbody>
-</table>
+  <!-- Nodos Voz y Datos -->
+  <div class="card">
+    <div class="card-title">🌐 Voz y Datos (24 Nodos)</div>
+    <div id="container-vd"></div>
+  </div>
 
-<!-- PIE DE FORMATO Y FIRMAS -->
-<table style="width: 100%;">
-  <tr>
-    <td style="width: 40%; vertical-align: top;">
-      <table class="table-sub">
-        <tr><td style="background-color: #d9e1f2; font-weight: bold;">LIMPIEZA DEL SITE / GABINETE</td><td class="cell-chk"><input type="checkbox"></td></tr>
-        <tr><td style="background-color: #d9e1f2; font-weight: bold;">LIMPIEZA DE OFICINAS / AREA DE TRABAJO</td><td class="cell-chk"><input type="checkbox"></td></tr>
-        <tr><td style="background-color: #d9e1f2; font-weight: bold;">RACK A TIERRA FISICA / GABINETE</td><td class="cell-chk"><input type="checkbox"></td></tr>
-      </table>
-    </td>
-    <td style="width: 5%;"></td>
-    <td style="width: 55%; vertical-align: top;">
-      <div class="project-box">
-        PROYECTO: <input type="text" id="req-proyecto" style="border:none; border-bottom:1px solid #000; background:transparent; font-weight:bold; font-size:10pt; margin-left:5px; width:65%;" placeholder="Escriba el Proyecto...">
-      </div>
-    </td>
-  </tr>
-</table>
+  <!-- Nodos CCTV -->
+  <div class="card">
+    <div class="card-title">📹 CCTV (16 Nodos)</div>
+    <div id="container-cctv"></div>
+  </div>
 
-<div class="obs-container">
-  <strong>OBSERVACIONES:</strong> <input type="text" placeholder="Escriba aquí las observaciones...">
+  <!-- Limpieza y Observaciones -->
+  <div class="card">
+    <div class="card-title">📋 Revisiones Generales</div>
+    <div class="chk-grid" style="grid-template-columns: 1fr;">
+      <label class="chk-item"><input type="checkbox" id="chk-site"> Limpieza del Site / Gabinete</label>
+      <label class="chk-item"><input type="checkbox" id="chk-oficinas"> Limpieza de Oficinas / Área de Trabajo</label>
+      <label class="chk-item"><input type="checkbox" id="chk-tierra"> Rack a Tierra Física / Gabinete</label>
+    </div>
+    
+    <div style="margin-top: 12px;">
+      <label><strong>Observaciones:</strong></label>
+      <input type="text" id="req-obs" class="input-field" placeholder="Agregar notas u observaciones...">
+    </div>
+  </div>
 </div>
-
-<table class="signatures-table">
-  <tr>
-    <td style="width: 35%;">
-      <div class="line-sig"></div>
-      <strong>RECIBE SISTEMAS</strong><br><small>Nombre y firma</small>
-    </td>
-    <td style="width: 35%;">
-      <div class="line-sig"></div>
-      <strong>ENTREGA PROVEEDOR</strong><br><small>Nombre y firma</small>
-    </td>
-    <td style="width: 30%; text-align: right;">
-      Fecha: <input type="date" id="req-fecha" style="border:none; border-bottom:1pt solid #000; font-size:8pt;">
-    </td>
-  </tr>
-</table>
 
 <script>
-  // Construye la matriz visual
-  function inicializarMatriz() {
-    const bodyVD = document.getElementById('body-voz-datos');
+  const opcionesVD = ["Rematado Face Plate", "Rematado Patch Panel", "Face Plate Etq.", "Patch Panel Etq.", "Patchcord Etq.", "Switch Etq.", "Org. Vertical", "Org. Horizontal", "Continuidad", "Transmisión"];
+  const opcionesCCTV = ["Rematado Patch Panel", "Etiquetado Patch Panel", "Patchcord Patch Panel", "Patchcord Switch", "Patchcord NVR", "Org. Vertical", "Org. Horizontal", "Resanes Cámara", "Retoques Cámara", "Tapas Registros", "Continuidad", "Transmisión"];
+
+  window.onload = function() {
+    renderizarNodos();
+    actualizarSelector();
+  };
+
+  function renderizarNodos() {
+    const vdContainer = document.getElementById('container-vd');
+    vdContainer.innerHTML = '';
     for (let i = 1; i <= 24; i++) {
-      let tr = document.createElement('tr');
-      tr.innerHTML = `<td class="col-nodo">${i}</td>` + Array(10).fill('<td class="cell-chk"><input type="checkbox"></td>').join('');
-      bodyVD.appendChild(tr);
+      let det = document.createElement('details');
+      det.innerHTML = `<summary>Nodo #${i} <span>▼</span></summary>
+        <div class="chk-grid">
+          ${opcionesVD.map((op, c) => `<label class="chk-item"><input type="checkbox" id="vd_${i}_${c}"> ${op}</label>`).join('')}
+        </div>`;
+      vdContainer.appendChild(det);
     }
 
-    const bodyCCTV = document.getElementById('body-cctv');
+    const cctvContainer = document.getElementById('container-cctv');
+    cctvContainer.innerHTML = '';
     for (let i = 1; i <= 16; i++) {
-      let tr = document.createElement('tr');
-      tr.innerHTML = `<td class="col-nodo">${i}</td>` + Array(12).fill('<td class="cell-chk"><input type="checkbox"></td>').join('');
-      bodyCCTV.appendChild(tr);
+      let det = document.createElement('details');
+      det.innerHTML = `<summary>Cam / Nodo #${i} <span>▼</span></summary>
+        <div class="chk-grid">
+          ${opcionesCCTV.map((op, c) => `<label class="chk-item"><input type="checkbox" id="cctv_${i}_${c}"> ${op}</label>`).join('')}
+        </div>`;
+      cctvContainer.appendChild(det);
     }
   }
 
-  // Valida y ejecuta la ventana nativa del navegador para guardar PDF
-  function exportarFormato() {
+  function guardarProgreso() {
+    const nombre = document.getElementById('req-proyecto').value.trim();
+    if (!nombre) { alert("⚠️ Escribe un Nombre de Proyecto para guardar."); return; }
+
+    const estado = {
+      proyecto: nombre,
+      fecha: document.getElementById('req-fecha').value,
+      observaciones: document.getElementById('req-obs').value,
+      chkSite: document.getElementById('chk-site').checked,
+      chkOficinas: document.getElementById('chk-oficinas').checked,
+      chkTierra: document.getElementById('chk-tierra').checked,
+      checkboxes: {}
+    };
+
+    document.querySelectorAll('#formato-app input[type="checkbox"]').forEach(chk => {
+      if (chk.id) estado.checkboxes[chk.id] = chk.checked;
+    });
+
+    let proyectos = JSON.parse(localStorage.getItem('proyectos_movil_vd') || '{}');
+    proyectos[nombre] = estado;
+    localStorage.setItem('proyectos_movil_vd', JSON.stringify(proyectos));
+
+    alert(`✅ Proyecto "${nombre}" guardado.`);
+    actualizarSelector(nombre);
+  }
+
+  function cargarProyecto(nombre) {
+    if (!nombre) return;
+    let proyectos = JSON.parse(localStorage.getItem('proyectos_movil_vd') || '{}');
+    const estado = proyectos[nombre];
+    if (!estado) return;
+
+    document.getElementById('req-proyecto').value = estado.proyecto;
+    document.getElementById('req-fecha').value = estado.fecha;
+    document.getElementById('req-obs').value = estado.observaciones;
+    document.getElementById('chk-site').checked = estado.chkSite;
+    document.getElementById('chk-oficinas').checked = estado.chkOficinas;
+    document.getElementById('chk-tierra').checked = estado.chkTierra;
+
+    Object.keys(estado.checkboxes).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.checked = estado.checkboxes[id];
+    });
+  }
+
+  function nuevoProyecto() {
+    document.getElementById('req-proyecto').value = '';
+    document.getElementById('req-fecha').value = '';
+    document.getElementById('req-obs').value = '';
+    document.querySelectorAll('#formato-app input[type="checkbox"]').forEach(chk => chk.checked = false);
+    document.getElementById('select-proyectos').value = '';
+  }
+
+  function actualizarSelector(seleccionado = '') {
+    const select = document.getElementById('select-proyectos');
+    let proyectos = JSON.parse(localStorage.getItem('proyectos_movil_vd') || '{}');
+    select.innerHTML = '<option value="">-- Cargar Borrador Guardado --</option>';
+    Object.keys(proyectos).forEach(nombre => {
+      let opt = document.createElement('option');
+      opt.value = nombre;
+      opt.textContent = nombre;
+      if (nombre === seleccionado) opt.selected = true;
+      select.appendChild(opt);
+    });
+  }
+
+  function descargarPDF() {
     const proyecto = document.getElementById('req-proyecto').value.trim();
-    const fecha = document.getElementById('req-fecha').value;
+    if (!proyecto) { alert("⚠️ Asigna un nombre al proyecto."); return; }
 
-    if (!proyecto || !fecha) {
-      alert("⚠️ Por favor completa el Nombre del Proyecto y la Fecha antes de exportar.");
-      return;
-    }
+    const elemento = document.getElementById('formato-app');
+    
+    // Abrimos temporalmente los acordeones para salir en el PDF
+    document.querySelectorAll('details').forEach(d => d.open = true);
 
-    window.print();
+    const opciones = {
+      margin: 8,
+      filename: `Recepcion_${proyecto}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opciones).from(elemento).save().then(() => {
+      // Volvemos a cerrar los acordeones tras generar el PDF
+      document.querySelectorAll('details').forEach(d => d.open = false);
+    });
   }
-
-  window.onload = inicializarMatriz;
 </script>
 
 </body>
