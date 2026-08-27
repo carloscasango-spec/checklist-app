@@ -49,10 +49,10 @@
 <body>
 
 <div class="top-bar">
-  <div style="font-weight: bold; font-size: 14px;">📁 Gestión de Proyectos</div>
+  <div style="font-weight: bold; font-size: 14px;">☁️ Proyectos Sincronizados</div>
   <div style="margin-top: 5px;">
     <select id="select-proyectos" onchange="cargarProyecto(this.value)">
-      <option value="">-- Cargar Borrador Guardado --</option>
+      <option value="">⏳ Cargando desde la nube...</option>
     </select>
   </div>
   <div class="top-bar-controls">
@@ -104,12 +104,16 @@
 </div>
 
 <script>
+  const BIN_ID = "6a906a3af5f4af5e294a7049";
+  const API_KEY = "$2a$10$5BDKoNaJb98nczPxrHl1Uuow.tck.XjCTrl6Cc7b.aZ3RbBRtHr4e";
+  const URL_NUBE = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+
   const opcionesVD = ["Rematado Face Plate", "Rematado Patch Panel", "Face Plate Etq.", "Patch Panel Etq.", "Patchcord Etq.", "Switch Etq.", "Org. Vertical", "Org. Horizontal", "Continuidad", "Transmisión"];
   const opcionesCCTV = ["Rematado Patch Panel", "Etiquetado Patch Panel", "Patchcord Patch Panel", "Patchcord Switch", "Patchcord NVR", "Org. Vertical", "Org. Horizontal", "Resanes Cámara", "Retoques Cámara", "Tapas Registros", "Continuidad", "Transmisión"];
 
   window.onload = function() {
     renderizarNodos();
-    actualizarSelector();
+    cargarProyectosDesdeNube();
   };
 
   function renderizarNodos() {
@@ -136,7 +140,7 @@
     }
   }
 
-  function guardarProgreso() {
+  async function guardarProgreso() {
     const nombre = document.getElementById('req-proyecto').value.trim();
     if (!nombre) { alert("⚠️ Escribe un Nombre de Proyecto para guardar."); return; }
 
@@ -154,18 +158,55 @@
       if (chk.id) estado.checkboxes[chk.id] = chk.checked;
     });
 
-    let proyectos = JSON.parse(localStorage.getItem('proyectos_movil_vd') || '{}');
-    proyectos[nombre] = estado;
-    localStorage.setItem('proyectos_movil_vd', JSON.stringify(proyectos));
+    try {
+      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
+      let data = await res.json();
+      let proyectos = data.record.proyectos || {};
 
-    alert(`✅ Proyecto "${nombre}" guardado.`);
-    actualizarSelector(nombre);
+      proyectos[nombre] = estado;
+
+      await fetch(URL_NUBE, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Master-Key": API_KEY
+        },
+        body: JSON.stringify({ proyectos: proyectos })
+      });
+
+      alert(`☁️ Proyecto "${nombre}" guardado en la nube exitosamente.`);
+      cargarProyectosDesdeNube(nombre);
+    } catch (err) {
+      alert("❌ Error al conectar con la nube. Revisa tu conexión.");
+      console.error(err);
+    }
+  }
+
+  async function cargarProyectosDesdeNube(seleccionado = '') {
+    const select = document.getElementById('select-proyectos');
+    select.innerHTML = '<option value="">⏳ Cargando desde la nube...</option>';
+
+    try {
+      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
+      let data = await res.json();
+      window.proyectosNube = data.record.proyectos || {};
+
+      select.innerHTML = '<option value="">-- Cargar Borrador Guardado --</option>';
+      Object.keys(window.proyectosNube).forEach(nombre => {
+        let opt = document.createElement('option');
+        opt.value = nombre;
+        opt.textContent = nombre;
+        if (nombre === seleccionado) opt.selected = true;
+        select.appendChild(opt);
+      });
+    } catch (err) {
+      select.innerHTML = '<option value="">❌ Error al cargar borradores</option>';
+    }
   }
 
   function cargarProyecto(nombre) {
-    if (!nombre) return;
-    let proyectos = JSON.parse(localStorage.getItem('proyectos_movil_vd') || '{}');
-    const estado = proyectos[nombre];
+    if (!nombre || !window.proyectosNube) return;
+    const estado = window.proyectosNube[nombre];
     if (!estado) return;
 
     document.getElementById('req-proyecto').value = estado.proyecto;
@@ -189,26 +230,11 @@
     document.getElementById('select-proyectos').value = '';
   }
 
-  function actualizarSelector(seleccionado = '') {
-    const select = document.getElementById('select-proyectos');
-    let proyectos = JSON.parse(localStorage.getItem('proyectos_movil_vd') || '{}');
-    select.innerHTML = '<option value="">-- Cargar Borrador Guardado --</option>';
-    Object.keys(proyectos).forEach(nombre => {
-      let opt = document.createElement('option');
-      opt.value = nombre;
-      opt.textContent = nombre;
-      if (nombre === seleccionado) opt.selected = true;
-      select.appendChild(opt);
-    });
-  }
-
   function descargarPDF() {
     const proyecto = document.getElementById('req-proyecto').value.trim();
     if (!proyecto) { alert("⚠️ Asigna un nombre al proyecto."); return; }
 
     const elemento = document.getElementById('formato-app');
-    
-    // Abrimos temporalmente los acordeones para salir en el PDF
     document.querySelectorAll('details').forEach(d => d.open = true);
 
     const opciones = {
@@ -220,7 +246,6 @@
     };
 
     html2pdf().set(opciones).from(elemento).save().then(() => {
-      // Volvemos a cerrar los acordeones tras generar el PDF
       document.querySelectorAll('details').forEach(d => d.open = false);
     });
   }
