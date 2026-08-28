@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Voz y Datos - Synergo Sistemas</title>
+  <title>Recepción Voz y Datos - Synergo Sistemas</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
@@ -27,28 +27,39 @@
     .btn-new { background: #555; color: white; }
     .btn-pdf { background: #d32f2f; color: white; }
     
-    select, input[type="text"], input[type="date"], textarea { 
-      width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 13px; background: #fff; font-family: inherit;
+    select, input[type="text"], input[type="date"] { 
+      width: 100%; padding: 7px; border-radius: 6px; border: 1px solid #ccc; font-size: 12px; background: #fff; font-family: inherit;
     }
 
     /* Tarjetas */
     .card { background: white; border-radius: 8px; padding: 12px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     .card-title { font-weight: bold; font-size: 14px; color: #1b365d; border-bottom: 2px solid #bdd7ee; padding-bottom: 4px; margin-bottom: 10px; }
     
-    .form-group { margin-bottom: 10px; }
-    .form-group label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 3px; color: #555; text-transform: uppercase; }
+    .form-group { margin-bottom: 8px; }
+    .form-group label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 3px; color: #444; text-transform: uppercase; }
+
+    /* Secciones dentro de cada nodo */
+    .section-header {
+      background: #bdd7ee;
+      color: #1b365d;
+      font-weight: bold;
+      font-size: 11px;
+      padding: 4px 8px;
+      margin-top: 8px;
+      margin-bottom: 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
 
     /* Acordeón / Bloques de Nodos */
     details { background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; margin-bottom: 8px; padding: 6px 10px; }
     summary { font-weight: bold; cursor: pointer; padding: 6px 0; color: #1b365d; display: flex; justify-content: space-between; align-items: center; }
-
-    /* Estilos para radios de opción rápida */
-    .radio-group { display: flex; gap: 8px; margin-bottom: 8px; background: #f8f9fa; padding: 6px 10px; border-radius: 4px; border: 1px solid #eee; }
-    .radio-label { display: flex; align-items: center; gap: 4px; font-weight: bold; font-size: 12px; cursor: pointer; flex: 1; justify-content: center; }
-    .radio-label input { transform: scale(1.2); }
-    .radio-label.ok { color: #2e7d32; }
-    .radio-label.pend { color: #d32f2f; }
-    .radio-label.na { color: #666; }
 
     @media print { .top-bar { display: none; } }
   </style>
@@ -72,6 +83,10 @@
 <div id="formato-app">
 
   <div class="card">
+    <div style="text-align: center; font-weight: bold; font-size: 16px; color: #1b365d; margin-bottom: 10px;">
+      RECEPCIÓN DE CABLEADO DE VOZ Y DATOS EN TIENDAS Y ESTACIONES
+    </div>
+    
     <div class="form-group">
       <label>Nombre del Proyecto / Sucursal:</label>
       <input type="text" id="req-proyecto" placeholder="Ej: GC PALMA TROPICA">
@@ -84,7 +99,7 @@
   </div>
 
   <div class="card">
-    <div class="card-title">🌐 Voz y Datos (24 Nodos)</div>
+    <div class="card-title">🌐 Registro de Nodos (1 al 24)</div>
     <div id="contenedor-nodos"></div>
   </div>
 
@@ -94,6 +109,15 @@
   const BIN_ID = "6a906a3af5f4af5e294a7049";
   const API_KEY = "$2a$10$5BDKoNaJb98nczPxrHl1Uuow.tck.XjCTrl6Cc7b.aZ3RbBRtHr4e";
   const URL_NUBE = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+
+  // Opciones estándar para los desplegables
+  const opcionesEstado = `
+    <option value="">-- Seleccionar --</option>
+    <option value="OK">✅ OK / Correcto</option>
+    <option value="Pendiente">⚠️ Pendiente</option>
+    <option value="N/A">⛔ No Aplica (N/A)</option>
+    <option value="Fallo">❌ Fallo / Dañado</option>
+  `;
 
   window.onload = function() {
     renderizarNodos();
@@ -107,32 +131,89 @@
     for (let i = 1; i <= 24; i++) {
       const details = document.createElement('details');
       details.innerHTML = `
-        <summary>Nodo #${i} <span>▼</span></summary>
+        <summary>Nodo #${i} <span id="resumen_nodo_${i}" style="font-weight:normal; font-size:11px; color:#666;"></span> <span>▼</span></summary>
         <div style="padding-top: 8px;">
-          <div class="form-group">
-            <label>UBICACIÓN / ÁREA:</label>
-            <input type="text" id="nodo_ubi_${i}" placeholder="Ej: Caja 1 / Bóveda / Oficina">
-          </div>
           
           <div class="form-group">
-            <label>ESTADO / MEDICIÓN:</label>
-            <select id="nodo_est_${i}">
-              <option value="">-- Seleccionar Estado --</option>
-              <option value="Correcto">✅ Correcto / OK</option>
-              <option value="Pendiente">⚠️ Pendiente</option>
-              <option value="No Aplica">⛔ No Aplica / N/A</option>
-              <option value="Fallo de Par">❌ Fallo de Par / Dañado</option>
-            </select>
+            <label>Ubicación / Área del Nodo:</label>
+            <input type="text" id="nodo_ubi_${i}" placeholder="Ej: Caja 1 / Bóveda / Oficina" onchange="actualizarResumen(${i})">
           </div>
 
-          <div class="form-group">
-            <label>OBSERVACIONES:</label>
-            <input type="text" id="nodo_obs_${i}" placeholder="Notas sobre el nodo...">
+          <!-- 1. CABLEADO DEL NODO -->
+          <div class="section-header">1. Cableado del Nodo</div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label>Rematado Face Plate:</label>
+              <select id="nodo_rem_face_${i}">${opcionesEstado}</select>
+            </div>
+            <div class="form-group">
+              <label>Rematado Patch Panel:</label>
+              <select id="nodo_rem_patch_${i}">${opcionesEstado}</select>
+            </div>
           </div>
+
+          <!-- 2. ETIQUETADO DEL NODO -->
+          <div class="section-header">2. Etiquetado del Nodo</div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label>Face Plate:</label>
+              <select id="nodo_etiq_face_${i}">${opcionesEstado}</select>
+            </div>
+            <div class="form-group">
+              <label>Patch Panel:</label>
+              <select id="nodo_etiq_patch_${i}">${opcionesEstado}</select>
+            </div>
+          </div>
+
+          <!-- 3. ETIQUETADO DEL PATCHCORD -->
+          <div class="section-header">3. Etiquetado del Patchcord</div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label>Patch Panel:</label>
+              <select id="nodo_cord_patch_${i}">${opcionesEstado}</select>
+            </div>
+            <div class="form-group">
+              <label>Switch:</label>
+              <select id="nodo_cord_switch_${i}">${opcionesEstado}</select>
+            </div>
+          </div>
+
+          <!-- 4. ORGANIZACIÓN DEL CABLEADO -->
+          <div class="section-header">4. Organización del Cableado</div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label>Organizador Vertical:</label>
+              <select id="nodo_org_vert_${i}">${opcionesEstado}</select>
+            </div>
+            <div class="form-group">
+              <label>Organizador Horizontal:</label>
+              <select id="nodo_org_horiz_${i}">${opcionesEstado}</select>
+            </div>
+          </div>
+
+          <!-- 5. PRUEBAS DE COMUNICACIÓN -->
+          <div class="section-header">5. Pruebas de Comunicación</div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label>Continuidad:</label>
+              <select id="nodo_prue_cont_${i}">${opcionesEstado}</select>
+            </div>
+            <div class="form-group">
+              <label>Transmisión:</label>
+              <select id="nodo_prue_trans_${i}">${opcionesEstado}</select>
+            </div>
+          </div>
+
         </div>
       `;
       contenedor.appendChild(details);
     }
+  }
+
+  function actualizarResumen(i) {
+    const ubi = document.getElementById(`nodo_ubi_${i}`).value;
+    const span = document.getElementById(`resumen_nodo_${i}`);
+    span.textContent = ubi ? `(${ubi})` : '';
   }
 
   async function guardarProgreso() {
@@ -149,8 +230,16 @@
     for (let i = 1; i <= 24; i++) {
       estado.nodos[`nodo_${i}`] = {
         ubicacion: document.getElementById(`nodo_ubi_${i}`).value,
-        estado: document.getElementById(`nodo_est_${i}`).value,
-        observaciones: document.getElementById(`nodo_obs_${i}`).value
+        rem_face: document.getElementById(`nodo_rem_face_${i}`).value,
+        rem_patch: document.getElementById(`nodo_rem_patch_${i}`).value,
+        etiq_face: document.getElementById(`nodo_etiq_face_${i}`).value,
+        etiq_patch: document.getElementById(`nodo_etiq_patch_${i}`).value,
+        cord_patch: document.getElementById(`nodo_cord_patch_${i}`).value,
+        cord_switch: document.getElementById(`nodo_cord_switch_${i}`).value,
+        org_vert: document.getElementById(`nodo_org_vert_${i}`).value,
+        org_horiz: document.getElementById(`nodo_org_horiz_${i}`).value,
+        prue_cont: document.getElementById(`nodo_prue_cont_${i}`).value,
+        prue_trans: document.getElementById(`nodo_prue_trans_${i}`).value
       };
     }
 
@@ -217,11 +306,20 @@
 
     if (estado.nodos) {
       for (let i = 1; i <= 24; i++) {
-        const datosNodo = estado.nodos[`nodo_${i}`];
-        if (datosNodo) {
-          document.getElementById(`nodo_ubi_${i}`).value = datosNodo.ubicacion || '';
-          document.getElementById(`nodo_est_${i}`).value = datosNodo.estado || '';
-          document.getElementById(`nodo_obs_${i}`).value = datosNodo.observaciones || '';
+        const d = estado.nodos[`nodo_${i}`];
+        if (d) {
+          document.getElementById(`nodo_ubi_${i}`).value = d.ubicacion || '';
+          document.getElementById(`nodo_rem_face_${i}`).value = d.rem_face || '';
+          document.getElementById(`nodo_rem_patch_${i}`).value = d.rem_patch || '';
+          document.getElementById(`nodo_etiq_face_${i}`).value = d.etiq_face || '';
+          document.getElementById(`nodo_etiq_patch_${i}`).value = d.etiq_patch || '';
+          document.getElementById(`nodo_cord_patch_${i}`).value = d.cord_patch || '';
+          document.getElementById(`nodo_cord_switch_${i}`).value = d.cord_switch || '';
+          document.getElementById(`nodo_org_vert_${i}`).value = d.org_vert || '';
+          document.getElementById(`nodo_org_horiz_${i}`).value = d.org_horiz || '';
+          document.getElementById(`nodo_prue_cont_${i}`).value = d.prue_cont || '';
+          document.getElementById(`nodo_prue_trans_${i}`).value = d.prue_trans || '';
+          actualizarResumen(i);
         }
       }
     }
@@ -232,8 +330,17 @@
     document.getElementById('req-fecha').value = '';
     for (let i = 1; i <= 24; i++) {
       document.getElementById(`nodo_ubi_${i}`).value = '';
-      document.getElementById(`nodo_est_${i}`).value = '';
-      document.getElementById(`nodo_obs_${i}`).value = '';
+      document.getElementById(`nodo_rem_face_${i}`).value = '';
+      document.getElementById(`nodo_rem_patch_${i}`).value = '';
+      document.getElementById(`nodo_etiq_face_${i}`).value = '';
+      document.getElementById(`nodo_etiq_patch_${i}`).value = '';
+      document.getElementById(`nodo_cord_patch_${i}`).value = '';
+      document.getElementById(`nodo_cord_switch_${i}`).value = '';
+      document.getElementById(`nodo_org_vert_${i}`).value = '';
+      document.getElementById(`nodo_org_horiz_${i}`).value = '';
+      document.getElementById(`nodo_prue_cont_${i}`).value = '';
+      document.getElementById(`nodo_prue_trans_${i}`).value = '';
+      actualizarResumen(i);
     }
     document.getElementById('select-proyectos').value = '';
   }
