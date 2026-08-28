@@ -333,6 +333,7 @@
     }
   }
 
+  /* === CORRECCIÓN APLICADA AQUÍ === */
   async function cargarProyectosDesdeNube(seleccionado = '') {
     const select = document.getElementById('select-proyectos');
     select.innerHTML = '<option value="">⏳ Cargando desde la nube...</option>';
@@ -346,11 +347,15 @@
       Object.keys(window.proyectosNube).forEach(clave => {
         let item = window.proyectosNube[clave];
 
-        // FILTRO: Solo proyectos de CCTV
-        if (item.tipo === "CCTV" || clave.startsWith("CCTV_")) {
+        // Filtro estricto: Debe ser tipo "CCTV" o comenzar con "CCTV_" y no pertenecer a Voz y Datos
+        const esCCTV = (item.tipo === "CCTV" || clave.startsWith("CCTV_")) && 
+                       item.tipo !== "VOZ_DATOS" && 
+                       !clave.startsWith("VISITA_");
+
+        if (esCCTV) {
           let opt = document.createElement('option');
           opt.value = clave;
-          opt.textContent = item.proyecto || clave;
+          opt.textContent = item.proyecto || clave.replace("CCTV_", "");
           if (clave === seleccionado) opt.selected = true;
           select.appendChild(opt);
         }
