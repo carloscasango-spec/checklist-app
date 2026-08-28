@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acceso - Synergo Sistemas</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0; padding: 20px 15px; background: #f4f6f9; color: #333;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh;
+    }
+    .card {
+      width: 100%; max-width: 380px; background: #ffffff; padding: 25px 20px;
+      border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); text-align: center;
+    }
+    h1 { font-size: 20px; color: #1b365d; margin-bottom: 8px; }
+    p { font-size: 13px; color: #666; margin-bottom: 20px; }
+    .form-group { margin-bottom: 15px; text-align: left; }
+    label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 4px; color: #444; text-transform: uppercase; }
+    input[type="text"], input[type="password"] {
+      width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 13px;
+    }
+    .btn-login {
+      width: 100%; padding: 12px; background: #1b365d; color: white; border: none;
+      font-weight: bold; font-size: 14px; border-radius: 8px; cursor: pointer; margin-top: 10px;
+    }
+    .btn-login:hover { background: #2b4c7e; }
+    .error-msg { color: #d32f2f; font-size: 12px; margin-top: 10px; display: none; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1>Synergo Sistemas</h1>
+    <p>Ingresa tus credenciales para acceder</p>
+
+    <form onsubmit="validarLogin(event)">
+      <div class="form-group">
+        <label>Usuario:</label>
+        <input type="text" id="usuario" required placeholder="Usuario">
+      </div>
+      <div class="form-group">
+        <label>Contraseña:</label>
+        <input type="password" id="password" required placeholder="••••••••">
+      </div>
+      <button type="submit" class="btn-login">Ingresar</button>
+      <div id="error" class="error-msg">⚠️ Usuario o contraseña incorrectos</div>
+    </form>
+  </div>
+
+<script>
+  // Configura aquí tus 5 usuarios y sus claves (en minúsculas preferentemente)
+  const USUARIOS = {
+    "admin": "synergo2026",
+    "tecnico1": "campo123",
+    "tecnico2": "campo456",
+    "tecnico3": "campo789",
+    "sistemas": "sistemas2026"
+  };
+
+  function validarLogin(e) {
+    e.preventDefault();
+    const u = document.getElementById('usuario').value.trim().toLowerCase();
+    const p = document.getElementById('password').value.trim();
+    const errorDiv = document.getElementById('error');
+
+    // Valida si el usuario existe y la contraseña coincide
+    if (USUARIOS[u] && USUARIOS[u] === p) {
+      sessionStorage.setItem("synergo_auth", "true");
+      sessionStorage.setItem("synergo_user", u); // Guarda el nombre del usuario activo
+      window.location.href = "index.html";
+    } else {
+      errorDiv.style.display = "block";
+    }
+  }
+</script>
+
+</body>
+</html>
