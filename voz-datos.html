@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <script>
-  if (sessionStorage.getItem("synergo_auth") !== "true") {
-    window.location.href = "login.html";
-  }
-</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Recepción Voz y Datos - Synergo Sistemas</title>
+  <script>
+    if (sessionStorage.getItem("synergo_auth") !== "true") {
+      window.location.href = "login.html";
+    }
+  </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
@@ -115,7 +115,6 @@
   const API_KEY = "$2a$10$5BDKoNaJb98nczPxrHl1Uuow.tck.XjCTrl6Cc7b.aZ3RbBRtHr4e";
   const URL_NUBE = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
-  // Opciones estándar para los desplegables
   const opcionesEstado = `
     <option value="">-- Seleccionar --</option>
     <option value="OK">✅ OK / Correcto</option>
@@ -285,8 +284,9 @@
       Object.keys(window.proyectosNube).forEach(clave => {
         let item = window.proyectosNube[clave];
 
-        // FILTRO: Solo proyectos de Voz y Datos
-        const esVozDatos = item.tipo === "VOZ_DATOS" || (!clave.startsWith("VISITA_") && item.tipo !== "VISITA_GOMART");
+        // Filtro estricto: excluir CCTV y Visitas
+        const esVozDatos = item.tipo === "VOZ_DATOS" || 
+          (!clave.startsWith("VISITA_") && !clave.startsWith("CCTV_") && item.modulo !== "CCTV");
 
         if (esVozDatos) {
           let opt = document.createElement('option');
