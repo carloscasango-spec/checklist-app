@@ -24,8 +24,11 @@
       margin-bottom: 15px;
     }
     .top-bar-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-    .btn { border: none; padding: 8px 12px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 12px; flex: 1; text-align: center; color: white; }
+    .btn { border: none; padding: 8px 12px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 12px; flex: 1; text-align: center; color: white; transition: all 0.2s; }
     .btn-save { background: #2e7d32; }
+    .btn-save:disabled { background: #81c784; cursor: not-allowed; }
+    .btn-delete { background: #e53935; }
+    .btn-delete:disabled { background: #ef9a9a; cursor: not-allowed; }
     .btn-new { background: #555; }
     .btn-pdf { background: #d32f2f; }
     .btn-menu { background: #4a5568; }
@@ -72,7 +75,8 @@
       </select>
     </div>
     <div class="top-bar-controls">
-      <button class="btn btn-save" onclick="guardarEnNube()">💾 Guardar</button>
+      <button class="btn btn-save" id="btn-guardar" onclick="guardarEnNube()">💾 Guardar</button>
+      <button class="btn btn-delete" id="btn-eliminar" onclick="eliminarDeNube()">🗑️ Eliminar</button>
       <button class="btn btn-new" onclick="nuevoProyecto()">➕ Nuevo</button>
       <button class="btn btn-pdf" onclick="generarPDF()">📥 Exportar PDF</button>
       <button class="btn btn-menu" onclick="window.location.href='index.html'">Menú</button>
@@ -317,6 +321,10 @@
     const tienda = document.getElementById('tienda_gomart').value.trim();
     if (!tienda) { alert("⚠️ Escribe el Nombre / Número de Tienda para guardar."); return; }
 
+    const btnGuardar = document.getElementById('btn-guardar');
+    btnGuardar.disabled = true;
+    btnGuardar.innerHTML = "⏳ Guardando...";
+
     const payload = recopilarRespuestas();
 
     try {
@@ -336,10 +344,60 @@
       });
 
       alert(`☁️ Visita en sitio "${tienda}" guardada en la nube exitosamente.`);
-      cargarProyectosDesdeNube(`VISITA_${tienda}`);
+      await cargarProyectosDesdeNube(`VISITA_${tienda}`);
     } catch (e) {
       alert("⚠️ Error al guardar en la nube. Verifica tu conexión.");
       console.error(e);
+    } finally {
+      btnGuardar.disabled = false;
+      btnGuardar.innerHTML = "💾 Guardar";
+    }
+  }
+
+  async function eliminarDeNube() {
+    const select = document.getElementById('select-proyectos');
+    const clave = select.value;
+
+    if (!clave) {
+      alert("⚠️ Selecciona un borrador del desplegable para eliminar.");
+      return;
+    }
+
+    const nombreMostrar = select.options[select.selectedIndex].text;
+    const confirmacion = confirm(`🗑️ ¿Estás seguro de que deseas eliminar permanentemente el proyecto "${nombreMostrar}"?`);
+    if (!confirmacion) return;
+
+    const btnEliminar = document.getElementById('btn-eliminar');
+    btnEliminar.disabled = true;
+    btnEliminar.innerHTML = "⏳ Eliminando...";
+
+    try {
+      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
+      let data = await res.json();
+      let proyectos = data.record.proyectos || {};
+
+      if (proyectos[clave]) {
+        delete proyectos[clave];
+
+        await fetch(URL_NUBE, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Master-Key": API_KEY
+          },
+          body: JSON.stringify({ proyectos: proyectos })
+        });
+
+        alert(`🗑️ El proyecto "${nombreMostrar}" fue eliminado exitosamente.`);
+        nuevoProyecto();
+        await cargarProyectosDesdeNube();
+      }
+    } catch (e) {
+      alert("⚠️ Error al eliminar el proyecto de la nube.");
+      console.error(e);
+    } finally {
+      btnEliminar.disabled = false;
+      btnEliminar.innerHTML = "🗑️ Eliminar";
     }
   }
 
@@ -356,7 +414,6 @@
       Object.keys(window.proyectosNube).forEach(clave => {
         let item = window.proyectosNube[clave];
 
-        // FILTRO ESTRICTO: Solo incluye registros de Visita en Sitio
         const esVisita = (item.tipo === "VISITA" || clave.startsWith("VISITA_")) && 
                           item.tipo !== "VOZ_DATOS" && 
                           item.tipo !== "CCTV" && 
