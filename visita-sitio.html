@@ -16,18 +16,24 @@
       font-family: Arial, sans-serif;
       margin: 0; padding: 15px; background: #f4f6f9; color: #000; font-size: 12px;
     }
+    
+    /* Barra Superior de Control */
     .top-bar {
       position: sticky; top: 0; background: #1b365d; color: white; padding: 10px 15px;
-      border-radius: 6px; display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 15px; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+      border-radius: 8px; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+      margin-bottom: 15px;
     }
-    .top-bar h2 { margin: 0; font-size: 14px; text-transform: uppercase; }
-    .btn-action {
-      background: #e65100; color: white; border: none; padding: 8px 12px;
-      border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; margin-left: 5px;
+    .top-bar-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .btn { border: none; padding: 8px 12px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 12px; flex: 1; text-align: center; color: white; }
+    .btn-save { background: #2e7d32; }
+    .btn-new { background: #555; }
+    .btn-pdf { background: #d32f2f; }
+    .btn-menu { background: #4a5568; }
+    .btn-logout { background: #c62828; }
+
+    select.nube-select {
+      width: 100%; padding: 7px; border-radius: 6px; border: 1px solid #ccc; font-size: 12px; background: #fff;
     }
-    .btn-secondary { background: #4a5568; }
-    .btn-logout { background: #d32f2f; }
     
     .container { max-width: 900px; margin: 0 auto; background: white; padding: 20px; border: 2px solid #000; }
     
@@ -53,24 +59,26 @@
 
     textarea.obs-general { width: 100%; border: 1px solid #000; min-height: 80px; padding: 5px; font-family: inherit; font-size: 11px; outline: none; }
 
-    .status-msg { margin: 10px 0; padding: 10px; border-radius: 4px; font-size: 12px; text-align: center; display: none; }
-    .status-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-    .status-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    @media print { .top-bar { display: none; } }
   </style>
 </head>
 <body>
 
   <div class="top-bar">
-    <h2>Visita en Sitio - Gomart</h2>
-    <div>
-      <button class="btn-action btn-secondary" onclick="window.location.href='index.html'">Menú</button>
-      <button class="btn-action" onclick="guardarEnNube()">Guardar Nube</button>
-      <button class="btn-action" onclick="generarPDF()">Descargar PDF</button>
-      <button class="btn-action btn-logout" onclick="cerrarSesion()">Salir</button>
+    <div style="font-weight: bold; font-size: 14px;">☁️ Proyectos Sincronizados (Visita en Sitio)</div>
+    <div style="margin-top: 5px;">
+      <select id="select-proyectos" class="nube-select" onchange="cargarProyecto(this.value)">
+        <option value="">⏳ Cargando borradores...</option>
+      </select>
+    </div>
+    <div class="top-bar-controls">
+      <button class="btn btn-save" onclick="guardarEnNube()">💾 Guardar</button>
+      <button class="btn btn-new" onclick="nuevoProyecto()">➕ Nuevo</button>
+      <button class="btn btn-pdf" onclick="generarPDF()">📥 Exportar PDF</button>
+      <button class="btn btn-menu" onclick="window.location.href='index.html'">Menú</button>
+      <button class="btn btn-logout" onclick="cerrarSesion()">Salir</button>
     </div>
   </div>
-
-  <div id="status" class="status-msg"></div>
 
   <div class="container" id="contenido-pdf">
     <div class="main-header">Checklist de Adecuaciones en Gomart</div>
@@ -194,6 +202,10 @@
   </div>
 
 <script>
+  const BIN_ID = "6a906a3af5f4af5e294a7049";
+  const API_KEY = "$2a$10$5BDKoNaJb98nczPxrHl1Uuow.tck.XjCTrl6Cc7b.aZ3RbBRtHr4e";
+  const URL_NUBE = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+
   const DATOS_FORMATO = {
     A: [
       "canalizaciones / Registros para datos en area de TPV",
@@ -238,8 +250,12 @@
     ]
   };
 
+  window.onload = function() {
+    renderizarTablas();
+    cargarProyectosDesdeNube();
+  };
+
   function renderizarTablas() {
-    // Establecer fecha y hora actual por defecto
     const hoy = new Date();
     document.getElementById('fecha_revision').valueAsDate = hoy;
     document.getElementById('hora_revision').value = hoy.toTimeString().substring(0,5);
@@ -268,7 +284,8 @@
 
   function recopilarRespuestas() {
     const data = {
-      tienda: document.getElementById('tienda_gomart').value.trim(),
+      tipo: "VISITA",
+      proyecto: document.getElementById('tienda_gomart').value.trim(),
       responsable: document.getElementById('responsable').value.trim(),
       fecha: document.getElementById('fecha_revision').value,
       hora: document.getElementById('hora_revision').value,
@@ -297,34 +314,99 @@
   }
 
   async function guardarEnNube() {
+    const tienda = document.getElementById('tienda_gomart').value.trim();
+    if (!tienda) { alert("⚠️ Escribe el Nombre / Número de Tienda para guardar."); return; }
+
     const payload = recopilarRespuestas();
-    const statusDiv = document.getElementById('status');
-    statusDiv.style.display = 'block';
-    statusDiv.className = 'status-msg';
-    statusDiv.innerText = "Enviando datos a la nube...";
 
     try {
-      // Envío POST a JSONBin para crear un nuevo registro histórico
-      const res = await fetch('https://api.jsonbin.io/v3/b', {
-        method: 'POST',
+      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
+      let data = await res.json();
+      let proyectos = data.record.proyectos || {};
+
+      proyectos[`VISITA_${tienda}`] = payload;
+
+      await fetch(URL_NUBE, {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
-          'X-Master-Key': '$2a$10$wT0XkI3GZ9nJ7GZ6T9P7u.Y9hQ.8yE5gLgU8kU8kU8kU8kU8kU8kU',
-          'X-Bin-Name': `Visita_${payload.tienda || 'Gomart'}_${payload.fecha}`
+          "Content-Type": "application/json",
+          "X-Master-Key": API_KEY
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ proyectos: proyectos })
       });
 
-      if (res.ok) {
-        statusDiv.className = 'status-msg status-success';
-        statusDiv.innerText = "✅ ¡Guardado exitosamente en la nube!";
-      } else {
-        throw new Error('Error al conectar con la API');
-      }
+      alert(`☁️ Visita en sitio "${tienda}" guardada en la nube exitosamente.`);
+      cargarProyectosDesdeNube(`VISITA_${tienda}`);
     } catch (e) {
-      statusDiv.className = 'status-msg status-error';
-      statusDiv.innerText = "⚠️ Error al guardar en la nube. Verifica tu conexión a internet.";
+      alert("⚠️ Error al guardar en la nube. Verifica tu conexión.");
+      console.error(e);
     }
+  }
+
+  async function cargarProyectosDesdeNube(seleccionado = '') {
+    const select = document.getElementById('select-proyectos');
+    select.innerHTML = '<option value="">⏳ Cargando desde la nube...</option>';
+
+    try {
+      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
+      let data = await res.json();
+      window.proyectosNube = data.record.proyectos || {};
+
+      select.innerHTML = '<option value="">-- Cargar Borrador Guardado --</option>';
+      Object.keys(window.proyectosNube).forEach(clave => {
+        let item = window.proyectosNube[clave];
+
+        // FILTRO ESTRICTO: Solo incluye registros de Visita en Sitio
+        const esVisita = (item.tipo === "VISITA" || clave.startsWith("VISITA_")) && 
+                          item.tipo !== "VOZ_DATOS" && 
+                          item.tipo !== "CCTV" && 
+                          !clave.startsWith("CCTV_");
+
+        if (esVisita) {
+          let opt = document.createElement('option');
+          opt.value = clave;
+          opt.textContent = item.proyecto || clave.replace("VISITA_", "");
+          if (clave === seleccionado) opt.selected = true;
+          select.appendChild(opt);
+        }
+      });
+    } catch (err) {
+      select.innerHTML = '<option value="">❌ Error al cargar borradores</option>';
+    }
+  }
+
+  function cargarProyecto(clave) {
+    if (!clave || !window.proyectosNube) return;
+    const estado = window.proyectosNube[clave];
+    if (!estado) return;
+
+    document.getElementById('tienda_gomart').value = estado.proyecto || '';
+    document.getElementById('responsable').value = estado.responsable || '';
+    document.getElementById('fecha_revision').value = estado.fecha || '';
+    document.getElementById('hora_revision').value = estado.hora || '';
+    document.getElementById('observaciones_generales').value = estado.observaciones_generales || '';
+
+    if (estado.secciones) {
+      Object.keys(estado.secciones).forEach(sec => {
+        estado.secciones[sec].forEach((item) => {
+          const num = item.num;
+          const nameGroup = `rad_${sec}_${num}`;
+          const radio = document.querySelector(`input[name="${nameGroup}"][value="${item.evaluacion}"]`);
+          if (radio) radio.checked = true;
+
+          const obsInput = document.getElementById(`obs_${sec}_${num}`);
+          if (obsInput) obsInput.value = item.observacion || '';
+        });
+      });
+    }
+  }
+
+  function nuevoProyecto() {
+    document.getElementById('tienda_gomart').value = '';
+    document.getElementById('responsable').value = '';
+    document.getElementById('observaciones_generales').value = '';
+    renderizarTablas();
+    document.getElementById('select-proyectos').value = '';
   }
 
   function generarPDF() {
@@ -345,8 +427,6 @@
     sessionStorage.removeItem("synergo_user");
     window.location.href = "login.html";
   }
-
-  window.onload = renderizarTablas;
 </script>
 
 </body>
