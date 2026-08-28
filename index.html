@@ -3,53 +3,102 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Synergo - Gerencia de Sistemas</title>
+  <title>Sistema de Recepción y Formato - Synergo Sistemas</title>
   <style>
+    *, *::before, *::after { box-sizing: border-box; }
     body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f6f9;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       margin: 0;
+      padding: 20px 15px;
+      background: #f4f6f9;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
     }
-    .card {
-      background-color: white;
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    
+    .container {
+      width: 100%;
+      max-width: 450px;
+      background: #ffffff;
+      padding: 25px 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       text-align: center;
-      max-width: 400px;
-      width: 90%;
     }
+
     h1 {
-      color: #1b365d;
       font-size: 20px;
-      margin-bottom: 20px;
+      color: #1b365d;
+      margin-bottom: 8px;
     }
-    .btn {
+
+    p {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 25px;
+    }
+
+    .btn-menu {
       display: block;
-      background-color: #1b365d;
-      color: white;
+      width: 100%;
+      padding: 15px;
+      margin-bottom: 12px;
+      color: #ffffff;
       text-decoration: none;
-      padding: 12px;
-      margin: 10px 0;
-      border-radius: 5px;
       font-weight: bold;
-      transition: background-color 0.2s ease;
+      font-size: 14px;
+      border-radius: 8px;
+      transition: opacity 0.2s ease, transform 0.1s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    .btn:hover {
-      background-color: #0f2341;
+
+    .btn-menu:active {
+      transform: scale(0.98);
+    }
+
+    /* Colores por módulo */
+    .btn-visita {
+      background: #e65100; /* Naranja */
+    }
+
+    .btn-voz {
+      background: #1b365d; /* Azul marino */
+    }
+
+    .btn-cctv {
+      background: #2e7d32; /* Verde */
+    }
+
+    .btn-menu:hover {
+      opacity: 0.9;
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>SYNERGO - GERENCIA DE SISTEMAS</h1>
-    <p>Selecciona el formato a diligenciar:</p>
-    <a href="visita-sitio.html" class="btn">1. Visita en Sitio (Gomart)</a>
-    <a href="voz-datos.html" class="btn">2. Voz y Datos</a>
+
+  <div class="container">
+    <h1>Synergo Sistemas</h1>
+    <p>Selecciona el módulo de inspección o recepción a gestionar:</p>
+
+    <!-- 1. Visita en Sitio -->
+    <a href="visita.html" class="btn-menu btn-visita">
+      📍 Visita en Sitio
+    </a>
+
+    <!-- 2. Voz y Datos -->
+    <a href="voz-datos.html" class="btn-menu btn-voz">
+      🌐 Recepción Voz y Datos
+    </a>
+
+    <!-- 3. CCTV -->
+    <a href="cctv.html" class="btn-menu btn-cctv">
+      📹 Recepción CCTV
+    </a>
+
   </div>
+
 </body>
 </html>
