@@ -1,377 +1,205 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <script>
-  if (sessionStorage.getItem("synergo_auth") !== "true") {
-    window.location.href = "login.html";
-  }
-</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Checklist Adecuaciones Gomart - Synergo Sistemas</title>
+  <script>
+    if (sessionStorage.getItem("synergo_auth") !== "true") {
+      window.location.href = "login.html";
+    }
+  </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 10px; background: #f4f6f9; color: #333; font-size: 13px; }
-
-    /* Barra Superior de Control */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0; padding: 10px; background: #f4f6f9; color: #333; font-size: 13px;
+    }
     .top-bar {
-      position: sticky;
-      top: 0;
-      background: #1b365d;
-      color: white;
-      padding: 10px;
-      border-radius: 8px;
-      z-index: 1000;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.15);
-      margin-bottom: 15px;
+      position: sticky; top: 0; background: #1b365d; color: white; padding: 10px;
+      border-radius: 8px; display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 15px; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
-    .top-bar-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-    .btn { border: none; padding: 10px 12px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 13px; flex: 1; text-align: center; }
-    .btn-save { background: #2e7d32; color: white; }
-    .btn-new { background: #555; color: white; }
-    .btn-pdf { background: #d32f2f; color: white; }
-    
-    select, input[type="text"], input[type="date"], input[type="time"], textarea { 
-      width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 13px; background: #fff; font-family: inherit;
+    .top-bar h2 { margin: 0; font-size: 14px; text-transform: uppercase; }
+    .btn-action {
+      background: #e65100; color: white; border: none; padding: 8px 12px;
+      border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 11px; margin-left: 5px;
     }
-
-    /* Tarjetas */
-    .card { background: white; border-radius: 8px; padding: 12px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .card-header-logo { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #1b365d; padding-bottom: 8px; margin-bottom: 12px; }
-    
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .form-group { margin-bottom: 8px; }
-    .form-group label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 3px; color: #555; text-transform: uppercase; }
-
-    /* Estructura de Tabla / Items del Checklist */
-    .section-title { background: #d9e1f2; color: #000; font-weight: bold; padding: 8px; font-size: 13px; border-radius: 4px; margin-top: 15px; margin-bottom: 8px; text-transform: uppercase; border-left: 4px solid #1b365d; }
-    
-    .check-row { background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; padding: 10px; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
-    .check-row-num { font-weight: bold; color: #1b365d; margin-right: 5px; }
-    .check-row-text { font-size: 13px; font-weight: 500; margin-bottom: 8px; display: block; }
-    
-    /* Controles SI / NO / N/A */
-    .radio-group { display: flex; gap: 12px; margin-bottom: 8px; background: #f8f9fa; padding: 6px 10px; border-radius: 4px; border: 1px solid #eee; }
-    .radio-label { display: flex; align-items: center; gap: 4px; font-weight: bold; font-size: 12px; cursor: pointer; flex: 1; justify-content: center; }
-    .radio-label input { transform: scale(1.2); }
-    .radio-label.si { color: #2e7d32; }
-    .radio-label.no { color: #c62828; }
-    .radio-label.na { color: #666; }
-
-    @media print { .top-bar { display: none; } }
+    .btn-secondary { background: #4a5568; }
+    .btn-logout { background: #d32f2f; }
+    .container { max-width: 800px; margin: 0 auto; background: white; padding: 15px; border-radius: 8px; }
+    .header-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 15px; }
+    .field { display: flex; flex-direction: column; }
+    .field label { font-size: 10px; font-weight: bold; color: #555; text-transform: uppercase; margin-bottom: 3px; }
+    .field input, .field select, .field textarea {
+      padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;
+    }
+    .section-title {
+      background: #1b365d; color: white; padding: 6px 10px; font-size: 12px;
+      font-weight: bold; text-transform: uppercase; border-radius: 4px; margin: 15px 0 10px 0;
+    }
+    .check-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 0; border-bottom: 1px solid #eee;
+    }
+    .check-label { flex: 1; padding-right: 10px; }
+    .options { display: flex; gap: 8px; }
+    .options label { font-size: 11px; cursor: pointer; }
+    .status-msg { margin-top: 10px; padding: 8px; border-radius: 4px; font-size: 12px; text-align: center; display: none; }
+    .status-success { background: #d4edda; color: #155724; }
+    .status-error { background: #f8d7da; color: #721c24; }
   </style>
 </head>
 <body>
 
-<div class="top-bar">
-  <div style="font-weight: bold; font-size: 14px;">🏬 Visita en Sitio (Gomart)</div>
-  <div style="margin-top: 5px;">
-    <select id="select-proyectos" onchange="cargarProyecto(this.value)">
-      <option value="">⏳ Cargando visitas desde la nube...</option>
-    </select>
-  </div>
-  <div class="top-bar-controls">
-    <button class="btn btn-save" onclick="guardarProgreso()">💾 Guardar</button>
-    <button class="btn btn-new" onclick="nuevoProyecto()">➕ Nuevo</button>
-    <button class="btn btn-pdf" onclick="descargarPDF()">📥 Exportar PDF</button>
-  </div>
-</div>
-
-<div id="formato-app">
-
-  <!-- Encabezado Oficial -->
-  <div class="card">
-    <div class="card-header-logo">
-      <div style="font-size: 18px; font-weight: bold; color: #1b365d; letter-spacing: 1px;">SYNERGO</div>
-      <div style="text-align: center; font-weight: bold; font-size: 14px; color: #1b365d;">
-        GERENCIA DE SISTEMAS<br>
-        <span style="font-size: 12px; font-weight: normal;">CHECKLIST DE ADECUACIONES EN GOMART</span>
-      </div>
-      <div style="font-size: 11px; font-weight: bold; color: #555;">Ver. 2.0 Agosto2026</div>
-    </div>
-
-    <!-- Datos Generales -->
-    <div class="form-group">
-      <label>GOMART (Sucursal / Estación):</label>
-      <input type="text" id="req-gomart" placeholder="Ej: Gomart Mirador">
-    </div>
-
-    <div class="grid-2">
-      <div class="form-group">
-        <label>Responsable Revisión:</label>
-        <input type="text" id="req-responsable" placeholder="Nombre del revisor">
-      </div>
-      <div class="form-group">
-        <label>Firma / Nombre Firma:</label>
-        <input type="text" id="req-firma" placeholder="Firma / Validación">
-      </div>
-    </div>
-
-    <div class="grid-2">
-      <div class="form-group">
-        <label>Fecha de Revisión:</label>
-        <input type="date" id="req-fecha">
-      </div>
-      <div class="form-group">
-        <label>Hora de Revisión:</label>
-        <input type="time" id="req-hora">
-      </div>
+  <div class="top-bar">
+    <h2>Visita en Sitio</h2>
+    <div>
+      <button class="btn-action btn-secondary" onclick="window.location.href='index.html'">Menú</button>
+      <button class="btn-action" onclick="guardarEnNube()">Guardar</button>
+      <button class="btn-action" onclick="generarPDF()">PDF</button>
+      <button class="btn-action btn-logout" onclick="cerrarSesion()">Salir</button>
     </div>
   </div>
 
-  <!-- Contenedor del Checklist -->
-  <div class="card">
-
-    <div class="section-title">A. NODOS DE RED Y CONTACTOS PISO DE VENTA</div>
-    <div id="sec-a"></div>
-
-    <div class="section-title">B. NODOS DE RED Y CONTACTOS ELÉCTRICOS EQUIPO ADMINISTRATIVO</div>
-    <div id="sec-b"></div>
-
-    <div class="section-title">C. NODOS DE RED REGISTROS EQUIPO DE PUBLICIDAD</div>
-    <div id="sec-c"></div>
-
-    <div class="section-title">D. NODOS DE RED TORNIQUETE Y WIFI</div>
-    <div id="sec-d"></div>
-
-    <div class="section-title">E. ADECUACIONES PARA SITE TELECOMUNICACIONES (RACK/GABINETE)</div>
-    <div id="sec-e"></div>
-
-    <div class="section-title">F. LIMPIEZA Y ACABADOS CCTV</div>
-    <div id="sec-f"></div>
-
-    <div class="section-title">G. OBSERVACIONES GENERALES</div>
-    <div class="form-group" style="margin-top: 10px;">
-      <textarea id="req-observaciones-generales" rows="4" placeholder="Escriba aquí las observaciones generales del proyecto..."></textarea>
+  <div class="container" id="contenido-pdf">
+    <div class="header-info">
+      <div class="field">
+        <label>Proyecto / Tienda:</label>
+        <input type="text" id="proyecto" placeholder="Ej. Gomart Cancún">
+      </div>
+      <div class="field">
+        <label>Fecha:</label>
+        <input type="date" id="fecha">
+      </div>
+      <div class="field">
+        <label>Atendió (Cliente):</label>
+        <input type="text" id="atendio" placeholder="Nombre del encargado">
+      </div>
+      <div class="field">
+        <label>Realizó (Synergo):</label>
+        <input type="text" id="realizo" placeholder="Técnico a cargo">
+      </div>
     </div>
 
-  </div>
+    <div id="status" class="status-msg"></div>
 
-</div>
+    <div class="section-title">Checklist de Inspección en Sitio</div>
+
+    <div id="items-container">
+      <!-- Generado dinámicamente -->
+    </div>
+
+    <div class="section-title">Observaciones Generales</div>
+    <div class="field">
+      <textarea id="observaciones" rows="4" placeholder="Escribe aquí notas adicionales de la visita..."></textarea>
+    </div>
+  </div>
 
 <script>
-  const BIN_ID = "6a906a3af5f4af5e294a7049";
-  const API_KEY = "$2a$10$5BDKoNaJb98nczPxrHl1Uuow.tck.XjCTrl6Cc7b.aZ3RbBRtHr4e";
-  const URL_NUBE = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+  const BIN_ID = "66f44605e41b4d34e437b7b1"; // Tu Bin ID de JSONBin
+  const API_KEY = "$2a$10$wT0XkI3GZ9nJ7GZ6T9P7u.Y9hQ.8yE5gLgU8kU8kU8kU8kU8kU8kU"; // Tu Master Key
 
-  const datosChecklist = {
-    "sec-a": [
-      "Canalizaciones / Registros para datos en area de TPV",
-      "Canalizaciones / Registros para microfono y boton de panico en area de TPV",
-      "Contactos doble NO regulados por cada TPV",
-      "Voltajes en Contactos doble NO regulados por cada TPV",
-      "Pasos interiores en los muebles de los TPV",
-      "Pasos en la Barra para los brazos de los TPV"
-    ],
-    "sec-b": [
-      "Canalizaciones / Registros para datos",
-      "Contacto doble NO regulados",
-      "Voltajes en Contactos doble NO regulados por cada TPV",
-      "Repisa de 90x60 CM minimo"
-    ],
-    "sec-c": [
-      "Canalizaciones / Registros para datos",
-      "Contacto doble NO regulado",
-      "Voltajes en Contactos doble NO regulados por cada TPV",
-      "Repisa de 90x60 CM minimo",
-      "Gabinete estanca con puerta de 300X250X150 en bodega para guardar la holgura (sobre el cuarto frio)"
-    ],
-    "sec-d": [
-      "Canalizaciones / Registros para datos torniquete"
-    ],
-    "sec-e": [
-      "Todas las canalizaciones llegan al SITE / Gabinete",
-      "1 contacto doble NO regulado",
-      "Voltajes en Contactos doble NO regulados por cada TPV",
-      "Barra de tierra física",
-      "Acomodo del cableado",
-      "Limpieza del gabinete",
-      "Conexión a tierra física",
-      "Etiquetado de los patchcord"
-    ],
-    "sec-f": [
-      "Resanes bases y bajantes",
-      "Retoque de pintura en area de bases y bajantes de Cámaras",
-      "Canalizacion y registro con tapa para cámaras de Beercave y cuarto frio.",
-      "Tapas de los registros",
-      "Bajantes (ubicaciones)"
-    ]
-  };
+  const PUNTOS_INSPECCION = [
+    "Estado de acometida eléctrica principal",
+    "Espacio disponible en rack / gabinete",
+    "Canalización existente y preparaciones",
+    "Puntos de fijación para cámaras CCTV",
+    "Ubicación de nodos de voz y datos",
+    "Condiciones ambientales del site",
+    "Verificación de tierra física",
+    "Facilidad de paso de cableado estructurado"
+  ];
 
-  window.onload = function() {
-    renderizarChecklist();
-    cargarProyectosDesdeNube();
-  };
+  function inicializarFormulario() {
+    document.getElementById('fecha').valueAsDate = new Date();
+    const container = document.getElementById('items-container');
+    container.innerHTML = '';
 
-  function renderizarChecklist() {
-    Object.keys(datosChecklist).forEach(secId => {
-      const container = document.getElementById(secId);
-      container.innerHTML = '';
-      datosChecklist[secId].forEach((texto, idx) => {
-        const itemNum = idx + 1;
-        const itemId = `${secId}_${itemNum}`;
-        
-        const div = document.createElement('div');
-        div.className = 'check-row';
-        div.innerHTML = `
-          <span class="check-row-text"><span class="check-row-num">${itemNum}.</span> ${texto}</span>
-          <div class="radio-group">
-            <label class="radio-label si"><input type="radio" name="opt_${itemId}" value="SI"> SI</label>
-            <label class="radio-label no"><input type="radio" name="opt_${itemId}" value="NO"> NO</label>
-            <label class="radio-label na"><input type="radio" name="opt_${itemId}" value="N/A"> N/A</label>
-          </div>
-          <input type="text" id="obs_${itemId}" placeholder="Observaciones específicas..." style="font-size:12px; padding:6px;">
-        `;
-        container.appendChild(div);
-      });
+    PUNTOS_INSPECCION.forEach((item, index) => {
+      const div = document.createElement('div');
+      div.className = 'check-item';
+      div.innerHTML = `
+        <div class="check-label">${index + 1}. ${item}</div>
+        <div class="options">
+          <label><input type="radio" name="item_${index}" value="Cumple" checked> Cumple</label>
+          <label><input type="radio" name="item_${index}" value="No Cumple"> No Cumple</label>
+          <label><input type="radio" name="item_${index}" value="N/A"> N/A</label>
+        </div>
+      `;
+      container.appendChild(div);
     });
   }
 
-  async function guardarProgreso() {
-    const gomart = document.getElementById('req-gomart').value.trim();
-    if (!gomart) { alert("⚠️ Escribe el Nombre de Gomart para guardar."); return; }
+  function recopilarDatos() {
+    const respuestas = [];
+    PUNTOS_INSPECCION.forEach((item, index) => {
+      const opcion = document.querySelector(`input[name="item_${index}"]:checked`).value;
+      respuestas.push({ punto: item, estado: opcion });
+    });
 
-    const claveGuardado = "VISITA_" + gomart;
-
-    const estado = {
-      tipo: "VISITA_GOMART",
-      gomart: gomart,
-      responsable: document.getElementById('req-responsable').value,
-      firma: document.getElementById('req-firma').value,
-      fecha: document.getElementById('req-fecha').value,
-      hora: document.getElementById('req-hora').value,
-      observacionesGenerales: document.getElementById('req-observaciones-generales').value,
-      respuestas: {},
-      observaciones: {}
+    return {
+      modulo: "Visita en Sitio",
+      proyecto: document.getElementById('proyecto').value.trim(),
+      fecha: document.getElementById('fecha').value,
+      atendio: document.getElementById('atendio').value.trim(),
+      realizo: document.getElementById('realizo').value.trim(),
+      observaciones: document.getElementById('observaciones').value.trim(),
+      detalles: respuestas,
+      usuario_activo: sessionStorage.getItem("synergo_user") || "desconocido"
     };
+  }
 
-    Object.keys(datosChecklist).forEach(secId => {
-      datosChecklist[secId].forEach((_, idx) => {
-        const itemNum = idx + 1;
-        const itemId = `${secId}_${itemNum}`;
-        
-        const checkedRadio = document.querySelector(`input[name="opt_${itemId}"]:checked`);
-        if (checkedRadio) estado.respuestas[itemId] = checkedRadio.value;
-        
-        const obsInput = document.getElementById(`obs_${itemId}`);
-        if (obsInput && obsInput.value) estado.observaciones[itemId] = obsInput.value;
-      });
-    });
+  async function guardarEnNube() {
+    const datos = recopilarDatos();
+    const statusDiv = document.getElementById('status');
+    statusDiv.style.display = 'block';
+    statusDiv.className = 'status-msg';
+    statusDiv.innerText = "Guardando en la nube...";
 
     try {
-      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
-      let data = await res.json();
-      let proyectos = data.record.proyectos || {};
-
-      proyectos[claveGuardado] = estado;
-
-      await fetch(URL_NUBE, {
-        method: "PUT",
+      const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+        method: 'PUT',
         headers: {
-          "Content-Type": "application/json",
-          "X-Master-Key": API_KEY
+          'Content-Type': 'application/json',
+          'X-Master-Key': API_KEY
         },
-        body: JSON.stringify({ proyectos: proyectos })
+        body: JSON.stringify(datos)
       });
 
-      alert(`☁️ Visita "${gomart}" guardada en la nube exitosamente.`);
-      cargarProyectosDesdeNube(claveGuardado);
+      if (response.ok) {
+        statusDiv.className = 'status-msg status-success';
+        statusDiv.innerText = "✅ Visita guardada exitosamente en la nube.";
+      } else {
+        throw new Error("Error en el servidor");
+      }
     } catch (err) {
-      alert("❌ Error al conectar con la nube.");
-      console.error(err);
+      statusDiv.className = 'status-msg status-error';
+      statusDiv.innerText = "⚠️ Error al guardar los datos en la nube.";
     }
   }
 
-  async function cargarProyectosDesdeNube(seleccionado = '') {
-    const select = document.getElementById('select-proyectos');
-    select.innerHTML = '<option value="">⏳ Cargando desde la nube...</option>';
-
-    try {
-      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
-      let data = await res.json();
-      window.proyectosNube = data.record.proyectos || {};
-
-      select.innerHTML = '<option value="">-- Seleccionar Visita Guardada --</option>';
-      Object.keys(window.proyectosNube).forEach(clave => {
-        let item = window.proyectosNube[clave];
-
-        // FILTRO: Solo mostrar proyectos de Visita en Sitio
-        const esVisita = clave.startsWith("VISITA_") || item.tipo === "VISITA_GOMART";
-
-        if (esVisita) {
-          let opt = document.createElement('option');
-          opt.value = clave;
-          let nombreLimpio = item.gomart || item.tienda || clave.replace("VISITA_", "");
-          opt.textContent = nombreLimpio;
-          if (clave === seleccionado) opt.selected = true;
-          select.appendChild(opt);
-        }
-      });
-    } catch (err) {
-      select.innerHTML = '<option value="">❌ Error al cargar borradores</option>';
-    }
-  }
-
-  function cargarProyecto(clave) {
-    if (!clave || !window.proyectosNube) return;
-    const estado = window.proyectosNube[clave];
-    if (!estado) return;
-
-    document.getElementById('req-gomart').value = estado.gomart || '';
-    document.getElementById('req-responsable').value = estado.responsable || '';
-    document.getElementById('req-firma').value = estado.firma || '';
-    document.getElementById('req-fecha').value = estado.fecha || '';
-    document.getElementById('req-hora').value = estado.hora || '';
-    document.getElementById('req-observaciones-generales').value = estado.observacionesGenerales || '';
-
-    document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
-    document.querySelectorAll('.check-row input[type="text"]').forEach(i => i.value = '');
-
-    if (estado.respuestas) {
-      Object.keys(estado.respuestas).forEach(itemId => {
-        const val = estado.respuestas[itemId];
-        const radio = document.querySelector(`input[name="opt_${itemId}"][value="${val}"]`);
-        if (radio) radio.checked = true;
-      });
-    }
-
-    if (estado.observaciones) {
-      Object.keys(estado.observaciones).forEach(itemId => {
-        const obsInput = document.getElementById(`obs_${itemId}`);
-        if (obsInput) obsInput.value = estado.observaciones[itemId];
-      });
-    }
-  }
-
-  function nuevoProyecto() {
-    document.getElementById('req-gomart').value = '';
-    document.getElementById('req-responsable').value = '';
-    document.getElementById('req-firma').value = '';
-    document.getElementById('req-fecha').value = '';
-    document.getElementById('req-hora').value = '';
-    document.getElementById('req-observaciones-generales').value = '';
-    document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
-    document.querySelectorAll('.check-row input[type="text"]').forEach(i => i.value = '');
-    document.getElementById('select-proyectos').value = '';
-  }
-
-  function descargarPDF() {
-    const gomart = document.getElementById('req-gomart').value.trim();
-    if (!gomart) { alert("⚠️ Asigna un nombre a Gomart."); return; }
-
-    const elemento = document.getElementById('formato-app');
-
-    const opciones = {
-      margin: 8,
-      filename: `Checklist_Adecuaciones_Gomart_${gomart}.pdf`,
+  function generarPDF() {
+    const element = document.getElementById('contenido-pdf');
+    const proyecto = document.getElementById('proyecto').value || "Visita";
+    const opt = {
+      margin: 0.5,
+      filename: `Visita_Sitio_${proyecto}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { scale: 2 },
-      jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
+      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
     };
-
-    html2pdf().set(opciones).from(elemento).save();
+    html2pdf().set(opt).from(element).save();
   }
+
+  function cerrarSesion() {
+    sessionStorage.removeItem("synergo_auth");
+    sessionStorage.removeItem("synergo_user");
+    window.location.href = "login.html";
+  }
+
+  window.onload = inicializarFormulario;
 </script>
 
 </body>
