@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recepción CCTV - Synergo Sistemas</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 10px; background: #f4f6f9; color: #333; font-size: 13px; }
+
+    /* Barra Superior de Control */
+    .top-bar {
+      position: sticky;
+      top: 0;
+      background: #1b365d;
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      z-index: 1000;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+      margin-bottom: 15px;
+    }
+    .top-bar-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .btn { border: none; padding: 10px 12px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 13px; flex: 1; text-align: center; }
+    .btn-save { background: #2e7d32; color: white; }
+    .btn-new { background: #555; color: white; }
+    .btn-pdf { background: #d32f2f; color: white; }
+    
+    select, input[type="text"], input[type="date"], textarea { 
+      width: 100%; padding: 7px; border-radius: 6px; border: 1px solid #ccc; font-size: 12px; background: #fff; font-family: inherit;
+    }
+
+    /* Tarjetas */
+    .card { background: white; border-radius: 8px; padding: 12px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .card-title { font-weight: bold; font-size: 14px; color: #1b365d; border-bottom: 2px solid #bdd7ee; padding-bottom: 4px; margin-bottom: 10px; }
+    
+    .form-group { margin-bottom: 8px; }
+    .form-group label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 3px; color: #444; text-transform: uppercase; }
+
+    /* Secciones dentro de cada nodo */
+    .section-header {
+      background: #bdd7ee;
+      color: #1b365d;
+      font-weight: bold;
+      font-size: 11px;
+      padding: 4px 8px;
+      margin-top: 8px;
+      margin-bottom: 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+    /* Acordeón / Bloques de Nodos */
+    details { background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; margin-bottom: 8px; padding: 6px 10px; }
+    summary { font-weight: bold; cursor: pointer; padding: 6px 0; color: #1b365d; display: flex; justify-content: space-between; align-items: center; }
+
+    @media print { .top-bar { display: none; } }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div style="font-weight: bold; font-size: 14px;">☁️ Proyectos Sincronizados (CCTV)</div>
+  <div style="margin-top: 5px;">
+    <select id="select-proyectos" onchange="cargarProyecto(this.value)">
+      <option value="">⏳ Cargando borradores...</option>
+    </select>
+  </div>
+  <div class="top-bar-controls">
+    <button class="btn btn-save" onclick="guardarProgreso()">💾 Guardar</button>
+    <button class="btn btn-new" onclick="nuevoProyecto()">➕ Nuevo</button>
+    <button class="btn btn-pdf" onclick="descargarPDF()">📥 Exportar PDF</button>
+  </div>
+</div>
+
+<div id="formato-app">
+
+  <div class="card">
+    <div style="text-align: center; font-weight: bold; font-size: 16px; color: #1b365d; margin-bottom: 10px;">
+      RECEPCIÓN DE CCTV EN TIENDAS Y ESTACIONES
+    </div>
+    
+    <div class="form-group">
+      <label>Nombre del Proyecto / Sucursal:</label>
+      <input type="text" id="req-proyecto" placeholder="Ej: GC PALMA TROPICA">
+    </div>
+
+    <div class="form-group">
+      <label>Fecha de Inspección:</label>
+      <input type="date" id="req-fecha">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📹 Registro de Nodos / Cámaras (1 al 16)</div>
+    <div id="contenedor-nodos"></div>
+  </div>
+
+  <!-- LIMPIEZA Y GENERALES -->
+  <div class="card">
+    <div class="card-title">🧹 Limpieza del Site y Gabinete</div>
+    
+    <div class="form-group">
+      <label>Limpieza de Site / Gabinete:</label>
+      <select id="gen_limp_site"></select>
+    </div>
+
+    <div class="form-group">
+      <label>Limpieza de Oficinas / Área de Trabajo:</label>
+      <select id="gen_limp_oficinas"></select>
+    </div>
+
+    <div class="form-group">
+      <label>Rack a Tierra Física / Gabinete:</label>
+      <select id="gen_rack_tierra"></select>
+    </div>
+
+    <div class="form-group" style="margin-top: 10px;">
+      <label>Observaciones Generales:</label>
+      <textarea id="gen_observaciones" rows="3" placeholder="Comentarios adicionales..."></textarea>
+    </div>
+  </div>
+
+  <!-- FIRMAS -->
+  <div class="card">
+    <div class="card-title">✍️ Responsables</div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Recibe Sistemas:</label>
+        <input type="text" id="firma_recibe" placeholder="Nombre de quien recibe">
+      </div>
+      <div class="form-group">
+        <label>Entrega Proveedor:</label>
+        <input type="text" id="firma_entrega" placeholder="Nombre de quien entrega">
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const BIN_ID = "6a906a3af5f4af5e294a7049";
+  const API_KEY = "$2a$10$5BDKoNaJb98nczPxrHl1Uuow.tck.XjCTrl6Cc7b.aZ3RbBRtHr4e";
+  const URL_NUBE = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+
+  // Opciones estándar para los desplegables
+  const opcionesEstado = `
+    <option value="">-- Seleccionar --</option>
+    <option value="OK">✅ OK / Correcto</option>
+    <option value="Pendiente">⚠️ Pendiente</option>
+    <option value="N/A">⛔ No Aplica (N/A)</option>
+    <option value="Fallo">❌ Fallo / Dañado</option>
+  `;
+
+  window.onload = function() {
+    renderizarNodos();
+    cargarSelectsGenerales();
+    cargarProyectosDesdeNube();
+  };
+
+  function cargarSelectsGenerales() {
+    document.getElementById('gen_limp_site').innerHTML = opcionesEstado;
+    document.getElementById('gen_limp_oficinas').innerHTML = opcionesEstado;
+    document.getElementById('gen_rack_tierra').innerHTML = opcionesEstado;
+  }
+
+  function renderizarNodos() {
+    const contenedor = document.getElementById('contenedor-nodos');
+    contenedor.innerHTML = '';
+
+    for (let i = 1; i <= 16; i++) {
+      const details = document.createElement('details');
+      details.innerHTML = `
+        <summary>Cámara / Nodo #${i} <span id="resumen_nodo_${i}" style="font-weight:normal; font-size:11px; color:#666;"></span> <span>▼</span></summary>
+        <div style="padding-top: 8px;">
+          
+          <div class="form-group">
+            <label>Ubicación / Cámara:</label>
+            <input type="text" id="nodo_ubi_${i}" placeholder="Ej: Cámara Acceso / Caja 1 / Pasillo" onchange="actualizarResumen(${i})">
+          </div>
+
+          <!-- 1. CABLEADO DEL NODO -->
+          <div class="section-header">1. Cableado del Nodo</div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label>Rematado Patch Panel:</label>
+              <select id="nodo_rem_patch_${i}">${opcionesEstado}</select>
+            </div>
+            <div class="form-group">
+              <label>Etiquetado Patch Panel:</label>
+              <select id="nodo_etiq_patch_${i}">${opcionesEstado}</select>
+            </div>
+          </div>
+
+          <!-- 2. ETIQUETADO DEL PATCHCORD -->
+          <div class="section-header">2. Etiquetado del Patchcord</div>
+          <div class="grid-3">
+            <div class="form-group">
+              <label>Patch Panel:</label>
+              <select id="nodo_cord_patch_${i}">${opcionesEstado}</select>
+            </div>
+            <div class="form-group">
+              <label>Switch:</label>
+              <select id="nodo_cord_switch_${i}">${opcionesEstado}</select>
+            </div>
+            <div class="form-group">
+              <label>NVR:</label>
+              <select id="nodo_cord_nvr_${i}">${opcionesEstado}</select>
+            </div>
+          </div>
+
+          <!-- 3. ORGANIZACIÓN DEL CABLEADO -->
+          <div class="section-header">3. Organización del Cableado</div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label>Org. Vertical:</label>
+              <select id="nodo_org_vert_${i}">${opcionesEstado}</select>
+            </div>
+            <div class="form-group">
+              <label>Org. Horizontal:</label>
+              <select id="nodo_org_horiz_${i}">${opcionesEstado}</select>
+            </div>
+          </div>
+
+          <!-- 4. LIMPIEZA Y ACABADOS CCTV -->
+          <div class="section-header">4. Limpieza y Acabados CCTV</div>
+          <div class="grid-3">
+            <div class="form-group">
+              <label>Resanes Fijación:</label>
+              <select id="nodo_resanes_${i}">${opcionesEstado}</select>
+            </div>
+            <div class="form-group">
+              <label>Retoques Instalación:</label>
+              <select id="nodo_retoques_${i}">${opcionesEstado}</select>
+            </div>
+            <div class="form-group">
+              <label>Tapas Registros:</label>
+              <select id="nodo_tapas_${i}">${opcionesEstado}</select>
+            </div>
+          </div>
+
+          <!-- 5. PRUEBAS DE COMUNICACIÓN -->
+          <div class="section-header">5. Pruebas de Comunicación</div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label>Continuidad:</label>
+              <select id="nodo_prue_cont_${i}">${opcionesEstado}</select>
+            </div>
+            <div class="form-group">
+              <label>Transmisión:</label>
+              <select id="nodo_prue_trans_${i}">${opcionesEstado}</select>
+            </div>
+          </div>
+
+        </div>
+      `;
+      contenedor.appendChild(details);
+    }
+  }
+
+  function actualizarResumen(i) {
+    const ubi = document.getElementById(`nodo_ubi_${i}`).value;
+    const span = document.getElementById(`resumen_nodo_${i}`);
+    span.textContent = ubi ? `(${ubi})` : '';
+  }
+
+  async function guardarProgreso() {
+    const proyecto = document.getElementById('req-proyecto').value.trim();
+    if (!proyecto) { alert("⚠️ Escribe el Nombre del Proyecto para guardar."); return; }
+
+    const estado = {
+      tipo: "CCTV",
+      proyecto: proyecto,
+      fecha: document.getElementById('req-fecha').value,
+      limp_site: document.getElementById('gen_limp_site').value,
+      limp_oficinas: document.getElementById('gen_limp_oficinas').value,
+      rack_tierra: document.getElementById('gen_rack_tierra').value,
+      observaciones: document.getElementById('gen_observaciones').value,
+      recibe: document.getElementById('firma_recibe').value,
+      entrega: document.getElementById('firma_entrega').value,
+      nodos: {}
+    };
+
+    for (let i = 1; i <= 16; i++) {
+      estado.nodos[`nodo_${i}`] = {
+        ubicacion: document.getElementById(`nodo_ubi_${i}`).value,
+        rem_patch: document.getElementById(`nodo_rem_patch_${i}`).value,
+        etiq_patch: document.getElementById(`nodo_etiq_patch_${i}`).value,
+        cord_patch: document.getElementById(`nodo_cord_patch_${i}`).value,
+        cord_switch: document.getElementById(`nodo_cord_switch_${i}`).value,
+        cord_nvr: document.getElementById(`nodo_cord_nvr_${i}`).value,
+        org_vert: document.getElementById(`nodo_org_vert_${i}`).value,
+        org_horiz: document.getElementById(`nodo_org_horiz_${i}`).value,
+        resanes: document.getElementById(`nodo_resanes_${i}`).value,
+        retoques: document.getElementById(`nodo_retoques_${i}`).value,
+        tapas: document.getElementById(`nodo_tapas_${i}`).value,
+        prue_cont: document.getElementById(`nodo_prue_cont_${i}`).value,
+        prue_trans: document.getElementById(`nodo_prue_trans_${i}`).value
+      };
+    }
+
+    try {
+      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
+      let data = await res.json();
+      let proyectos = data.record.proyectos || {};
+
+      proyectos[`CCTV_${proyecto}`] = estado;
+
+      await fetch(URL_NUBE, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Master-Key": API_KEY
+        },
+        body: JSON.stringify({ proyectos: proyectos })
+      });
+
+      alert(`☁️ Proyecto CCTV "${proyecto}" guardado en la nube exitosamente.`);
+      cargarProyectosDesdeNube(`CCTV_${proyecto}`);
+    } catch (err) {
+      alert("❌ Error al conectar con la nube.");
+      console.error(err);
+    }
+  }
+
+  async function cargarProyectosDesdeNube(seleccionado = '') {
+    const select = document.getElementById('select-proyectos');
+    select.innerHTML = '<option value="">⏳ Cargando desde la nube...</option>';
+
+    try {
+      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
+      let data = await res.json();
+      window.proyectosNube = data.record.proyectos || {};
+
+      select.innerHTML = '<option value="">-- Cargar Borrador Guardado --</option>';
+      Object.keys(window.proyectosNube).forEach(clave => {
+        let item = window.proyectosNube[clave];
+
+        // FILTRO: Solo proyectos de CCTV
+        if (item.tipo === "CCTV" || clave.startsWith("CCTV_")) {
+          let opt = document.createElement('option');
+          opt.value = clave;
+          opt.textContent = item.proyecto || clave;
+          if (clave === seleccionado) opt.selected = true;
+          select.appendChild(opt);
+        }
+      });
+    } catch (err) {
+      select.innerHTML = '<option value="">❌ Error al cargar borradores</option>';
+    }
+  }
+
+  function cargarProyecto(clave) {
+    if (!clave || !window.proyectosNube) return;
+    const estado = window.proyectosNube[clave];
+    if (!estado) return;
+
+    document.getElementById('req-proyecto').value = estado.proyecto || '';
+    document.getElementById('req-fecha').value = estado.fecha || '';
+    document.getElementById('gen_limp_site').value = estado.limp_site || '';
+    document.getElementById('gen_limp_oficinas').value = estado.limp_oficinas || '';
+    document.getElementById('gen_rack_tierra').value = estado.rack_tierra || '';
+    document.getElementById('gen_observaciones').value = estado.observaciones || '';
+    document.getElementById('firma_recibe').value = estado.recibe || '';
+    document.getElementById('firma_entrega').value = estado.entrega || '';
+
+    if (estado.nodos) {
+      for (let i = 1; i <= 16; i++) {
+        const d = estado.nodos[`nodo_${i}`];
+        if (d) {
+          document.getElementById(`nodo_ubi_${i}`).value = d.ubicacion || '';
+          document.getElementById(`nodo_rem_patch_${i}`).value = d.rem_patch || '';
+          document.getElementById(`nodo_etiq_patch_${i}`).value = d.etiq_patch || '';
+          document.getElementById(`nodo_cord_patch_${i}`).value = d.cord_patch || '';
+          document.getElementById(`nodo_cord_switch_${i}`).value = d.cord_switch || '';
+          document.getElementById(`nodo_cord_nvr_${i}`).value = d.cord_nvr || '';
+          document.getElementById(`nodo_org_vert_${i}`).value = d.org_vert || '';
+          document.getElementById(`nodo_org_horiz_${i}`).value = d.org_horiz || '';
+          document.getElementById(`nodo_resanes_${i}`).value = d.resanes || '';
+          document.getElementById(`nodo_retoques_${i}`).value = d.retoques || '';
+          document.getElementById(`nodo_tapas_${i}`).value = d.tapas || '';
+          document.getElementById(`nodo_prue_cont_${i}`).value = d.prue_cont || '';
+          document.getElementById(`nodo_prue_trans_${i}`).value = d.prue_trans || '';
+          actualizarResumen(i);
+        }
+      }
+    }
+  }
+
+  function nuevoProyecto() {
+    document.getElementById('req-proyecto').value = '';
+    document.getElementById('req-fecha').value = '';
+    document.getElementById('gen_limp_site').value = '';
+    document.getElementById('gen_limp_oficinas').value = '';
+    document.getElementById('gen_rack_tierra').value = '';
+    document.getElementById('gen_observaciones').value = '';
+    document.getElementById('firma_recibe').value = '';
+    document.getElementById('firma_entrega').value = '';
+
+    for (let i = 1; i <= 16; i++) {
+      document.getElementById(`nodo_ubi_${i}`).value = '';
+      document.getElementById(`nodo_rem_patch_${i}`).value = '';
+      document.getElementById(`nodo_etiq_patch_${i}`).value = '';
+      document.getElementById(`nodo_cord_patch_${i}`).value = '';
+      document.getElementById(`nodo_cord_switch_${i}`).value = '';
+      document.getElementById(`nodo_cord_nvr_${i}`).value = '';
+      document.getElementById(`nodo_org_vert_${i}`).value = '';
+      document.getElementById(`nodo_org_horiz_${i}`).value = '';
+      document.getElementById(`nodo_resanes_${i}`).value = '';
+      document.getElementById(`nodo_retoques_${i}`).value = '';
+      document.getElementById(`nodo_tapas_${i}`).value = '';
+      document.getElementById(`nodo_prue_cont_${i}`).value = '';
+      document.getElementById(`nodo_prue_trans_${i}`).value = '';
+      actualizarResumen(i);
+    }
+    document.getElementById('select-proyectos').value = '';
+  }
+
+  function descargarPDF() {
+    const proyecto = document.getElementById('req-proyecto').value.trim();
+    if (!proyecto) { alert("⚠️ Asigna un nombre al Proyecto."); return; }
+
+    const elemento = document.getElementById('formato-app');
+    document.querySelectorAll('details').forEach(d => d.open = true);
+
+    const opciones = {
+      margin: 8,
+      filename: `CCTV_${proyecto}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opciones).from(elemento).save().then(() => {
+      document.querySelectorAll('details').forEach(d => d.open = false);
+    });
+  }
+</script>
+
+</body>
+</html>
