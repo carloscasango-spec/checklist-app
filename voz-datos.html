@@ -9,7 +9,7 @@
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Recepción de CCTV en Tiendas - Synergo Sistemas</title>
+  <title>Recepción de Voz y Datos - Synergo Sistemas</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
@@ -50,7 +50,7 @@
     }
     .cam-counter-bar label { font-weight: bold; color: #1b365d; font-size: 12px; }
     .cam-counter-bar input[type="number"] {
-      width: 70px;
+      width: 80px;
       text-align: center;
       font-weight: bold;
       font-size: 14px;
@@ -76,6 +76,24 @@
       margin-left: auto;
     }
     .btn-auto:hover { background: #004d40; }
+
+    .btn-add-extra {
+      background: #1565c0;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 13px;
+      width: 100%;
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-add-extra:hover { background: #0d47a1; }
 
     select, input[type="text"], input[type="date"], input[type="number"], textarea { 
       width: 100%; padding: 7px; border-radius: 6px; border: 1px solid #ccc; font-size: 12px; background: #fff; font-family: inherit;
@@ -111,13 +129,13 @@
       cursor: crosshair;
     }
 
-    @media print { .top-bar, .cam-counter-bar { display: none; } }
+    @media print { .top-bar, .cam-counter-bar, .btn-add-extra { display: none; } }
   </style>
 </head>
 <body>
 
 <div class="top-bar">
-  <div style="font-weight: bold; font-size: 14px;">☁️ Proyectos Sincronizados (Recepción CCTV)</div>
+  <div style="font-weight: bold; font-size: 14px;">☁️ Proyectos Sincronizados (Voz y Datos)</div>
   <div style="margin-top: 5px;">
     <select id="select-proyectos" onchange="cargarProyecto(this.value)">
       <option value="">⏳ Cargando borradores...</option>
@@ -136,7 +154,7 @@
   <!-- DATOS GENERALES -->
   <div class="card">
     <div style="text-align: center; font-weight: bold; font-size: 16px; color: #1b365d; margin-bottom: 10px;">
-      RECEPCIÓN DE CCTV EN TIENDAS Y ESTACIONES
+      RECEPCIÓN DE VOZ Y DATOS EN TIENDAS Y ESTACIONES
     </div>
     
     <div class="form-group">
@@ -156,18 +174,21 @@
     </div>
   </div>
 
-  <!-- REGISTRO DE NODOS / CÁMARAS -->
+  <!-- REGISTRO DE NODOS DE VOZ Y DATOS -->
   <div class="card">
-    <div class="card-title">📹 Registro de Nodos / Cámaras (1 al 16)</div>
+    <div class="card-title">🔌 Registro de Nodos de Red (Voz y Datos)</div>
     
     <div class="cam-counter-bar">
-      <label for="cant-camaras">Cámaras a recibir:</label>
-      <input type="number" id="cant-camaras" min="1" max="16" value="4">
-      <button type="button" class="btn-adjust" onclick="generarCamarasPorNumero()">Establecer</button>
+      <label for="cant-camaras">Nodos a recibir:</label>
+      <input type="number" id="cant-camaras" min="1" value="24">
+      <button type="button" class="btn-adjust" onclick="generarCamarasPorNumero()">Establecer Nodos</button>
       <button type="button" class="btn-auto" onclick="llenarTodoCumple()">⚡ Llenar Todo como CUMPLE</button>
     </div>
 
     <div id="contenedor-nodos"></div>
+
+    <!-- OPCIÓN PARA AGREGAR MÁS NODOS DE MANERA DINÁMICA -->
+    <button type="button" class="btn-add-extra" onclick="agregarNodoExtra()">➕ Agregar Nodo Extra</button>
   </div>
 
   <!-- FIRMAS DIGITALES DE RECIBIDO Y CONFORMIDAD -->
@@ -205,23 +226,19 @@
     inicializarCanvas('canvas_cliente');
   };
 
-  /* --- GENERACIÓN SIMPLIFICADA DE CÁMARAS --- */
+  /* --- GENERACIÓN DINÁMICA DE NODOS --- */
   function generarCamarasPorNumero(datosGuardados = null, esLimpiezaTotal = false) {
     const contenedor = document.getElementById('contenedor-nodos');
     const inputCant = document.getElementById('cant-camaras');
     let objetivo = parseInt(inputCant.value) || 1;
 
-    if (objetivo > 16) {
-      objetivo = 16;
-      inputCant.value = 16;
-      alert("⚠️ El número máximo de cámaras es 16.");
-    } else if (objetivo < 1) {
+    if (objetivo < 1) {
       objetivo = 1;
       inputCant.value = 1;
     }
 
     if (datosGuardados && Array.isArray(datosGuardados)) {
-      objetivo = Math.min(datosGuardados.length, 16);
+      objetivo = datosGuardados.length;
       inputCant.value = objetivo;
     }
 
@@ -245,72 +262,88 @@
 
     for (let i = 1; i <= objetivo; i++) {
       const info = (datosGuardados && datosGuardados[i - 1]) || (datosPrevios[i - 1]) || {};
+      crearBloqueNodoHTML(i, info, contenedor);
+    }
+  }
 
-      const details = document.createElement('details');
-      details.id = `bloque_nodo_${i}`;
-      details.innerHTML = `
-        <summary>
-          Cámara / Nodo #${i} <span id="resumen_nodo_${i}" style="font-weight:normal; font-size:11px; color:#666;"></span> <span>▼</span>
-        </summary>
-        <div style="padding-top: 8px;">
+  function crearBloqueNodoHTML(i, info, contenedor) {
+    const details = document.createElement('details');
+    details.id = `bloque_nodo_${i}`;
+    details.innerHTML = `
+      <summary>
+        Nodo de Red #${i} <span id="resumen_nodo_${i}" style="font-weight:normal; font-size:11px; color:#666;"></span> <span>▼</span>
+      </summary>
+      <div style="padding-top: 8px;">
+        <div class="form-group">
+          <label>Ubicación / Identificador de Nodo:</label>
+          <input type="text" id="nodo_ubi_${i}" placeholder="Ej: Nodo Caja 1 / Punto de Venta / AP Pasillo" onchange="actualizarResumen(${i})" value="${info.ubicacion || ''}">
+        </div>
+
+        <div class="grid-4" style="margin-top: 6px;">
           <div class="form-group">
-            <label>Ubicación / Identificador:</label>
-            <input type="text" id="nodo_ubi_${i}" placeholder="Ej: Cámara Acceso / Caja 1 / Pasillo" onchange="actualizarResumen(${i})" value="${info.ubicacion || ''}">
-          </div>
-
-          <!-- CHECKLIST COMPACTA DE EVALUACIÓN -->
-          <div class="grid-4" style="margin-top: 6px;">
-            <div class="form-group">
-              <label>1. Cableado y Peinado</label>
-              <select id="nodo_cabling_${i}">
-                <option value="">-- Estado --</option>
-                <option value="CUMPLE" ${info.cableado === 'CUMPLE' ? 'selected' : ''}>CUMPLE</option>
-                <option value="NO CUMPLE" ${info.cableado === 'NO CUMPLE' ? 'selected' : ''}>NO CUMPLE</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>2. Etiquetado Integral</label>
-              <select id="nodo_tag_${i}">
-                <option value="">-- Estado --</option>
-                <option value="CUMPLE" ${info.etiquetado === 'CUMPLE' ? 'selected' : ''}>CUMPLE</option>
-                <option value="NO CUMPLE" ${info.etiquetado === 'NO CUMPLE' ? 'selected' : ''}>NO CUMPLE</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>3. Limpieza y Acabados</label>
-              <select id="nodo_clean_${i}">
-                <option value="">-- Estado --</option>
-                <option value="CUMPLE" ${info.limpieza === 'CUMPLE' ? 'selected' : ''}>CUMPLE</option>
-                <option value="NO CUMPLE" ${info.limpieza === 'NO CUMPLE' ? 'selected' : ''}>NO CUMPLE</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>4. Pruebas de Video/Red</label>
-              <select id="nodo_test_${i}">
-                <option value="">-- Estado --</option>
-                <option value="CUMPLE" ${info.pruebas === 'CUMPLE' ? 'selected' : ''}>CUMPLE</option>
-                <option value="NO CUMPLE" ${info.pruebas === 'NO CUMPLE' ? 'selected' : ''}>NO CUMPLE</option>
-              </select>
-            </div>
+            <label>1. Cableado y Peinado</label>
+            <select id="nodo_cabling_${i}">
+              <option value="">-- Estado --</option>
+              <option value="CUMPLE" ${info.cableado === 'CUMPLE' ? 'selected' : ''}>CUMPLE</option>
+              <option value="NO CUMPLE" ${info.cableado === 'NO CUMPLE' ? 'selected' : ''}>NO CUMPLE</option>
+            </select>
           </div>
 
           <div class="form-group">
-            <label>Observaciones o Retoques Pendientes:</label>
-            <input type="text" id="nodo_obs_${i}" placeholder="Escribir si hubo algún detalle o falla puntual..." value="${info.obs || ''}">
+            <label>2. Etiquetado Integral</label>
+            <select id="nodo_tag_${i}">
+              <option value="">-- Estado --</option>
+              <option value="CUMPLE" ${info.etiquetado === 'CUMPLE' ? 'selected' : ''}>CUMPLE</option>
+              <option value="NO CUMPLE" ${info.etiquetado === 'NO CUMPLE' ? 'selected' : ''}>NO CUMPLE</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>3. Limpieza y Acabados</label>
+            <select id="nodo_clean_${i}">
+              <option value="">-- Estado --</option>
+              <option value="CUMPLE" ${info.limpieza === 'CUMPLE' ? 'selected' : ''}>CUMPLE</option>
+              <option value="NO CUMPLE" ${info.limpieza === 'NO CUMPLE' ? 'selected' : ''}>NO CUMPLE</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>4. Pruebas / Mapeo Red</label>
+            <select id="nodo_test_${i}">
+              <option value="">-- Estado --</option>
+              <option value="CUMPLE" ${info.pruebas === 'CUMPLE' ? 'selected' : ''}>CUMPLE</option>
+              <option value="NO CUMPLE" ${info.pruebas === 'NO CUMPLE' ? 'selected' : ''}>NO CUMPLE</option>
+            </select>
           </div>
         </div>
-      `;
-      contenedor.appendChild(details);
-      if (info.ubicacion) actualizarResumen(i);
-    }
+
+        <div class="form-group">
+          <label>Observaciones o Detalle del Nodo:</label>
+          <input type="text" id="nodo_obs_${i}" placeholder="Escribir observaciones puntuales..." value="${info.obs || ''}">
+        </div>
+      </div>
+    `;
+    contenedor.appendChild(details);
+    if (info.ubicacion) actualizarResumen(i);
+  }
+
+  /* --- AGREGAR UN NODO EXTRA INDIVIDUAL --- */
+  function agregarNodoExtra() {
+    const contenedor = document.getElementById('contenedor-nodos');
+    const inputCant = document.getElementById('cant-camaras');
+    const nuevoTotal = (parseInt(inputCant.value) || contenedor.querySelectorAll('details').length) + 1;
+    
+    inputCant.value = nuevoTotal;
+    crearBloqueNodoHTML(nuevoTotal, {}, contenedor);
+    
+    // Abre automáticamente el nuevo nodo agregado
+    const nuevoBloque = document.getElementById(`bloque_nodo_${nuevoTotal}`);
+    if (nuevoBloque) nuevoBloque.open = true;
   }
 
   /* --- BOTÓN DE AUTO-COMPLETAR TODO EN CUMPLE --- */
   function llenarTodoCumple() {
-    const total = parseInt(document.getElementById('cant-camaras').value) || 0;
+    const total = document.getElementById('contenedor-nodos').querySelectorAll('details').length;
     for (let i = 1; i <= total; i++) {
       if (document.getElementById(`nodo_cabling_${i}`)) document.getElementById(`nodo_cabling_${i}`).value = 'CUMPLE';
       if (document.getElementById(`nodo_tag_${i}`)) document.getElementById(`nodo_tag_${i}`).value = 'CUMPLE';
@@ -413,7 +446,7 @@
     btnGuardar.innerHTML = "⏳ Guardando...";
 
     const nodosData = [];
-    const total = parseInt(document.getElementById('cant-camaras').value) || 0;
+    const total = document.getElementById('contenedor-nodos').querySelectorAll('details').length;
     
     for (let i = 1; i <= total; i++) {
       nodosData.push({
@@ -427,7 +460,7 @@
     }
 
     const estado = {
-      tipo: "RECEPCION_CCTV",
+      tipo: "RECEPCION_VOZ_DATOS",
       proyecto: proyecto,
       fecha: document.getElementById('req-fecha').value,
       tecnico: document.getElementById('req-tecnico').value,
@@ -443,7 +476,7 @@
       let data = await res.json();
       let proyectos = data.record.proyectos || {};
 
-      proyectos[`REC_${proyecto}`] = estado;
+      proyectos[`VYD_${proyecto}`] = estado;
 
       await fetch(URL_NUBE, {
         method: "PUT",
@@ -451,8 +484,8 @@
         body: JSON.stringify({ proyectos: proyectos })
       });
 
-      alert(`☁️ Recepción "${proyecto}" guardada exitosamente.`);
-      await cargarProyectosDesdeNube(`REC_${proyecto}`);
+      alert(`☁️ Recepción Voz y Datos "${proyecto}" guardada exitosamente.`);
+      await cargarProyectosDesdeNube(`VYD_${proyecto}`);
     } catch (err) {
       alert("❌ Error al conectar con la nube.");
       console.error(err);
@@ -474,10 +507,10 @@
       select.innerHTML = '<option value="">-- Cargar Borrador Guardado --</option>';
       Object.keys(window.proyectosNube).forEach(clave => {
         let item = window.proyectosNube[clave];
-        if (item.tipo === "RECEPCION_CCTV" || clave.startsWith("REC_")) {
+        if (item.tipo === "RECEPCION_VOZ_DATOS" || clave.startsWith("VYD_")) {
           let opt = document.createElement('option');
           opt.value = clave;
-          opt.textContent = item.proyecto || clave.replace("REC_", "");
+          opt.textContent = item.proyecto || clave.replace("VYD_", "");
           if (clave === seleccionado) opt.selected = true;
           select.appendChild(opt);
         }
@@ -552,7 +585,7 @@
     document.getElementById('nombre_firma_cliente').value = '';
     limpiarCanvas('canvas_cliente');
 
-    document.getElementById('cant-camaras').value = 4;
+    document.getElementById('cant-camaras').value = 24;
     generarCamarasPorNumero(null, true);
     
     document.getElementById('select-proyectos').value = '';
@@ -567,7 +600,7 @@
 
     const opciones = {
       margin: 8,
-      filename: `Recepcion_CCTV_${proyecto}.pdf`,
+      filename: `Recepcion_Voz_y_Datos_${proyecto}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { scale: 2 },
       jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
