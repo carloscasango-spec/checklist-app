@@ -145,8 +145,8 @@
     
     <!-- BARRA PARA DEFINIR CANTIDAD DE CÁMARAS -->
     <div class="cam-counter-bar">
-      <label for="cant-camaras">¿Cuántas cámaras requiere este proyecto?</label>
-      <input type="number" id="cant-camaras" min="1" max="64" value="4">
+      <label for="cant-camaras">¿Cuántas cámaras requiere este proyecto? (Máx. 16)</label>
+      <input type="number" id="cant-camaras" min="1" max="16" value="4">
       <button type="button" class="btn-adjust" onclick="generarCamarasPorNumero()">Establecer Cámaras</button>
     </div>
 
@@ -237,14 +237,25 @@
     inicializarCanvas('canvas_cliente');
   };
 
-  /* --- GENERACIÓN DINÁMICA DE CÁMARAS SEGÚN CANTIDAD INGRESADA --- */
+  /* --- GENERACIÓN DINÁMICA DE CÁMARAS SEGÚN CANTIDAD INGRESADA (MÁXIMO 16) --- */
   function generarCamarasPorNumero(datosGuardados = null, esLimpiezaTotal = false) {
     const contenedor = document.getElementById('contenedor-nodos');
-    let objetivo = parseInt(document.getElementById('cant-camaras').value) || 1;
+    const inputCant = document.getElementById('cant-camaras');
+    let objetivo = parseInt(inputCant.value) || 1;
+
+    // Validar límite superior de 16 e inferior de 1
+    if (objetivo > 16) {
+      objetivo = 16;
+      inputCant.value = 16;
+      alert("⚠️ El número máximo de cámaras permitido es 16.");
+    } else if (objetivo < 1) {
+      objetivo = 1;
+      inputCant.value = 1;
+    }
 
     if (datosGuardados && Array.isArray(datosGuardados)) {
-      objetivo = datosGuardados.length;
-      document.getElementById('cant-camaras').value = objetivo;
+      objetivo = Math.min(datosGuardados.length, 16);
+      inputCant.value = objetivo;
     }
 
     // Si es limpieza total (Nuevo Proyecto), no recuperamos datos anteriores del DOM
