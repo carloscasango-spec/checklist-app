@@ -153,55 +153,6 @@
     <div id="contenedor-nodos"></div>
   </div>
 
-  <!-- FACTIBILIDAD TÉCNICA DEL SITE -->
-  <div class="card">
-    <div class="card-title">⚙️ Factibilidad Técnica e Infraestructura</div>
-    
-    <div class="grid-2">
-      <div class="form-group">
-        <label>Puertos Disponibles NVR/Switch:</label>
-        <select id="fact_puertos">
-          <option value="">-- Seleccionar --</option>
-          <option value="Suficientes">✅ Suficientes Puertos</option>
-          <option value="Requiere Switch Extra">⚠️ Requiere Switch Extra</option>
-          <option value="NVR Lleno">❌ NVR Lleno / Cambio de NVR</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>Estado Canalización Existente:</label>
-        <select id="fact_canalizacion">
-          <option value="">-- Seleccionar --</option>
-          <option value="Disponible">✅ Disponible / Buenas Condiciones</option>
-          <option value="Saturada">⚠️ Saturada (Requiere nueva)</option>
-          <option value="Sin Canalizacion">⛔ No Existe (Tubería Nueva)</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="grid-2">
-      <div class="form-group">
-        <label>Respaldo Eléctrico (UPS/Contacto):</label>
-        <select id="fact_energia">
-          <option value="">-- Seleccionar --</option>
-          <option value="OK">✅ Contacto / UPS Operativo</option>
-          <option value="Requiere UPS">⚠️ Requiere Instalación de UPS</option>
-          <option value="Sin Energia">❌ Sin Contacto Cercano</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>Distancia Cable Promedio por Punto:</label>
-        <input type="text" id="fact_distancia" placeholder="Ej: 35 metros prom.">
-      </div>
-    </div>
-
-    <div class="form-group" style="margin-top: 10px;">
-      <label>Observaciones y Riesgos en Sitio (Permisos, Horarios, Andamios, etc.):</label>
-      <textarea id="gen_observaciones" rows="3" placeholder="Anotaciones importantes sobre la viabilidad del proyecto..."></textarea>
-    </div>
-  </div>
-
   <!-- FIRMAS DIGITALES -->
   <div class="card">
     <div class="card-title">✍️ Firmas Digitales de Conformidad</div>
@@ -243,7 +194,7 @@
     const inputCant = document.getElementById('cant-camaras');
     let objetivo = parseInt(inputCant.value) || 1;
 
-    // Validar límite superior de 16 e inferior de 1
+    // Control de límites (Mínimo 1, Máximo 16)
     if (objetivo > 16) {
       objetivo = 16;
       inputCant.value = 16;
@@ -258,7 +209,6 @@
       inputCant.value = objetivo;
     }
 
-    // Si es limpieza total (Nuevo Proyecto), no recuperamos datos anteriores del DOM
     const datosPrevios = [];
     if (!esLimpiezaTotal && !datosGuardados) {
       const bloques = contenedor.querySelectorAll('details');
@@ -291,13 +241,15 @@
               <input type="text" id="nodo_ubi_${i}" placeholder="Ej: Entrada Principal / Caja 1" onchange="actualizarResumen(${i})" value="${info.ubicacion || ''}">
             </div>
             <div class="form-group">
-              <label>Tipo de Cámara Sugerida:</label>
+              <label>Tipo de Cámara Requerida:</label>
               <select id="nodo_tipo_${i}">
                 <option value="">-- Seleccionar --</option>
-                <option value="Domo Interior" ${info.tipo === 'Domo Interior' ? 'selected' : ''}>Domo Interior</option>
-                <option value="Bullet Exterior" ${info.tipo === 'Bullet Exterior' ? 'selected' : ''}>Bullet Exterior</option>
-                <option value="PTZ / 360°" ${info.tipo === 'PTZ / 360°' ? 'selected' : ''}>PTZ / 360°</option>
-                <option value="Ojo de Pez (Fisheye)" ${info.tipo === 'Ojo de Pez (Fisheye)' ? 'selected' : ''}>Ojo de Pez (Fisheye)</option>
+                <option value="Cámara de Isla" ${info.tipo === 'Cámara de Isla' ? 'selected' : ''}>Cámara de Isla</option>
+                <option value="Cámara de Kit" ${info.tipo === 'Cámara de Kit' ? 'selected' : ''}>Cámara de Kit</option>
+                <option value="Cámara de Audio" ${info.tipo === 'Cámara de Audio' ? 'selected' : ''}>Cámara de Audio</option>
+                <option value="Cámara PTZ" ${info.tipo === 'Cámara PTZ' ? 'selected' : ''}>Cámara PTZ</option>
+                <option value="Cámara 360" ${info.tipo === 'Cámara 360' ? 'selected' : ''}>Cámara 360</option>
+                <option value="Cámara Bullet" ${info.tipo === 'Cámara Bullet' ? 'selected' : ''}>Cámara Bullet</option>
               </select>
             </div>
           </div>
@@ -428,11 +380,6 @@
       proyecto: proyecto,
       fecha: document.getElementById('req-fecha').value,
       tecnico: document.getElementById('req-tecnico').value,
-      puertos: document.getElementById('fact_puertos').value,
-      canalizacion: document.getElementById('fact_canalizacion').value,
-      energia: document.getElementById('fact_energia').value,
-      distancia: document.getElementById('fact_distancia').value,
-      observaciones: document.getElementById('gen_observaciones').value,
       nombre_tecnico: document.getElementById('nombre_firma_tecnico').value,
       firma_tecnico: canvasStates['canvas_tecnico'] || null,
       nombre_cliente: document.getElementById('nombre_firma_cliente').value,
@@ -497,11 +444,6 @@
     document.getElementById('req-proyecto').value = estado.proyecto || '';
     document.getElementById('req-fecha').value = estado.fecha || '';
     document.getElementById('req-tecnico').value = estado.tecnico || '';
-    document.getElementById('fact_puertos').value = estado.puertos || '';
-    document.getElementById('fact_canalizacion').value = estado.canalizacion || '';
-    document.getElementById('fact_energia').value = estado.energia || '';
-    document.getElementById('fact_distancia').value = estado.distancia || '';
-    document.getElementById('gen_observaciones').value = estado.observaciones || '';
 
     document.getElementById('nombre_firma_tecnico').value = estado.nombre_tecnico || '';
     cargarImagenEnCanvas('canvas_tecnico', estado.firma_tecnico);
@@ -509,7 +451,6 @@
     document.getElementById('nombre_firma_cliente').value = estado.nombre_cliente || '';
     cargarImagenEnCanvas('canvas_cliente', estado.firma_cliente);
 
-    // Carga dinámica de cámaras
     if (estado.nodosLista && estado.nodosLista.length > 0) {
       generarCamarasPorNumero(estado.nodosLista, false);
     }
@@ -553,11 +494,6 @@
     document.getElementById('req-proyecto').value = '';
     document.getElementById('req-fecha').value = '';
     document.getElementById('req-tecnico').value = '';
-    document.getElementById('fact_puertos').value = '';
-    document.getElementById('fact_canalizacion').value = '';
-    document.getElementById('fact_energia').value = '';
-    document.getElementById('fact_distancia').value = '';
-    document.getElementById('gen_observaciones').value = '';
 
     document.getElementById('nombre_firma_tecnico').value = '';
     limpiarCanvas('canvas_tecnico');
@@ -566,8 +502,6 @@
     limpiarCanvas('canvas_cliente');
 
     document.getElementById('cant-camaras').value = 4;
-    
-    // Limpieza estricta de la lista de cámaras (sin conservar datos previos)
     generarCamarasPorNumero(null, true);
     
     document.getElementById('select-proyectos').value = '';
