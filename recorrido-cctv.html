@@ -6,7 +6,7 @@
     window.location.href = "login.html";
   }
 </script>
-  
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Levantamiento Previo CCTV - Synergo Sistemas</title>
@@ -231,14 +231,14 @@
   const URL_NUBE = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
   window.onload = function() {
-    generarCamarasPorNumero();
+    generarCamarasPorNumero(null, true);
     cargarProyectosDesdeNube();
     inicializarCanvas('canvas_tecnico');
     inicializarCanvas('canvas_cliente');
   };
 
   /* --- GENERACIÓN DINÁMICA DE CÁMARAS SEGÚN CANTIDAD INGRESADA --- */
-  function generarCamarasPorNumero(datosGuardados = null) {
+  function generarCamarasPorNumero(datosGuardados = null, esLimpiezaTotal = false) {
     const contenedor = document.getElementById('contenedor-nodos');
     let objetivo = parseInt(document.getElementById('cant-camaras').value) || 1;
 
@@ -247,18 +247,20 @@
       document.getElementById('cant-camaras').value = objetivo;
     }
 
-    // Guardar lo que ya estaba escrito para no perderlo al reajustar cantidad
+    // Si es limpieza total (Nuevo Proyecto), no recuperamos datos anteriores del DOM
     const datosPrevios = [];
-    const bloques = contenedor.querySelectorAll('details');
-    bloques.forEach((b, idx) => {
-      const i = idx + 1;
-      datosPrevios.push({
-        ubicacion: document.getElementById(`nodo_ubi_${i}`) ? document.getElementById(`nodo_ubi_${i}`).value : '',
-        tipo: document.getElementById(`nodo_tipo_${i}`) ? document.getElementById(`nodo_tipo_${i}`).value : '',
-        requerimiento: document.getElementById(`nodo_req_${i}`) ? document.getElementById(`nodo_req_${i}`).value : '',
-        cambio: document.getElementById(`nodo_cambio_${i}`) ? document.getElementById(`nodo_cambio_${i}`).value : ''
+    if (!esLimpiezaTotal && !datosGuardados) {
+      const bloques = contenedor.querySelectorAll('details');
+      bloques.forEach((b, idx) => {
+        const i = idx + 1;
+        datosPrevios.push({
+          ubicacion: document.getElementById(`nodo_ubi_${i}`) ? document.getElementById(`nodo_ubi_${i}`).value : '',
+          tipo: document.getElementById(`nodo_tipo_${i}`) ? document.getElementById(`nodo_tipo_${i}`).value : '',
+          requerimiento: document.getElementById(`nodo_req_${i}`) ? document.getElementById(`nodo_req_${i}`).value : '',
+          cambio: document.getElementById(`nodo_cambio_${i}`) ? document.getElementById(`nodo_cambio_${i}`).value : ''
+        });
       });
-    });
+    }
 
     contenedor.innerHTML = '';
 
@@ -498,7 +500,7 @@
 
     // Carga dinámica de cámaras
     if (estado.nodosLista && estado.nodosLista.length > 0) {
-      generarCamarasPorNumero(estado.nodosLista);
+      generarCamarasPorNumero(estado.nodosLista, false);
     }
   }
 
@@ -553,7 +555,10 @@
     limpiarCanvas('canvas_cliente');
 
     document.getElementById('cant-camaras').value = 4;
-    generarCamarasPorNumero();
+    
+    // Limpieza estricta de la lista de cámaras (sin conservar datos previos)
+    generarCamarasPorNumero(null, true);
+    
     document.getElementById('select-proyectos').value = '';
   }
 
