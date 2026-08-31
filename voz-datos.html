@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<script>
+  if (sessionStorage.getItem("synergo_auth") !== "true") {
+    window.location.href = "login.html";
+  }
+</script>
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Recepción Voz y Datos - Synergo Sistemas</title>
-  <script>
-    if (sessionStorage.getItem("synergo_auth") !== "true") {
-      window.location.href = "login.html";
-    }
-  </script>
+  <title>Recepción de CCTV en Tiendas - Synergo Sistemas</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
@@ -34,8 +35,49 @@
     .btn-delete:disabled { background: #ef9a9a; cursor: not-allowed; }
     .btn-new { background: #555; }
     .btn-pdf { background: #d32f2f; }
+    .btn-clear { background: #757575; padding: 4px 8px; font-size: 11px; margin-top: 4px; }
     
-    select, input[type="text"], input[type="date"] { 
+    .cam-counter-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #eef4fb;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      border: 1px solid #bdd7ee;
+      flex-wrap: wrap;
+    }
+    .cam-counter-bar label { font-weight: bold; color: #1b365d; font-size: 12px; }
+    .cam-counter-bar input[type="number"] {
+      width: 70px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 14px;
+      padding: 5px;
+    }
+    .btn-adjust {
+      background: #1b365d;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .btn-auto {
+      background: #00796b;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-left: auto;
+    }
+    .btn-auto:hover { background: #004d40; }
+
+    select, input[type="text"], input[type="date"], input[type="number"], textarea { 
       width: 100%; padding: 7px; border-radius: 6px; border: 1px solid #ccc; font-size: 12px; background: #fff; font-family: inherit;
     }
 
@@ -46,36 +88,36 @@
     .form-group { margin-bottom: 8px; }
     .form-group label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 3px; color: #444; text-transform: uppercase; }
 
-    /* Secciones dentro de cada nodo */
-    .section-header {
-      background: #bdd7ee;
-      color: #1b365d;
-      font-weight: bold;
-      font-size: 11px;
-      padding: 4px 8px;
-      margin-top: 8px;
-      margin-bottom: 6px;
-      border-radius: 4px;
-      text-transform: uppercase;
-    }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 
-    .grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
+    @media (max-width: 600px) {
+      .grid-4 { grid-template-columns: 1fr 1fr; }
+      .grid-2 { grid-template-columns: 1fr; }
     }
 
     /* Acordeón / Bloques de Nodos */
     details { background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; margin-bottom: 8px; padding: 6px 10px; }
     summary { font-weight: bold; cursor: pointer; padding: 6px 0; color: #1b365d; display: flex; justify-content: space-between; align-items: center; }
 
-    @media print { .top-bar { display: none; } }
+    /* Estilos del Canvas para Firma */
+    .signature-pad {
+      border: 2px dashed #1b365d;
+      border-radius: 6px;
+      background: #fafafa;
+      touch-action: none;
+      width: 100%;
+      height: 120px;
+      cursor: crosshair;
+    }
+
+    @media print { .top-bar, .cam-counter-bar { display: none; } }
   </style>
 </head>
 <body>
 
 <div class="top-bar">
-  <div style="font-weight: bold; font-size: 14px;">☁️ Proyectos Sincronizados (Voz y Datos)</div>
+  <div style="font-weight: bold; font-size: 14px;">☁️ Proyectos Sincronizados (Recepción CCTV)</div>
   <div style="margin-top: 5px;">
     <select id="select-proyectos" onchange="cargarProyecto(this.value)">
       <option value="">⏳ Cargando borradores...</option>
@@ -91,9 +133,10 @@
 
 <div id="formato-app">
 
+  <!-- DATOS GENERALES -->
   <div class="card">
     <div style="text-align: center; font-weight: bold; font-size: 16px; color: #1b365d; margin-bottom: 10px;">
-      RECEPCIÓN DE CABLEADO DE VOZ Y DATOS EN TIENDAS Y ESTACIONES
+      RECEPCIÓN DE CCTV EN TIENDAS Y ESTACIONES
     </div>
     
     <div class="form-group">
@@ -101,15 +144,51 @@
       <input type="text" id="req-proyecto" placeholder="Ej: GC PALMA TROPICA">
     </div>
 
-    <div class="form-group">
-      <label>Fecha de Inspección:</label>
-      <input type="date" id="req-fecha">
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Fecha de Inspección:</label>
+        <input type="date" id="req-fecha">
+      </div>
+      <div class="form-group">
+        <label>Técnico / Inspector:</label>
+        <input type="text" id="req-tecnico" placeholder="Nombre de quien recibe">
+      </div>
     </div>
   </div>
 
+  <!-- REGISTRO DE NODOS / CÁMARAS -->
   <div class="card">
-    <div class="card-title">🌐 Registro de Nodos (1 al 24)</div>
+    <div class="card-title">📹 Registro de Nodos / Cámaras (1 al 16)</div>
+    
+    <div class="cam-counter-bar">
+      <label for="cant-camaras">Cámaras a recibir:</label>
+      <input type="number" id="cant-camaras" min="1" max="16" value="4">
+      <button type="button" class="btn-adjust" onclick="generarCamarasPorNumero()">Establecer</button>
+      <button type="button" class="btn-auto" onclick="llenarTodoCumple()">⚡ Llenar Todo como CUMPLE</button>
+    </div>
+
     <div id="contenedor-nodos"></div>
+  </div>
+
+  <!-- FIRMAS DIGITALES DE RECIBIDO Y CONFORMIDAD -->
+  <div class="card">
+    <div class="card-title">✍️ Firmas Digitales de Conclusión y Recibido</div>
+    
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Firma Inspector / Synergo:</label>
+        <input type="text" id="nombre_firma_tecnico" placeholder="Nombre completo del inspector" style="margin-bottom: 5px;">
+        <canvas id="canvas_tecnico" class="signature-pad"></canvas>
+        <button class="btn btn-clear" onclick="limpiarCanvas('canvas_tecnico')">🧹 Borrar Firma</button>
+      </div>
+
+      <div class="form-group">
+        <label>Firma Recibido / Cliente o Encargado:</label>
+        <input type="text" id="nombre_firma_cliente" placeholder="Nombre completo de quien recibe" style="margin-bottom: 5px;">
+        <canvas id="canvas_cliente" class="signature-pad"></canvas>
+        <button class="btn btn-clear" onclick="limpiarCanvas('canvas_cliente')">🧹 Borrar Firma</button>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -119,217 +198,267 @@
   const API_KEY = "$2a$10$5BDKoNaJb98nczPxrHl1Uuow.tck.XjCTrl6Cc7b.aZ3RbBRtHr4e";
   const URL_NUBE = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
-  const opcionesEstado = `
-    <option value="">-- Seleccionar --</option>
-    <option value="OK">✅ OK / Correcto</option>
-    <option value="Pendiente">⚠️ Pendiente</option>
-    <option value="N/A">⛔ No Aplica (N/A)</option>
-    <option value="Fallo">❌ Fallo / Dañado</option>
-  `;
-
   window.onload = function() {
-    renderizarNodos();
+    generarCamarasPorNumero(null, true);
     cargarProyectosDesdeNube();
+    inicializarCanvas('canvas_tecnico');
+    inicializarCanvas('canvas_cliente');
   };
 
-  function renderizarNodos() {
+  /* --- GENERACIÓN SIMPLIFICADA DE CÁMARAS --- */
+  function generarCamarasPorNumero(datosGuardados = null, esLimpiezaTotal = false) {
     const contenedor = document.getElementById('contenedor-nodos');
+    const inputCant = document.getElementById('cant-camaras');
+    let objetivo = parseInt(inputCant.value) || 1;
+
+    if (objetivo > 16) {
+      objetivo = 16;
+      inputCant.value = 16;
+      alert("⚠️ El número máximo de cámaras es 16.");
+    } else if (objetivo < 1) {
+      objetivo = 1;
+      inputCant.value = 1;
+    }
+
+    if (datosGuardados && Array.isArray(datosGuardados)) {
+      objetivo = Math.min(datosGuardados.length, 16);
+      inputCant.value = objetivo;
+    }
+
+    const datosPrevios = [];
+    if (!esLimpiezaTotal && !datosGuardados) {
+      const bloques = contenedor.querySelectorAll('details');
+      bloques.forEach((b, idx) => {
+        const i = idx + 1;
+        datosPrevios.push({
+          ubicacion: document.getElementById(`nodo_ubi_${i}`) ? document.getElementById(`nodo_ubi_${i}`).value : '',
+          cableado: document.getElementById(`nodo_cabling_${i}`) ? document.getElementById(`nodo_cabling_${i}`).value : '',
+          etiquetado: document.getElementById(`nodo_tag_${i}`) ? document.getElementById(`nodo_tag_${i}`).value : '',
+          limpieza: document.getElementById(`nodo_clean_${i}`) ? document.getElementById(`nodo_clean_${i}`).value : '',
+          pruebas: document.getElementById(`nodo_test_${i}`) ? document.getElementById(`nodo_test_${i}`).value : '',
+          obs: document.getElementById(`nodo_obs_${i}`) ? document.getElementById(`nodo_obs_${i}`).value : ''
+        });
+      });
+    }
+
     contenedor.innerHTML = '';
 
-    for (let i = 1; i <= 24; i++) {
+    for (let i = 1; i <= objetivo; i++) {
+      const info = (datosGuardados && datosGuardados[i - 1]) || (datosPrevios[i - 1]) || {};
+
       const details = document.createElement('details');
+      details.id = `bloque_nodo_${i}`;
       details.innerHTML = `
-        <summary>Nodo #${i} <span id="resumen_nodo_${i}" style="font-weight:normal; font-size:11px; color:#666;"></span> <span>▼</span></summary>
+        <summary>
+          Cámara / Nodo #${i} <span id="resumen_nodo_${i}" style="font-weight:normal; font-size:11px; color:#666;"></span> <span>▼</span>
+        </summary>
         <div style="padding-top: 8px;">
-          
           <div class="form-group">
-            <label>Ubicación / Área del Nodo:</label>
-            <input type="text" id="nodo_ubi_${i}" placeholder="Ej: Caja 1 / Bóveda / Oficina" onchange="actualizarResumen(${i})">
+            <label>Ubicación / Identificador:</label>
+            <input type="text" id="nodo_ubi_${i}" placeholder="Ej: Cámara Acceso / Caja 1 / Pasillo" onchange="actualizarResumen(${i})" value="${info.ubicacion || ''}">
           </div>
 
-          <!-- 1. CABLEADO DEL NODO -->
-          <div class="section-header">1. Cableado del Nodo</div>
-          <div class="grid-2">
+          <!-- CHECKLIST COMPACTA DE EVALUACIÓN -->
+          <div class="grid-4" style="margin-top: 6px;">
             <div class="form-group">
-              <label>Rematado Face Plate:</label>
-              <select id="nodo_rem_face_${i}">${opcionesEstado}</select>
+              <label>1. Cableado y Peinado</label>
+              <select id="nodo_cabling_${i}">
+                <option value="">-- Estado --</option>
+                <option value="CUMPLE" ${info.cableado === 'CUMPLE' ? 'selected' : ''}>CUMPLE</option>
+                <option value="NO CUMPLE" ${info.cableado === 'NO CUMPLE' ? 'selected' : ''}>NO CUMPLE</option>
+              </select>
             </div>
-            <div class="form-group">
-              <label>Rematado Patch Panel:</label>
-              <select id="nodo_rem_patch_${i}">${opcionesEstado}</select>
-            </div>
-          </div>
 
-          <!-- 2. ETIQUETADO DEL NODO -->
-          <div class="section-header">2. Etiquetado del Nodo</div>
-          <div class="grid-2">
             <div class="form-group">
-              <label>Face Plate:</label>
-              <select id="nodo_etiq_face_${i}">${opcionesEstado}</select>
+              <label>2. Etiquetado Integral</label>
+              <select id="nodo_tag_${i}">
+                <option value="">-- Estado --</option>
+                <option value="CUMPLE" ${info.etiquetado === 'CUMPLE' ? 'selected' : ''}>CUMPLE</option>
+                <option value="NO CUMPLE" ${info.etiquetado === 'NO CUMPLE' ? 'selected' : ''}>NO CUMPLE</option>
+              </select>
             </div>
-            <div class="form-group">
-              <label>Patch Panel:</label>
-              <select id="nodo_etiq_patch_${i}">${opcionesEstado}</select>
-            </div>
-          </div>
 
-          <!-- 3. ETIQUETADO DEL PATCHCORD -->
-          <div class="section-header">3. Etiquetado del Patchcord</div>
-          <div class="grid-2">
             <div class="form-group">
-              <label>Patch Panel:</label>
-              <select id="nodo_cord_patch_${i}">${opcionesEstado}</select>
+              <label>3. Limpieza y Acabados</label>
+              <select id="nodo_clean_${i}">
+                <option value="">-- Estado --</option>
+                <option value="CUMPLE" ${info.limpieza === 'CUMPLE' ? 'selected' : ''}>CUMPLE</option>
+                <option value="NO CUMPLE" ${info.limpieza === 'NO CUMPLE' ? 'selected' : ''}>NO CUMPLE</option>
+              </select>
             </div>
-            <div class="form-group">
-              <label>Switch:</label>
-              <select id="nodo_cord_switch_${i}">${opcionesEstado}</select>
-            </div>
-          </div>
 
-          <!-- 4. ORGANIZACIÓN DEL CABLEADO -->
-          <div class="section-header">4. Organización del Cableado</div>
-          <div class="grid-2">
             <div class="form-group">
-              <label>Organizador Vertical:</label>
-              <select id="nodo_org_vert_${i}">${opcionesEstado}</select>
-            </div>
-            <div class="form-group">
-              <label>Organizador Horizontal:</label>
-              <select id="nodo_org_horiz_${i}">${opcionesEstado}</select>
+              <label>4. Pruebas de Video/Red</label>
+              <select id="nodo_test_${i}">
+                <option value="">-- Estado --</option>
+                <option value="CUMPLE" ${info.pruebas === 'CUMPLE' ? 'selected' : ''}>CUMPLE</option>
+                <option value="NO CUMPLE" ${info.pruebas === 'NO CUMPLE' ? 'selected' : ''}>NO CUMPLE</option>
+              </select>
             </div>
           </div>
 
-          <!-- 5. PRUEBAS DE COMUNICACIÓN -->
-          <div class="section-header">5. Pruebas de Comunicación</div>
-          <div class="grid-2">
-            <div class="form-group">
-              <label>Continuidad:</label>
-              <select id="nodo_prue_cont_${i}">${opcionesEstado}</select>
-            </div>
-            <div class="form-group">
-              <label>Transmisión:</label>
-              <select id="nodo_prue_trans_${i}">${opcionesEstado}</select>
-            </div>
+          <div class="form-group">
+            <label>Observaciones o Retoques Pendientes:</label>
+            <input type="text" id="nodo_obs_${i}" placeholder="Escribir si hubo algún detalle o falla puntual..." value="${info.obs || ''}">
           </div>
-
         </div>
       `;
       contenedor.appendChild(details);
+      if (info.ubicacion) actualizarResumen(i);
+    }
+  }
+
+  /* --- BOTÓN DE AUTO-COMPLETAR TODO EN CUMPLE --- */
+  function llenarTodoCumple() {
+    const total = parseInt(document.getElementById('cant-camaras').value) || 0;
+    for (let i = 1; i <= total; i++) {
+      if (document.getElementById(`nodo_cabling_${i}`)) document.getElementById(`nodo_cabling_${i}`).value = 'CUMPLE';
+      if (document.getElementById(`nodo_tag_${i}`)) document.getElementById(`nodo_tag_${i}`).value = 'CUMPLE';
+      if (document.getElementById(`nodo_clean_${i}`)) document.getElementById(`nodo_clean_${i}`).value = 'CUMPLE';
+      if (document.getElementById(`nodo_test_${i}`)) document.getElementById(`nodo_test_${i}`).value = 'CUMPLE';
     }
   }
 
   function actualizarResumen(i) {
-    const ubi = document.getElementById(`nodo_ubi_${i}`).value;
+    const el = document.getElementById(`nodo_ubi_${i}`);
+    if (!el) return;
+    const ubi = el.value;
     const span = document.getElementById(`resumen_nodo_${i}`);
-    span.textContent = ubi ? `(${ubi})` : '';
+    if (span) span.textContent = ubi ? `(${ubi})` : '';
   }
 
+  /* --- CANVAS DE FIRMAS DIGITALES --- */
+  const canvasStates = {};
+
+  function inicializarCanvas(idCanvas) {
+    const canvas = document.getElementById(idCanvas);
+    const ctx = canvas.getContext('2d');
+    let dibujando = false;
+
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#1b365d';
+
+    function obtenerPosicion(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return { x: clientX - rect.left, y: clientY - rect.top };
+    }
+
+    function iniciarDibujo(e) {
+      dibujando = true;
+      const pos = obtenerPosicion(e);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+    }
+
+    function dibujar(e) {
+      if (!dibujando) return;
+      e.preventDefault();
+      const pos = obtenerPosicion(e);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+    }
+
+    function detenerDibujo() {
+      if (dibujando) {
+        dibujando = false;
+        canvasStates[idCanvas] = canvas.toDataURL();
+      }
+    }
+
+    canvas.addEventListener('mousedown', iniciarDibujo);
+    canvas.addEventListener('mousemove', dibujar);
+    canvas.addEventListener('mouseup', detenerDibujo);
+    canvas.addEventListener('mouseleave', detenerDibujo);
+
+    canvas.addEventListener('touchstart', iniciarDibujo);
+    canvas.addEventListener('touchmove', dibujar);
+    canvas.addEventListener('touchend', detenerDibujo);
+  }
+
+  function limpiarCanvas(idCanvas) {
+    const canvas = document.getElementById(idCanvas);
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    canvasStates[idCanvas] = null;
+  }
+
+  function cargarImagenEnCanvas(idCanvas, dataUrl) {
+    const canvas = document.getElementById(idCanvas);
+    const ctx = canvas.getContext('2d');
+    limpiarCanvas(idCanvas);
+
+    if (dataUrl) {
+      const img = new Image();
+      img.onload = function() {
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvasStates[idCanvas] = dataUrl;
+      };
+      img.src = dataUrl;
+    }
+  }
+
+  /* --- SINCRO NUBE Y PROYECTOS --- */
   async function guardarProgreso() {
     const proyecto = document.getElementById('req-proyecto').value.trim();
     if (!proyecto) { alert("⚠️ Escribe el Nombre del Proyecto para guardar."); return; }
 
     const btnGuardar = document.getElementById('btn-guardar');
-    if(btnGuardar) {
-      btnGuardar.disabled = true;
-      btnGuardar.innerHTML = "⏳ Guardando...";
+    btnGuardar.disabled = true;
+    btnGuardar.innerHTML = "⏳ Guardando...";
+
+    const nodosData = [];
+    const total = parseInt(document.getElementById('cant-camaras').value) || 0;
+    
+    for (let i = 1; i <= total; i++) {
+      nodosData.push({
+        ubicacion: document.getElementById(`nodo_ubi_${i}`) ? document.getElementById(`nodo_ubi_${i}`).value : '',
+        cableado: document.getElementById(`nodo_cabling_${i}`) ? document.getElementById(`nodo_cabling_${i}`).value : '',
+        etiquetado: document.getElementById(`nodo_tag_${i}`) ? document.getElementById(`nodo_tag_${i}`).value : '',
+        limpieza: document.getElementById(`nodo_clean_${i}`) ? document.getElementById(`nodo_clean_${i}`).value : '',
+        pruebas: document.getElementById(`nodo_test_${i}`) ? document.getElementById(`nodo_test_${i}`).value : '',
+        obs: document.getElementById(`nodo_obs_${i}`) ? document.getElementById(`nodo_obs_${i}`).value : ''
+      });
     }
 
     const estado = {
-      tipo: "VOZ_DATOS",
+      tipo: "RECEPCION_CCTV",
       proyecto: proyecto,
       fecha: document.getElementById('req-fecha').value,
-      nodos: {}
+      tecnico: document.getElementById('req-tecnico').value,
+      nombre_tecnico: document.getElementById('nombre_firma_tecnico').value,
+      firma_tecnico: canvasStates['canvas_tecnico'] || null,
+      nombre_cliente: document.getElementById('nombre_firma_cliente').value,
+      firma_cliente: canvasStates['canvas_cliente'] || null,
+      nodosLista: nodosData
     };
-
-    for (let i = 1; i <= 24; i++) {
-      estado.nodos[`nodo_${i}`] = {
-        ubicacion: document.getElementById(`nodo_ubi_${i}`).value,
-        rem_face: document.getElementById(`nodo_rem_face_${i}`).value,
-        rem_patch: document.getElementById(`nodo_rem_patch_${i}`).value,
-        etiq_face: document.getElementById(`nodo_etiq_face_${i}`).value,
-        etiq_patch: document.getElementById(`nodo_etiq_patch_${i}`).value,
-        cord_patch: document.getElementById(`nodo_cord_patch_${i}`).value,
-        cord_switch: document.getElementById(`nodo_cord_switch_${i}`).value,
-        org_vert: document.getElementById(`nodo_org_vert_${i}`).value,
-        org_horiz: document.getElementById(`nodo_org_horiz_${i}`).value,
-        prue_cont: document.getElementById(`nodo_prue_cont_${i}`).value,
-        prue_trans: document.getElementById(`nodo_prue_trans_${i}`).value
-      };
-    }
 
     try {
       let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
       let data = await res.json();
       let proyectos = data.record.proyectos || {};
 
-      proyectos[proyecto] = estado;
+      proyectos[`REC_${proyecto}`] = estado;
 
       await fetch(URL_NUBE, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Master-Key": API_KEY
-        },
+        headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
         body: JSON.stringify({ proyectos: proyectos })
       });
 
-      alert(`☁️ Proyecto "${proyecto}" guardado en la nube exitosamente.`);
-      await cargarProyectosDesdeNube(proyecto);
+      alert(`☁️ Recepción "${proyecto}" guardada exitosamente.`);
+      await cargarProyectosDesdeNube(`REC_${proyecto}`);
     } catch (err) {
       alert("❌ Error al conectar con la nube.");
       console.error(err);
     } finally {
-      if(btnGuardar) {
-        btnGuardar.disabled = false;
-        btnGuardar.innerHTML = "💾 Guardar";
-      }
-    }
-  }
-
-  async function eliminarDeNube() {
-    const select = document.getElementById('select-proyectos');
-    const clave = select.value;
-
-    if (!clave) {
-      alert("⚠️ Selecciona un borrador del desplegable para eliminar.");
-      return;
-    }
-
-    const nombreMostrar = select.options[select.selectedIndex].text;
-    const confirmacion = confirm(`🗑️ ¿Estás seguro de que deseas eliminar permanentemente el proyecto "${nombreMostrar}"?`);
-    if (!confirmacion) return;
-
-    const btnEliminar = document.getElementById('btn-eliminar');
-    btnEliminar.disabled = true;
-    btnEliminar.innerHTML = "⏳ Eliminando...";
-
-    try {
-      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
-      let data = await res.json();
-      let proyectos = data.record.proyectos || {};
-
-      if (proyectos[clave]) {
-        delete proyectos[clave];
-
-        await fetch(URL_NUBE, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Master-Key": API_KEY
-          },
-          body: JSON.stringify({ proyectos: proyectos })
-        });
-
-        alert(`🗑️ El proyecto "${nombreMostrar}" fue eliminado exitosamente.`);
-        nuevoProyecto();
-        await cargarProyectosDesdeNube();
-      }
-    } catch (e) {
-      alert("⚠️ Error al eliminar el proyecto de la nube.");
-      console.error(e);
-    } finally {
-      btnEliminar.disabled = false;
-      btnEliminar.innerHTML = "🗑️ Eliminar";
+      btnGuardar.disabled = false;
+      btnGuardar.innerHTML = "💾 Guardar";
     }
   }
 
@@ -345,15 +474,10 @@
       select.innerHTML = '<option value="">-- Cargar Borrador Guardado --</option>';
       Object.keys(window.proyectosNube).forEach(clave => {
         let item = window.proyectosNube[clave];
-
-        // Filtro estricto: excluir CCTV y Visitas
-        const esVozDatos = item.tipo === "VOZ_DATOS" || 
-          (!clave.startsWith("VISITA_") && !clave.startsWith("CCTV_") && item.modulo !== "CCTV");
-
-        if (esVozDatos) {
+        if (item.tipo === "RECEPCION_CCTV" || clave.startsWith("REC_")) {
           let opt = document.createElement('option');
           opt.value = clave;
-          opt.textContent = item.proyecto || item.tienda || clave;
+          opt.textContent = item.proyecto || clave.replace("REC_", "");
           if (clave === seleccionado) opt.selected = true;
           select.appendChild(opt);
         }
@@ -368,47 +492,69 @@
     const estado = window.proyectosNube[clave];
     if (!estado) return;
 
-    document.getElementById('req-proyecto').value = estado.proyecto || clave;
+    document.getElementById('req-proyecto').value = estado.proyecto || '';
     document.getElementById('req-fecha').value = estado.fecha || '';
+    document.getElementById('req-tecnico').value = estado.tecnico || '';
 
-    if (estado.nodos) {
-      for (let i = 1; i <= 24; i++) {
-        const d = estado.nodos[`nodo_${i}`];
-        if (d) {
-          document.getElementById(`nodo_ubi_${i}`).value = d.ubicacion || '';
-          document.getElementById(`nodo_rem_face_${i}`).value = d.rem_face || '';
-          document.getElementById(`nodo_rem_patch_${i}`).value = d.rem_patch || '';
-          document.getElementById(`nodo_etiq_face_${i}`).value = d.etiq_face || '';
-          document.getElementById(`nodo_etiq_patch_${i}`).value = d.etiq_patch || '';
-          document.getElementById(`nodo_cord_patch_${i}`).value = d.cord_patch || '';
-          document.getElementById(`nodo_cord_switch_${i}`).value = d.cord_switch || '';
-          document.getElementById(`nodo_org_vert_${i}`).value = d.org_vert || '';
-          document.getElementById(`nodo_org_horiz_${i}`).value = d.org_horiz || '';
-          document.getElementById(`nodo_prue_cont_${i}`).value = d.prue_cont || '';
-          document.getElementById(`nodo_prue_trans_${i}`).value = d.prue_trans || '';
-          actualizarResumen(i);
-        }
+    document.getElementById('nombre_firma_tecnico').value = estado.nombre_tecnico || '';
+    cargarImagenEnCanvas('canvas_tecnico', estado.firma_tecnico);
+
+    document.getElementById('nombre_firma_cliente').value = estado.nombre_cliente || '';
+    cargarImagenEnCanvas('canvas_cliente', estado.firma_cliente);
+
+    if (estado.nodosLista && estado.nodosLista.length > 0) {
+      generarCamarasPorNumero(estado.nodosLista, false);
+    }
+  }
+
+  async function eliminarDeNube() {
+    const select = document.getElementById('select-proyectos');
+    const clave = select.value;
+    if (!clave) { alert("⚠️ Selecciona un borrador para eliminar."); return; }
+
+    const nombreMostrar = select.options[select.selectedIndex].text;
+    if (!confirm(`🗑️ ¿Deseas eliminar "${nombreMostrar}"?`)) return;
+
+    const btnEliminar = document.getElementById('btn-eliminar');
+    btnEliminar.disabled = true;
+
+    try {
+      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
+      let data = await res.json();
+      let proyectos = data.record.proyectos || {};
+
+      if (proyectos[clave]) {
+        delete proyectos[clave];
+        await fetch(URL_NUBE, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
+          body: JSON.stringify({ proyectos: proyectos })
+        });
+        alert(`🗑️ Eliminado exitosamente.`);
+        nuevoProyecto();
+        await cargarProyectosDesdeNube();
       }
+    } catch (e) {
+      alert("⚠️ Error al eliminar.");
+    } finally {
+      btnEliminar.disabled = false;
     }
   }
 
   function nuevoProyecto() {
     document.getElementById('req-proyecto').value = '';
     document.getElementById('req-fecha').value = '';
-    for (let i = 1; i <= 24; i++) {
-      document.getElementById(`nodo_ubi_${i}`).value = '';
-      document.getElementById(`nodo_rem_face_${i}`).value = '';
-      document.getElementById(`nodo_rem_patch_${i}`).value = '';
-      document.getElementById(`nodo_etiq_face_${i}`).value = '';
-      document.getElementById(`nodo_etiq_patch_${i}`).value = '';
-      document.getElementById(`nodo_cord_patch_${i}`).value = '';
-      document.getElementById(`nodo_cord_switch_${i}`).value = '';
-      document.getElementById(`nodo_org_vert_${i}`).value = '';
-      document.getElementById(`nodo_org_horiz_${i}`).value = '';
-      document.getElementById(`nodo_prue_cont_${i}`).value = '';
-      document.getElementById(`nodo_prue_trans_${i}`).value = '';
-      actualizarResumen(i);
-    }
+    document.getElementById('req-tecnico').value = '';
+
+    document.getElementById('nombre_firma_tecnico').value = '';
+    limpiarCanvas('canvas_tecnico');
+
+    document.getElementById('nombre_firma_cliente').value = '';
+    limpiarCanvas('canvas_cliente');
+
+    document.getElementById('cant-camaras').value = 4;
+    generarCamarasPorNumero(null, true);
+    
     document.getElementById('select-proyectos').value = '';
   }
 
@@ -421,7 +567,7 @@
 
     const opciones = {
       margin: 8,
-      filename: `Voz_y_Datos_${proyecto}.pdf`,
+      filename: `Recepcion_CCTV_${proyecto}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { scale: 2 },
       jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
