@@ -28,10 +28,13 @@
       margin-bottom: 15px;
     }
     .top-bar-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-    .btn { border: none; padding: 10px 12px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 13px; flex: 1; text-align: center; }
-    .btn-save { background: #2e7d32; color: white; }
-    .btn-new { background: #555; color: white; }
-    .btn-pdf { background: #d32f2f; color: white; }
+    .btn { border: none; padding: 10px 12px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 13px; flex: 1; text-align: center; color: white; transition: all 0.2s; }
+    .btn-save { background: #2e7d32; }
+    .btn-save:disabled { background: #81c784; cursor: not-allowed; }
+    .btn-delete { background: #e53935; }
+    .btn-delete:disabled { background: #ef9a9a; cursor: not-allowed; }
+    .btn-new { background: #555; }
+    .btn-pdf { background: #d32f2f; }
     
     select, input[type="text"], input[type="date"], textarea { 
       width: 100%; padding: 7px; border-radius: 6px; border: 1px solid #ccc; font-size: 12px; background: #fff; font-family: inherit;
@@ -77,7 +80,8 @@
     </select>
   </div>
   <div class="top-bar-controls">
-    <button class="btn btn-save" onclick="guardarProgreso()">💾 Guardar</button>
+    <button class="btn btn-save" id="btn-guardar" onclick="guardarProgreso()">💾 Guardar</button>
+    <button class="btn btn-delete" id="btn-eliminar" onclick="eliminarDeNube()">🗑️ Eliminar</button>
     <button class="btn btn-new" onclick="nuevoProyecto()">➕ Nuevo</button>
     <button class="btn btn-pdf" onclick="descargarPDF()">📥 Exportar PDF</button>
   </div>
@@ -278,6 +282,12 @@
     const proyecto = document.getElementById('req-proyecto').value.trim();
     if (!proyecto) { alert("⚠️ Escribe el Nombre del Proyecto para guardar."); return; }
 
+    const btnGuardar = document.getElementById('btn-guardar');
+    if(btnGuardar) {
+      btnGuardar.disabled = true;
+      btnGuardar.innerHTML = "⏳ Guardando...";
+    }
+
     const estado = {
       tipo: "CCTV",
       proyecto: proyecto,
@@ -326,14 +336,65 @@
       });
 
       alert(`☁️ Proyecto CCTV "${proyecto}" guardado en la nube exitosamente.`);
-      cargarProyectosDesdeNube(`CCTV_${proyecto}`);
+      await cargarProyectosDesdeNube(`CCTV_${proyecto}`);
     } catch (err) {
       alert("❌ Error al conectar con la nube.");
       console.error(err);
+    } finally {
+      if(btnGuardar) {
+        btnGuardar.disabled = false;
+        btnGuardar.innerHTML = "💾 Guardar";
+      }
     }
   }
 
-  /* === CORRECCIÓN APLICADA AQUÍ === */
+  async function eliminarDeNube() {
+    const select = document.getElementById('select-proyectos');
+    const clave = select.value;
+
+    if (!clave) {
+      alert("⚠️ Selecciona un borrador del desplegable para eliminar.");
+      return;
+    }
+
+    const nombreMostrar = select.options[select.selectedIndex].text;
+    const confirmacion = confirm(`🗑️ ¿Estás seguro de que deseas eliminar permanentemente el proyecto "${nombreMostrar}"?`);
+    if (!confirmacion) return;
+
+    const btnEliminar = document.getElementById('btn-eliminar');
+    btnEliminar.disabled = true;
+    btnEliminar.innerHTML = "⏳ Eliminando...";
+
+    try {
+      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
+      let data = await res.json();
+      let proyectos = data.record.proyectos || {};
+
+      if (proyectos[clave]) {
+        delete proyectos[clave];
+
+        await fetch(URL_NUBE, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Master-Key": API_KEY
+          },
+          body: JSON.stringify({ proyectos: proyectos })
+        });
+
+        alert(`🗑️ El proyecto "${nombreMostrar}" fue eliminado exitosamente.`);
+        nuevoProyecto();
+        await cargarProyectosDesdeNube();
+      }
+    } catch (e) {
+      alert("⚠️ Error al eliminar el proyecto de la nube.");
+      console.error(e);
+    } finally {
+      btnEliminar.disabled = false;
+      btnEliminar.innerHTML = "🗑️ Eliminar";
+    }
+  }
+
   async function cargarProyectosDesdeNube(seleccionado = '') {
     const select = document.getElementById('select-proyectos');
     select.innerHTML = '<option value="">⏳ Cargando desde la nube...</option>';
