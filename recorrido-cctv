@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<script>
+  if (sessionStorage.getItem("synergo_auth") !== "true") {
+    window.location.href = "login.html";
+  }
+</script>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Levantamiento Previo CCTV - Synergo Sistemas</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 10px; background: #f4f6f9; color: #333; font-size: 13px; }
+
+    /* Barra Superior de Control */
+    .top-bar {
+      position: sticky;
+      top: 0;
+      background: #1b365d;
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      z-index: 1000;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+      margin-bottom: 15px;
+    }
+    .top-bar-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .btn { border: none; padding: 10px 12px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 13px; flex: 1; text-align: center; color: white; transition: all 0.2s; }
+    .btn-save { background: #2e7d32; }
+    .btn-save:disabled { background: #81c784; cursor: not-allowed; }
+    .btn-delete { background: #e53935; }
+    .btn-delete:disabled { background: #ef9a9a; cursor: not-allowed; }
+    .btn-new { background: #555; }
+    .btn-pdf { background: #d32f2f; }
+    .btn-clear { background: #757575; padding: 4px 8px; font-size: 11px; margin-top: 4px; }
+    
+    .cam-counter-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #eef4fb;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      border: 1px solid #bdd7ee;
+    }
+    .cam-counter-bar label { font-weight: bold; color: #1b365d; font-size: 12px; }
+    .cam-counter-bar input[type="number"] {
+      width: 80px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 14px;
+      padding: 5px;
+    }
+    .btn-adjust {
+      background: #1b365d;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .btn-adjust:hover { background: #2e4a78; }
+
+    select, input[type="text"], input[type="date"], input[type="number"], textarea { 
+      width: 100%; padding: 7px; border-radius: 6px; border: 1px solid #ccc; font-size: 12px; background: #fff; font-family: inherit;
+    }
+
+    /* Tarjetas */
+    .card { background: white; border-radius: 8px; padding: 12px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .card-title { font-weight: bold; font-size: 14px; color: #1b365d; border-bottom: 2px solid #bdd7ee; padding-bottom: 4px; margin-bottom: 10px; }
+    
+    .form-group { margin-bottom: 8px; }
+    .form-group label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 3px; color: #444; text-transform: uppercase; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+    /* Acordeón / Bloques de Nodos */
+    details { background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; margin-bottom: 8px; padding: 6px 10px; }
+    summary { font-weight: bold; cursor: pointer; padding: 6px 0; color: #1b365d; display: flex; justify-content: space-between; align-items: center; }
+
+    /* Estilos del Canvas para Firma */
+    .signature-pad {
+      border: 2px dashed #1b365d;
+      border-radius: 6px;
+      background: #fafafa;
+      touch-action: none;
+      width: 100%;
+      height: 120px;
+      cursor: crosshair;
+    }
+
+    @media print { .top-bar, .cam-counter-bar { display: none; } }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div style="font-weight: bold; font-size: 14px;">☁️ Proyectos Sincronizados (Levantamiento CCTV)</div>
+  <div style="margin-top: 5px;">
+    <select id="select-proyectos" onchange="cargarProyecto(this.value)">
+      <option value="">⏳ Cargando borradores...</option>
+    </select>
+  </div>
+  <div class="top-bar-controls">
+    <button class="btn btn-save" id="btn-guardar" onclick="guardarProgreso()">💾 Guardar</button>
+    <button class="btn btn-delete" id="btn-eliminar" onclick="eliminarDeNube()">🗑️ Eliminar</button>
+    <button class="btn btn-new" onclick="nuevoProyecto()">➕ Nuevo</button>
+    <button class="btn btn-pdf" onclick="descargarPDF()">📥 Exportar PDF</button>
+  </div>
+</div>
+
+<div id="formato-app">
+
+  <!-- DATOS GENERALES DEL LEVANTAMIENTO -->
+  <div class="card">
+    <div style="text-align: center; font-weight: bold; font-size: 16px; color: #1b365d; margin-bottom: 10px;">
+      LEVANTAMIENTO PREVIO Y FACTIBILIDAD DE CCTV
+    </div>
+    
+    <div class="form-group">
+      <label>Nombre del Proyecto / Sucursal:</label>
+      <input type="text" id="req-proyecto" placeholder="Ej: GC PALMA TROPICA">
+    </div>
+
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Fecha del Levantamiento:</label>
+        <input type="date" id="req-fecha">
+      </div>
+      <div class="form-group">
+        <label>Técnico Evaluador:</label>
+        <input type="text" id="req-tecnico" placeholder="Nombre de quien realiza el recorrido">
+      </div>
+    </div>
+  </div>
+
+  <!-- SELECTOR Y PUNTOS DE CÁMARAS -->
+  <div class="card">
+    <div class="card-title">📹 Puntos de Cámaras Planificados</div>
+    
+    <!-- BARRA PARA DEFINIR CANTIDAD DE CÁMARAS -->
+    <div class="cam-counter-bar">
+      <label for="cant-camaras">¿Cuántas cámaras requiere este proyecto?</label>
+      <input type="number" id="cant-camaras" min="1" max="64" value="4">
+      <button type="button" class="btn-adjust" onclick="generarCamarasPorNumero()">Establecer Cámaras</button>
+    </div>
+
+    <div id="contenedor-nodos"></div>
+  </div>
+
+  <!-- FACTIBILIDAD TÉCNICA DEL SITE -->
+  <div class="card">
+    <div class="card-title">⚙️ Factibilidad Técnica e Infraestructura</div>
+    
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Puertos Disponibles NVR/Switch:</label>
+        <select id="fact_puertos">
+          <option value="">-- Seleccionar --</option>
+          <option value="Suficientes">✅ Suficientes Puertos</option>
+          <option value="Requiere Switch Extra">⚠️ Requiere Switch Extra</option>
+          <option value="NVR Lleno">❌ NVR Lleno / Cambio de NVR</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Estado Canalización Existente:</label>
+        <select id="fact_canalizacion">
+          <option value="">-- Seleccionar --</option>
+          <option value="Disponible">✅ Disponible / Buenas Condiciones</option>
+          <option value="Saturada">⚠️ Saturada (Requiere nueva)</option>
+          <option value="Sin Canalizacion">⛔ No Existe (Tubería Nueva)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Respaldo Eléctrico (UPS/Contacto):</label>
+        <select id="fact_energia">
+          <option value="">-- Seleccionar --</option>
+          <option value="OK">✅ Contacto / UPS Operativo</option>
+          <option value="Requiere UPS">⚠️ Requiere Instalación de UPS</option>
+          <option value="Sin Energia">❌ Sin Contacto Cercano</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Distancia Cable Promedio por Punto:</label>
+        <input type="text" id="fact_distancia" placeholder="Ej: 35 metros prom.">
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-top: 10px;">
+      <label>Observaciones y Riesgos en Sitio (Permisos, Horarios, Andamios, etc.):</label>
+      <textarea id="gen_observaciones" rows="3" placeholder="Anotaciones importantes sobre la viabilidad del proyecto..."></textarea>
+    </div>
+  </div>
+
+  <!-- FIRMAS DIGITALES -->
+  <div class="card">
+    <div class="card-title">✍️ Firmas Digitales de Conformidad</div>
+    
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Firma Técnico / Synergo:</label>
+        <input type="text" id="nombre_firma_tecnico" placeholder="Nombre completo" style="margin-bottom: 5px;">
+        <canvas id="canvas_tecnico" class="signature-pad"></canvas>
+        <button class="btn btn-clear" onclick="limpiarCanvas('canvas_tecnico')">🧹 Borrar Firma</button>
+      </div>
+
+      <div class="form-group">
+        <label>Firma Cliente / Encargado:</label>
+        <input type="text" id="nombre_firma_cliente" placeholder="Nombre completo" style="margin-bottom: 5px;">
+        <canvas id="canvas_cliente" class="signature-pad"></canvas>
+        <button class="btn btn-clear" onclick="limpiarCanvas('canvas_cliente')">🧹 Borrar Firma</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const BIN_ID = "6a906a3af5f4af5e294a7049";
+  const API_KEY = "$2a$10$5BDKoNaJb98nczPxrHl1Uuow.tck.XjCTrl6Cc7b.aZ3RbBRtHr4e";
+  const URL_NUBE = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+
+  window.onload = function() {
+    generarCamarasPorNumero();
+    cargarProyectosDesdeNube();
+    inicializarCanvas('canvas_tecnico');
+    inicializarCanvas('canvas_cliente');
+  };
+
+  /* --- GENERACIÓN DINÁMICA DE CÁMARAS SEGÚN CANTIDAD INGRESADA --- */
+  function generarCamarasPorNumero(datosGuardados = null) {
+    const contenedor = document.getElementById('contenedor-nodos');
+    let objetivo = parseInt(document.getElementById('cant-camaras').value) || 1;
+
+    if (datosGuardados && Array.isArray(datosGuardados)) {
+      objetivo = datosGuardados.length;
+      document.getElementById('cant-camaras').value = objetivo;
+    }
+
+    // Guardar lo que ya estaba escrito para no perderlo al reajustar cantidad
+    const datosPrevios = [];
+    const bloques = contenedor.querySelectorAll('details');
+    bloques.forEach((b, idx) => {
+      const i = idx + 1;
+      datosPrevios.push({
+        ubicacion: document.getElementById(`nodo_ubi_${i}`) ? document.getElementById(`nodo_ubi_${i}`).value : '',
+        tipo: document.getElementById(`nodo_tipo_${i}`) ? document.getElementById(`nodo_tipo_${i}`).value : '',
+        requerimiento: document.getElementById(`nodo_req_${i}`) ? document.getElementById(`nodo_req_${i}`).value : '',
+        cambio: document.getElementById(`nodo_cambio_${i}`) ? document.getElementById(`nodo_cambio_${i}`).value : ''
+      });
+    });
+
+    contenedor.innerHTML = '';
+
+    for (let i = 1; i <= objetivo; i++) {
+      const info = (datosGuardados && datosGuardados[i - 1]) || (datosPrevios[i - 1]) || {};
+
+      const details = document.createElement('details');
+      details.id = `bloque_nodo_${i}`;
+      details.innerHTML = `
+        <summary>
+          Punto de Cámara #${i} <span id="resumen_nodo_${i}" style="font-weight:normal; font-size:11px; color:#666;"></span> <span>▼</span>
+        </summary>
+        <div style="padding-top: 8px;">
+          <div class="grid-2">
+            <div class="form-group">
+              <label>Ubicación Propuesta:</label>
+              <input type="text" id="nodo_ubi_${i}" placeholder="Ej: Entrada Principal / Caja 1" onchange="actualizarResumen(${i})" value="${info.ubicacion || ''}">
+            </div>
+            <div class="form-group">
+              <label>Tipo de Cámara Sugerida:</label>
+              <select id="nodo_tipo_${i}">
+                <option value="">-- Seleccionar --</option>
+                <option value="Domo Interior" ${info.tipo === 'Domo Interior' ? 'selected' : ''}>Domo Interior</option>
+                <option value="Bullet Exterior" ${info.tipo === 'Bullet Exterior' ? 'selected' : ''}>Bullet Exterior</option>
+                <option value="PTZ / 360°" ${info.tipo === 'PTZ / 360°' ? 'selected' : ''}>PTZ / 360°</option>
+                <option value="Ojo de Pez (Fisheye)" ${info.tipo === 'Ojo de Pez (Fisheye)' ? 'selected' : ''}>Ojo de Pez (Fisheye)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Requerimientos Especiales de Instalación:</label>
+            <input type="text" id="nodo_req_${i}" placeholder="Ej: Montaje en losa alta / Requiere brazo para poste" value="${info.requerimiento || ''}">
+          </div>
+
+          <div class="form-group">
+            <label>Cambios o Ajustes Respecto al Plan Original:</label>
+            <input type="text" id="nodo_cambio_${i}" placeholder="Ej: Se recorre 2m a la izquierda por sombra de lámpara" value="${info.cambio || ''}">
+          </div>
+        </div>
+      `;
+      contenedor.appendChild(details);
+      if (info.ubicacion) actualizarResumen(i);
+    }
+  }
+
+  function actualizarResumen(i) {
+    const el = document.getElementById(`nodo_ubi_${i}`);
+    if (!el) return;
+    const ubi = el.value;
+    const span = document.getElementById(`resumen_nodo_${i}`);
+    if (span) span.textContent = ubi ? `(${ubi})` : '';
+  }
+
+  /* --- CANVAS DE FIRMAS DIGITALES --- */
+  const canvasStates = {};
+
+  function inicializarCanvas(idCanvas) {
+    const canvas = document.getElementById(idCanvas);
+    const ctx = canvas.getContext('2d');
+    let dibujando = false;
+
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#1b365d';
+
+    function obtenerPosicion(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return { x: clientX - rect.left, y: clientY - rect.top };
+    }
+
+    function iniciarDibujo(e) {
+      dibujando = true;
+      const pos = obtenerPosicion(e);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+    }
+
+    function dibujar(e) {
+      if (!dibujando) return;
+      e.preventDefault();
+      const pos = obtenerPosicion(e);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+    }
+
+    function detenerDibujo() {
+      if (dibujando) {
+        dibujando = false;
+        canvasStates[idCanvas] = canvas.toDataURL();
+      }
+    }
+
+    canvas.addEventListener('mousedown', iniciarDibujo);
+    canvas.addEventListener('mousemove', dibujar);
+    canvas.addEventListener('mouseup', detenerDibujo);
+    canvas.addEventListener('mouseleave', detenerDibujo);
+
+    canvas.addEventListener('touchstart', iniciarDibujo);
+    canvas.addEventListener('touchmove', dibujar);
+    canvas.addEventListener('touchend', detenerDibujo);
+  }
+
+  function limpiarCanvas(idCanvas) {
+    const canvas = document.getElementById(idCanvas);
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    canvasStates[idCanvas] = null;
+  }
+
+  function cargarImagenEnCanvas(idCanvas, dataUrl) {
+    const canvas = document.getElementById(idCanvas);
+    const ctx = canvas.getContext('2d');
+    limpiarCanvas(idCanvas);
+
+    if (dataUrl) {
+      const img = new Image();
+      img.onload = function() {
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvasStates[idCanvas] = dataUrl;
+      };
+      img.src = dataUrl;
+    }
+  }
+
+  /* --- SINCRO NUBE Y PROYECTOS --- */
+  async function guardarProgreso() {
+    const proyecto = document.getElementById('req-proyecto').value.trim();
+    if (!proyecto) { alert("⚠️ Escribe el Nombre del Proyecto para guardar."); return; }
+
+    const btnGuardar = document.getElementById('btn-guardar');
+    btnGuardar.disabled = true;
+    btnGuardar.innerHTML = "⏳ Guardando...";
+
+    const nodosData = [];
+    const total = parseInt(document.getElementById('cant-camaras').value) || 0;
+    
+    for (let i = 1; i <= total; i++) {
+      nodosData.push({
+        ubicacion: document.getElementById(`nodo_ubi_${i}`) ? document.getElementById(`nodo_ubi_${i}`).value : '',
+        tipo: document.getElementById(`nodo_tipo_${i}`) ? document.getElementById(`nodo_tipo_${i}`).value : '',
+        requerimiento: document.getElementById(`nodo_req_${i}`) ? document.getElementById(`nodo_req_${i}`).value : '',
+        cambio: document.getElementById(`nodo_cambio_${i}`) ? document.getElementById(`nodo_cambio_${i}`).value : ''
+      });
+    }
+
+    const estado = {
+      tipo: "LEVANTAMIENTO_CCTV",
+      proyecto: proyecto,
+      fecha: document.getElementById('req-fecha').value,
+      tecnico: document.getElementById('req-tecnico').value,
+      puertos: document.getElementById('fact_puertos').value,
+      canalizacion: document.getElementById('fact_canalizacion').value,
+      energia: document.getElementById('fact_energia').value,
+      distancia: document.getElementById('fact_distancia').value,
+      observaciones: document.getElementById('gen_observaciones').value,
+      nombre_tecnico: document.getElementById('nombre_firma_tecnico').value,
+      firma_tecnico: canvasStates['canvas_tecnico'] || null,
+      nombre_cliente: document.getElementById('nombre_firma_cliente').value,
+      firma_cliente: canvasStates['canvas_cliente'] || null,
+      nodosLista: nodosData
+    };
+
+    try {
+      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
+      let data = await res.json();
+      let proyectos = data.record.proyectos || {};
+
+      proyectos[`LEV_${proyecto}`] = estado;
+
+      await fetch(URL_NUBE, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
+        body: JSON.stringify({ proyectos: proyectos })
+      });
+
+      alert(`☁️ Levantamiento "${proyecto}" guardado exitosamente.`);
+      await cargarProyectosDesdeNube(`LEV_${proyecto}`);
+    } catch (err) {
+      alert("❌ Error al conectar con la nube.");
+      console.error(err);
+    } finally {
+      btnGuardar.disabled = false;
+      btnGuardar.innerHTML = "💾 Guardar";
+    }
+  }
+
+  async function cargarProyectosDesdeNube(seleccionado = '') {
+    const select = document.getElementById('select-proyectos');
+    select.innerHTML = '<option value="">⏳ Cargando desde la nube...</option>';
+
+    try {
+      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
+      let data = await res.json();
+      window.proyectosNube = data.record.proyectos || {};
+
+      select.innerHTML = '<option value="">-- Cargar Borrador Guardado --</option>';
+      Object.keys(window.proyectosNube).forEach(clave => {
+        let item = window.proyectosNube[clave];
+        if (item.tipo === "LEVANTAMIENTO_CCTV" || clave.startsWith("LEV_")) {
+          let opt = document.createElement('option');
+          opt.value = clave;
+          opt.textContent = item.proyecto || clave.replace("LEV_", "");
+          if (clave === seleccionado) opt.selected = true;
+          select.appendChild(opt);
+        }
+      });
+    } catch (err) {
+      select.innerHTML = '<option value="">❌ Error al cargar borradores</option>';
+    }
+  }
+
+  function cargarProyecto(clave) {
+    if (!clave || !window.proyectosNube) return;
+    const estado = window.proyectosNube[clave];
+    if (!estado) return;
+
+    document.getElementById('req-proyecto').value = estado.proyecto || '';
+    document.getElementById('req-fecha').value = estado.fecha || '';
+    document.getElementById('req-tecnico').value = estado.tecnico || '';
+    document.getElementById('fact_puertos').value = estado.puertos || '';
+    document.getElementById('fact_canalizacion').value = estado.canalizacion || '';
+    document.getElementById('fact_energia').value = estado.energia || '';
+    document.getElementById('fact_distancia').value = estado.distancia || '';
+    document.getElementById('gen_observaciones').value = estado.observaciones || '';
+
+    document.getElementById('nombre_firma_tecnico').value = estado.nombre_tecnico || '';
+    cargarImagenEnCanvas('canvas_tecnico', estado.firma_tecnico);
+
+    document.getElementById('nombre_firma_cliente').value = estado.nombre_cliente || '';
+    cargarImagenEnCanvas('canvas_cliente', estado.firma_cliente);
+
+    // Carga dinámica de cámaras
+    if (estado.nodosLista && estado.nodosLista.length > 0) {
+      generarCamarasPorNumero(estado.nodosLista);
+    }
+  }
+
+  async function eliminarDeNube() {
+    const select = document.getElementById('select-proyectos');
+    const clave = select.value;
+    if (!clave) { alert("⚠️ Selecciona un borrador para eliminar."); return; }
+
+    const nombreMostrar = select.options[select.selectedIndex].text;
+    if (!confirm(`🗑️ ¿Deseas eliminar "${nombreMostrar}"?`)) return;
+
+    const btnEliminar = document.getElementById('btn-eliminar');
+    btnEliminar.disabled = true;
+
+    try {
+      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
+      let data = await res.json();
+      let proyectos = data.record.proyectos || {};
+
+      if (proyectos[clave]) {
+        delete proyectos[clave];
+        await fetch(URL_NUBE, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
+          body: JSON.stringify({ proyectos: proyectos })
+        });
+        alert(`🗑️ Eliminado exitosamente.`);
+        nuevoProyecto();
+        await cargarProyectosDesdeNube();
+      }
+    } catch (e) {
+      alert("⚠️ Error al eliminar.");
+    } finally {
+      btnEliminar.disabled = false;
+    }
+  }
+
+  function nuevoProyecto() {
+    document.getElementById('req-proyecto').value = '';
+    document.getElementById('req-fecha').value = '';
+    document.getElementById('req-tecnico').value = '';
+    document.getElementById('fact_puertos').value = '';
+    document.getElementById('fact_canalizacion').value = '';
+    document.getElementById('fact_energia').value = '';
+    document.getElementById('fact_distancia').value = '';
+    document.getElementById('gen_observaciones').value = '';
+
+    document.getElementById('nombre_firma_tecnico').value = '';
+    limpiarCanvas('canvas_tecnico');
+
+    document.getElementById('nombre_firma_cliente').value = '';
+    limpiarCanvas('canvas_cliente');
+
+    document.getElementById('cant-camaras').value = 4;
+    generarCamarasPorNumero();
+    document.getElementById('select-proyectos').value = '';
+  }
+
+  function descargarPDF() {
+    const proyecto = document.getElementById('req-proyecto').value.trim();
+    if (!proyecto) { alert("⚠️ Asigna un nombre al Proyecto."); return; }
+
+    const elemento = document.getElementById('formato-app');
+    document.querySelectorAll('details').forEach(d => d.open = true);
+
+    const opciones = {
+      margin: 8,
+      filename: `Levantamiento_CCTV_${proyecto}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opciones).from(elemento).save().then(() => {
+      document.querySelectorAll('details').forEach(d => d.open = false);
+    });
+  }
+</script>
+
+</body>
+</html>
