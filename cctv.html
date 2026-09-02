@@ -1,247 +1,402 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<script>
+  // Validar sesión activa al cargar
+  if (sessionStorage.getItem("synergo_auth") !== "true") {
+    window.location.href = "login.html";
+  }
+</script>
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Recepción de Sistema CCTV</title>
+  <title>Recepción CCTV - Synergo Sistemas</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
-    :root {
-      --primary: #1e3a8a;
-      --secondary: #2563eb;
-      --bg: #f8fafc;
-      --surface: #ffffff;
-      --text: #1e293b;
-      --border: #cbd5e1;
-      --success: #16a34a;
-      --danger: #dc2626;
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 10px; background: #f4f6f9; color: #333; font-size: 13px; }
+
+    /* Barra Superior de Control */
+    .top-bar {
+      position: sticky;
+      top: 0;
+      background: #1b365d;
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      z-index: 1000;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+      margin-bottom: 15px;
+    }
+    .top-bar-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .btn { border: none; padding: 10px 12px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 13px; flex: 1; text-align: center; color: white; transition: all 0.2s; }
+    .btn-save { background: #2e7d32; }
+    .btn-save:disabled { background: #81c784; cursor: not-allowed; }
+    .btn-delete { background: #e53935; }
+    .btn-delete:disabled { background: #ef9a9a; cursor: not-allowed; }
+    .btn-new { background: #555; }
+    .btn-pdf { background: #d32f2f; }
+    .btn-clear { background: #757575; padding: 4px 8px; font-size: 11px; margin-top: 4px; }
+    
+    .cam-counter-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #eef4fb;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      border: 1px solid #bdd7ee;
+      flex-wrap: wrap;
+    }
+    .cam-counter-bar label { font-weight: bold; color: #1b365d; font-size: 12px; }
+    .cam-counter-bar input[type="number"] {
+      width: 70px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 14px;
+      padding: 5px;
+    }
+    .btn-adjust {
+      background: #1b365d;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .btn-auto {
+      background: #00796b;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-left: auto;
+    }
+    .btn-auto:hover { background: #004d40; }
+
+    select, input[type="text"], input[type="date"], input[type="number"], textarea { 
+      width: 100%; padding: 7px; border-radius: 6px; border: 1px solid #ccc; font-size: 12px; background: #fff; font-family: inherit;
     }
 
-    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; }
-    .container { max-width: 1000px; margin: 0 auto; background: var(--surface); padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+    /* Tarjetas */
+    .card { background: white; border-radius: 8px; padding: 12px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .card-title { font-weight: bold; font-size: 14px; color: #1b365d; border-bottom: 2px solid #bdd7ee; padding-bottom: 4px; margin-bottom: 10px; }
     
-    h1, h2, h3 { color: var(--primary); margin-top: 0; }
-    .header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; }
-    
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
-    .form-group { display: flex; flex-direction: column; }
-    .form-group label { font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; color: #475569; }
-    .form-group input, .form-group select, .form-group textarea { padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; }
-    
-    /* Acordeón de Cámaras */
-    .camara-card { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 10px; background: #fff; overflow: hidden; }
-    .camara-card summary { padding: 12px 15px; font-weight: bold; cursor: pointer; background: #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
-    .camara-body { padding: 15px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; border-top: 1px solid var(--border); }
-    .full-width { grid-column: 1 / -1; }
+    .form-group { margin-bottom: 8px; }
+    .form-group label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 3px; color: #444; text-transform: uppercase; }
 
-    /* Firmas */
-    .firmas-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px; }
-    .signature-box { border: 1px dashed var(--border); padding: 10px; border-radius: 8px; text-align: center; background: #fafafa; }
-    canvas { border: 1px solid var(--border); background: #fff; border-radius: 4px; width: 100%; height: 120px; touch-action: none; }
-    
-    /* Botones */
-    .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
-    .btn-primary { background: var(--secondary); color: white; }
-    .btn-primary:hover { background: var(--primary); }
-    .btn-secondary { background: #64748b; color: white; }
-    .btn-clear { background: #e2e8f0; color: #334155; font-size: 0.8rem; padding: 4px 8px; margin-top: 5px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 
-    /* Tabla Historial */
-    .historial-section { margin-top: 40px; border-top: 2px solid var(--border); padding-top: 20px; }
-    .tabla-historial { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
-    .tabla-historial th, .tabla-historial td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
-    .tabla-historial th { background-color: #f1f5f9; color: var(--primary); }
-    .tabla-historial tr:nth-child(even) { background-color: #f8fafc; }
+    .user-badge-bar {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 11px;
+    }
+    .history-table th, .history-table td {
+      border: 1px solid #e0e0e0;
+      padding: 6px;
+      text-align: left;
+    }
+    .history-table th { background: #f0f4f8; color: #1b365d; }
 
     @media (max-width: 600px) {
-      .firmas-grid { grid-template-columns: 1fr; }
+      .grid-4 { grid-template-columns: 1fr; }
+      .grid-2 { grid-template-columns: 1fr; }
     }
+
+    details { background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; margin-bottom: 8px; padding: 6px 10px; }
+    summary { font-weight: bold; cursor: pointer; padding: 6px 0; color: #1b365d; display: flex; justify-content: space-between; align-items: center; }
+
+    .signature-pad {
+      border: 2px dashed #1b365d;
+      border-radius: 6px;
+      background: #fafafa;
+      touch-action: none;
+      width: 100%;
+      height: 120px;
+      cursor: crosshair;
+    }
+
+    @media print { .top-bar, .cam-counter-bar { display: none; } }
   </style>
 </head>
 <body>
 
-<div class="container">
-  <div class="header-bar">
-    <h1>📜 Recepción de Sistema CCTV</h1>
+<div class="top-bar">
+  <div style="font-weight: bold; font-size: 14px;">🎥 Recepción CCTV</div>
+  
+  <div class="grid-2" style="margin-top: 8px; align-items: end;">
     <div>
-      <button id="btn-guardar" class="btn btn-primary" onclick="guardarProgreso()">💾 Guardar</button>
+      <label style="color: #bdd7ee; font-size: 10px; font-weight: bold;">SELECCIONAR BORRADOR:</label>
+      <select id="select-proyectos" onchange="cargarProyecto(this.value)">
+        <option value="">⏳ Cargando borradores...</option>
+      </select>
+    </div>
+    
+    <!-- USUARIO AUTOMÁTICO DESDE SESIÓN -->
+    <div class="user-badge-bar">
+      <span>👤 Usuario activo:</span>
+      <strong id="lbl-sesion-usuario" style="color: #ffcc80;">Cargando...</strong>
     </div>
   </div>
 
-  <!-- Datos del Proyecto -->
-  <div class="grid">
-    <div class="form-group">
-      <label for="req-proyecto">Nombre del Proyecto *</label>
-      <input type="text" id="req-proyecto" placeholder="Ej: Sucursal Centro">
-    </div>
-    <div class="form-group">
-      <label for="req-fecha">Fecha de Inspección</label>
-      <input type="date" id="req-fecha">
-    </div>
-    <div class="form-group">
-      <label for="req-tecnico">Técnico Asignado</label>
-      <input type="text" id="req-tecnico" placeholder="Nombre del técnico">
-    </div>
-    <div class="form-group">
-      <label for="num-camaras">Cantidad de Cámaras</label>
-      <input type="number" id="num-camaras" value="4" min="1" max="64" onchange="generarCamaras()">
-    </div>
-  </div>
-
-  <!-- Lista de Evaluación de Cámaras -->
-  <h2>📹 Evaluación por Cámara</h2>
-  <div id="contenedor-camaras"></div>
-
-  <!-- Sección de Firmas -->
-  <h2>✍️ Firmas de Conformidad</h2>
-  <div class="firmas-grid">
-    <div class="signature-box">
-      <label>Firma del Técnico</label>
-      <canvas id="canvas_tecnico"></canvas>
-      <button class="btn btn-clear" onclick="limpiarCanvas('canvas_tecnico')">Limpiar Firma</button>
-      <div class="form-group" style="margin-top: 10px;">
-        <input type="text" id="nombre_firma_tecnico" placeholder="Nombre completo del técnico">
-      </div>
-    </div>
-    <div class="signature-box">
-      <label>Firma del Cliente / Receptor</label>
-      <canvas id="canvas_cliente"></canvas>
-      <button class="btn btn-clear" onclick="limpiarCanvas('canvas_cliente')">Limpiar Firma</button>
-      <div class="form-group" style="margin-top: 10px;">
-        <input type="text" id="nombre_firma_cliente" placeholder="Nombre completo del cliente">
-      </div>
-    </div>
-  </div>
-
-  <!-- Historial de Cambios por Usuario -->
-  <div class="historial-section">
-    <h3>📜 Historial de Cambios por Usuario</h3>
-    <table class="tabla-historial">
-      <thead>
-        <tr>
-          <th>Fecha y Hora</th>
-          <th>Usuario Autor</th>
-          <th>Acción / Detalle</th>
-        </tr>
-      </thead>
-      <tbody id="tabla-historial-body">
-        <tr><td colspan="3" style="text-align:center; color:#888;">Sin cambios registrados</td></tr>
-      </tbody>
-    </table>
+  <div class="top-bar-controls">
+    <button class="btn btn-save" id="btn-guardar" onclick="guardarProgreso()">💾 Guardar</button>
+    <button class="btn btn-delete" id="btn-eliminar" onclick="eliminarDeNube()">🗑️ Eliminar</button>
+    <button class="btn btn-new" onclick="nuevoProyecto()">➕ Nuevo</button>
+    <button class="btn btn-pdf" onclick="descargarPDF()">📥 Exportar PDF</button>
   </div>
 </div>
 
+<div id="formato-app">
+
+  <!-- DATOS GENERALES -->
+  <div class="card">
+    <div style="text-align: center; font-weight: bold; font-size: 16px; color: #1b365d; margin-bottom: 10px;">
+      RECEPCIÓN DE CCTV EN TIENDAS Y ESTACIONES
+    </div>
+    
+    <div class="form-group">
+      <label>Nombre del Proyecto / Sucursal:</label>
+      <input type="text" id="req-proyecto" placeholder="Ej: GC PALMA TROPICAL">
+    </div>
+
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Fecha de Inspección:</label>
+        <input type="date" id="req-fecha">
+      </div>
+      <div class="form-group">
+        <label>Técnico Asignado:</label>
+        <input type="text" id="req-tecnico" placeholder="Nombre de quien recibe">
+      </div>
+    </div>
+  </div>
+
+  <!-- REGISTRO DE CÁMARAS -->
+  <div class="card">
+    <div class="card-title">📹 Registro de Cámaras</div>
+    
+    <div class="cam-counter-bar">
+      <label for="cant-camaras">Cámaras a recibir (Máx 16):</label>
+      <input type="number" id="cant-camaras" min="1" max="16" value="4">
+      <button type="button" class="btn-adjust" onclick="generarCamarasPorNumero()">Establecer</button>
+      <button type="button" class="btn-auto" onclick="llenarTodoCumple()">⚡ Llenar Todo como CUMPLE</button>
+    </div>
+
+    <div id="contenedor-camaras"></div>
+  </div>
+
+  <!-- FIRMAS DIGITALES -->
+  <div class="card">
+    <div class="card-title">✍️ Firmas Digitales de Conclusión y Recibido</div>
+    
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Firma Inspector / Synergo:</label>
+        <input type="text" id="nombre_firma_tecnico" placeholder="Nombre completo del inspector" style="margin-bottom: 5px;">
+        <canvas id="canvas_tecnico" class="signature-pad"></canvas>
+        <button class="btn btn-clear" onclick="limpiarCanvas('canvas_tecnico')">🧹 Borrar Firma</button>
+      </div>
+
+      <div class="form-group">
+        <label>Firma Recibido / Cliente o Encargado:</label>
+        <input type="text" id="nombre_firma_cliente" placeholder="Nombre completo de quien recibe" style="margin-bottom: 5px;">
+        <canvas id="canvas_cliente" class="signature-pad"></canvas>
+        <button class="btn btn-clear" onclick="limpiarCanvas('canvas_cliente')">🧹 Borrar Firma</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORIAL DE REVISIONES -->
+  <div class="card">
+    <details open>
+      <summary style="font-size: 13px; font-weight: bold;">📜 Historial de Cambios por Usuario</summary>
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>Fecha y Hora</th>
+            <th>Usuario Autor</th>
+            <th>Acción / Detalle</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-historial-body">
+          <tr>
+            <td colspan="3" style="text-align: center; color: #888;">Sin historial disponible.</td>
+          </tr>
+        </tbody>
+      </table>
+    </details>
+  </div>
+
+</div>
+
 <script>
-  // CONFIGURACIÓN JSONBIN (Reemplazar con tus credenciales)
-  const API_KEY = "$2a$10$TU_API_KEY_AQUI"; 
-  const BIN_ID = "TU_BIN_ID_AQUI";
+  const BIN_ID = "6a906a3af5f4af5e294a7049";
+  const API_KEY = "$2a$10$5BDKoNaJb98nczPxrHl1Uuow.tck.XjCTrl6Cc7b.aZ3RbBRtHr4e";
   const URL_NUBE = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
-  let canvasStates = {};
+  let historialGlobal = [];
+  const canvasStates = {};
 
-  // Inicialización al cargar la página
-  window.onload = () => {
-    document.getElementById('req-fecha').valueAsDate = new Date();
-    generarCamaras();
-    initCanvas('canvas_tecnico');
-    initCanvas('canvas_cliente');
-  };
-
-  // Obtener usuario autenticado o solicitarlo
+  // Obtiene el usuario autenticado directamente desde la sesión sin interrumpir al usuario
   function obtenerUsuarioAutenticado() {
-    let user = localStorage.getItem('usuario_actual');
-    if (!user) {
-      user = prompt("Ingrese su nombre de usuario para continuar:", "Usuario");
-      if (!user) user = "Anonimo";
-      localStorage.setItem('usuario_actual', user);
-    }
-    return user;
+    return sessionStorage.getItem("synergo_user") || 
+           sessionStorage.getItem("usuario") || 
+           localStorage.getItem("synergo_user") || 
+           "Usuario Autenticado";
   }
 
-  // Genera dinámicamente los campos de evaluación por cámara
-  function generarCamaras() {
+  window.onload = function() {
+    document.getElementById('lbl-sesion-usuario').textContent = obtenerUsuarioAutenticado();
+    document.getElementById('req-fecha').valueAsDate = new Date();
+
+    generarCamarasPorNumero(null, true);
+    cargarProyectosDesdeNube();
+    inicializarCanvas('canvas_tecnico');
+    inicializarCanvas('canvas_cliente');
+  };
+
+  function generarCamarasPorNumero(datosGuardados = null, esLimpiezaTotal = false) {
     const contenedor = document.getElementById('contenedor-camaras');
-    const total = parseInt(document.getElementById('num-camaras').value) || 1;
+    const inputCant = document.getElementById('cant-camaras');
+    let objetivo = parseInt(inputCant.value) || 4;
+
+    if (objetivo > 16) objetivo = 16;
+    if (objetivo < 1) objetivo = 1;
+    inputCant.value = objetivo;
+
+    if (datosGuardados && Array.isArray(datosGuardados)) {
+      objetivo = Math.min(datosGuardados.length, 16);
+      inputCant.value = objetivo;
+    }
+
+    const datosPrevios = [];
+    if (!esLimpiezaTotal && !datosGuardados) {
+      const bloques = contenedor.querySelectorAll('details');
+      bloques.forEach((b, idx) => {
+        const i = idx + 1;
+        datosPrevios.push({
+          num: i,
+          ubicacion: document.getElementById(`cam_ubi_${i}`) ? document.getElementById(`cam_ubi_${i}`).value : '',
+          instalacion: document.getElementById(`cam_inst_${i}`) ? document.getElementById(`cam_inst_${i}`).value : '',
+          cableado: document.getElementById(`cam_cabling_${i}`) ? document.getElementById(`cam_cabling_${i}`).value : '',
+          etiquetado: document.getElementById(`cam_tag_${i}`) ? document.getElementById(`cam_tag_${i}`).value : '',
+          video: document.getElementById(`cam_video_${i}`) ? document.getElementById(`cam_video_${i}`).value : '',
+          obs: document.getElementById(`cam_obs_${i}`) ? document.getElementById(`cam_obs_${i}`).value : ''
+        });
+      });
+    }
+
     contenedor.innerHTML = '';
 
-    for (let i = 1; i <= total; i++) {
+    for (let i = 1; i <= objetivo; i++) {
+      const info = (datosGuardados && datosGuardados[i - 1]) || (datosPrevios[i - 1]) || {};
+      
       const details = document.createElement('details');
-      details.className = 'camara-card';
-      details.open = i === 1; // Abrir la primera por defecto
+      details.id = `bloque_cam_${i}`;
+      if (i === 1) details.open = true;
 
       details.innerHTML = `
-        <summary>Cámara #${i} <span id="tag_summary_${i}" style="font-weight:normal; font-size:0.85rem; color:#64748b;">(Sin ubicación)</span></summary>
-        <div class="camara-body">
-          <div class="form-group full-width">
-            <label>Ubicación / Identificador</label>
-            <input type="text" id="cam_ubi_${i}" placeholder="Ej: Entrada Principal / Pasillo B" oninput="actualizarSummary(${i})">
-          </div>
+        <summary>
+          Cámara #${i} <span id="resumen_cam_${i}" style="font-weight:normal; font-size:11px; color:#666;"></span> <span>▼</span>
+        </summary>
+        <div style="padding-top: 8px;">
           <div class="form-group">
-            <label>Montaje / Instalación</label>
-            <select id="cam_inst_${i}">
-              <option value="">-- Seleccionar --</option>
-              <option value="CUMPLE">CUMPLE</option>
-              <option value="NO CUMPLE">NO CUMPLE</option>
-              <option value="N/A">N/A</option>
-            </select>
+            <label>Ubicación / Identificador:</label>
+            <input type="text" id="cam_ubi_${i}" placeholder="Ej: Cámara Acceso / Pasillo Main" onchange="actualizarResumen(${i})" value="${info.ubicacion || ''}">
           </div>
+
+          <div class="grid-4" style="margin-top: 6px;">
+            <div class="form-group">
+              <label>1. Montaje</label>
+              <select id="cam_inst_${i}">
+                <option value="">-- Estado --</option>
+                <option value="CUMPLE" ${info.instalacion === 'CUMPLE' ? 'selected' : ''}>CUMPLE</option>
+                <option value="NO CUMPLE" ${info.instalacion === 'NO CUMPLE' ? 'selected' : ''}>NO CUMPLE</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>2. Cableado</label>
+              <select id="cam_cabling_${i}">
+                <option value="">-- Estado --</option>
+                <option value="CUMPLE" ${info.cableado === 'CUMPLE' ? 'selected' : ''}>CUMPLE</option>
+                <option value="NO CUMPLE" ${info.cableado === 'NO CUMPLE' ? 'selected' : ''}>NO CUMPLE</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>3. Etiquetado</label>
+              <select id="cam_tag_${i}">
+                <option value="">-- Estado --</option>
+                <option value="CUMPLE" ${info.etiquetado === 'CUMPLE' ? 'selected' : ''}>CUMPLE</option>
+                <option value="NO CUMPLE" ${info.etiquetado === 'NO CUMPLE' ? 'selected' : ''}>NO CUMPLE</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>4. Video</label>
+              <select id="cam_video_${i}">
+                <option value="">-- Estado --</option>
+                <option value="CUMPLE" ${info.video === 'CUMPLE' ? 'selected' : ''}>CUMPLE</option>
+                <option value="NO CUMPLE" ${info.video === 'NO CUMPLE' ? 'selected' : ''}>NO CUMPLE</option>
+              </select>
+            </div>
+          </div>
+
           <div class="form-group">
-            <label>Cableado / Conectores</label>
-            <select id="cam_cabling_${i}">
-              <option value="">-- Seleccionar --</option>
-              <option value="CUMPLE">CUMPLE</option>
-              <option value="NO CUMPLE">NO CUMPLE</option>
-              <option value="N/A">N/A</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Etiquetado</label>
-            <select id="cam_tag_${i}">
-              <option value="">-- Seleccionar --</option>
-              <option value="CUMPLE">CUMPLE</option>
-              <option value="NO CUMPLE">NO CUMPLE</option>
-              <option value="N/A">N/A</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Señal de Video</label>
-            <select id="cam_video_${i}">
-              <option value="">-- Seleccionar --</option>
-              <option value="CUMPLE">CUMPLE</option>
-              <option value="NO CUMPLE">NO CUMPLE</option>
-              <option value="N/A">N/A</option>
-            </select>
-          </div>
-          <div class="form-group full-width">
-            <label>Observaciones</label>
-            <textarea id="cam_obs_${i}" rows="2" placeholder="Detalles o pendientados..."></textarea>
+            <label>Observaciones:</label>
+            <input type="text" id="cam_obs_${i}" placeholder="Observaciones técnicas..." value="${info.obs || ''}">
           </div>
         </div>
       `;
       contenedor.appendChild(details);
+      if (info.ubicacion) actualizarResumen(i);
     }
   }
 
-  function actualizarSummary(index) {
-    const val = document.getElementById(`cam_ubi_${index}`).value.trim();
-    document.getElementById(`tag_summary_${index}`).innerText = val ? `(${val})` : '(Sin ubicación)';
+  function llenarTodoCumple() {
+    const total = document.getElementById('contenedor-camaras').querySelectorAll('details').length;
+    for (let i = 1; i <= total; i++) {
+      if (document.getElementById(`cam_inst_${i}`)) document.getElementById(`cam_inst_${i}`).value = 'CUMPLE';
+      if (document.getElementById(`cam_cabling_${i}`)) document.getElementById(`cam_cabling_${i}`).value = 'CUMPLE';
+      if (document.getElementById(`cam_tag_${i}`)) document.getElementById(`cam_tag_${i}`).value = 'CUMPLE';
+      if (document.getElementById(`cam_video_${i}`)) document.getElementById(`cam_video_${i}`).value = 'CUMPLE';
+    }
   }
 
-  // Detecta exactamente qué cambió respecto a la versión previa
+  function actualizarResumen(i) {
+    const el = document.getElementById(`cam_ubi_${i}`);
+    if (!el) return;
+    const span = document.getElementById(`resumen_cam_${i}`);
+    if (span) span.textContent = el.value ? `(${el.value})` : '';
+  }
+
+  /* Comparador de Cambios */
   function generarDetalleCambios(previo, actual) {
-    if (!previo) {
-      return "Creación inicial del reporte de recepción CCTV.";
-    }
+    if (!previo) return "Creación inicial del reporte de recepción CCTV.";
 
     const cambios = [];
-
-    if (previo.tecnico !== actual.tecnico && actual.tecnico) {
-      cambios.push(`Técnico: "${actual.tecnico}"`);
-    }
-    if (previo.fecha !== actual.fecha && actual.fecha) {
-      cambios.push(`Fecha: ${actual.fecha}`);
-    }
-
+    if (previo.tecnico !== actual.tecnico && actual.tecnico) cambios.push(`Técnico: "${actual.tecnico}"`);
+    if (previo.fecha !== actual.fecha && actual.fecha) cambios.push(`Fecha: ${actual.fecha}`);
     if (!previo.firma_tecnico && actual.firma_tecnico) cambios.push("Añadió firma técnico");
     if (!previo.firma_cliente && actual.firma_cliente) cambios.push("Añadió firma cliente");
 
@@ -253,31 +408,16 @@
     listaActual.forEach((camAct, idx) => {
       const camPrev = listaPrevia[idx] || {};
       const tagCamara = camAct.ubicacion ? `Cám #${camAct.num} (${camAct.ubicacion})` : `Cám #${camAct.num}`;
-      
       const diffs = [];
 
-      if (camPrev.ubicacion !== camAct.ubicacion && camAct.ubicacion && camPrev.ubicacion) {
-        diffs.push(`Ubicación: "${camAct.ubicacion}"`);
-      }
-      if (camPrev.instalacion !== camAct.instalacion && camAct.instalacion) {
-        diffs.push(`Montaje: ${camAct.instalacion}`);
-      }
-      if (camPrev.cableado !== camAct.cableado && camAct.cableado) {
-        diffs.push(`Cableado: ${camAct.cableado}`);
-      }
-      if (camPrev.etiquetado !== camAct.etiquetado && camAct.etiquetado) {
-        diffs.push(`Etiquetado: ${camAct.etiquetado}`);
-      }
-      if (camPrev.video !== camAct.video && camAct.video) {
-        diffs.push(`Video: ${camAct.video}`);
-      }
-      if (camPrev.obs !== camAct.obs && camAct.obs) {
-        diffs.push(`Obs: "${camAct.obs}"`);
-      }
+      if (camPrev.ubicacion !== camAct.ubicacion && camAct.ubicacion && camPrev.ubicacion) diffs.push(`Ubicación: "${camAct.ubicacion}"`);
+      if (camPrev.instalacion !== camAct.instalacion && camAct.instalacion) diffs.push(`Montaje: ${camAct.instalacion}`);
+      if (camPrev.cableado !== camAct.cableado && camAct.cableado) diffs.push(`Cableado: ${camAct.cableado}`);
+      if (camPrev.etiquetado !== camAct.etiquetado && camAct.etiquetado) diffs.push(`Etiquetado: ${camAct.etiquetado}`);
+      if (camPrev.video !== camAct.video && camAct.video) diffs.push(`Video: ${camAct.video}`);
+      if (camPrev.obs !== camAct.obs && camAct.obs) diffs.push(`Obs: "${camAct.obs}"`);
 
-      if (diffs.length > 0) {
-        resumenCamaras.push(`${tagCamara} [${diffs.join(', ')}]`);
-      }
+      if (diffs.length > 0) resumenCamaras.push(`${tagCamara} [${diffs.join(', ')}]`);
     });
 
     if (resumenCamaras.length > 0) {
@@ -288,16 +428,13 @@
       }
     }
 
-    return cambios.length > 0 ? cambios.join(' | ') : "Guardado/Revisión sin modificaciones detectadas.";
+    return cambios.length > 0 ? cambios.join(' | ') : "Guardado sin modificaciones detectadas.";
   }
 
-  // Guarda en la nube y registra el detalle en el historial
+  /* Guardado a Nube */
   async function guardarProgreso() {
     const proyecto = document.getElementById('req-proyecto').value.trim();
-    if (!proyecto) { 
-      alert("⚠️ Escribe el Nombre del Proyecto para guardar."); 
-      return; 
-    }
+    if (!proyecto) { alert("⚠️ Escribe el Nombre del Proyecto para guardar."); return; }
 
     const usuario = obtenerUsuarioAutenticado();
     const btnGuardar = document.getElementById('btn-guardar');
@@ -334,7 +471,7 @@
       let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
       let data = await res.json();
       let proyectos = data.record.proyectos || {};
-      
+
       const versionPrevia = proyectos[`CCTV_${proyecto}`] || null;
       const detalleAccion = generarDetalleCambios(versionPrevia, estadoFormulario);
 
@@ -342,14 +479,7 @@
       const fechaHoraStr = ahora.toLocaleDateString('es-MX') + ' ' + ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
 
       let historialPrevio = (versionPrevia && versionPrevia.historial) ? versionPrevia.historial : [];
-
-      const nuevoRegistro = {
-        fecha: fechaHoraStr,
-        usuario: usuario,
-        accion: detalleAccion
-      };
-
-      historialPrevio.unshift(nuevoRegistro);
+      historialPrevio.unshift({ fecha: fechaHoraStr, usuario: usuario, accion: detalleAccion });
 
       const estadoFinal = {
         ...estadoFormulario,
@@ -368,8 +498,7 @@
       });
 
       alert(`☁️ Guardado con éxito por ${usuario}.`);
-      renderizarHistorial(historialPrevio);
-
+      await cargarProyectosDesdeNube(`CCTV_${proyecto}`);
     } catch (err) {
       alert("❌ Error al guardar en el servidor.");
       console.error(err);
@@ -379,79 +508,215 @@
     }
   }
 
-  // Carga y muestra los registros del historial en la tabla
-  function renderizarHistorial(historialArray) {
+  async function cargarProyectosDesdeNube(seleccionado = '') {
+    const select = document.getElementById('select-proyectos');
+    select.innerHTML = '<option value="">⏳ Cargando borradores...</option>';
+
+    try {
+      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
+      let data = await res.json();
+      window.proyectosNube = data.record.proyectos || {};
+
+      select.innerHTML = '<option value="">-- Seleccionar Borrador --</option>';
+      Object.keys(window.proyectosNube).forEach(clave => {
+        let item = window.proyectosNube[clave];
+        if (item.tipo === "RECEPCION_CCTV" || clave.startsWith("CCTV_")) {
+          let opt = document.createElement('option');
+          opt.value = clave;
+          opt.textContent = item.proyecto || clave.replace("CCTV_", "");
+          if (clave === seleccionado) opt.selected = true;
+          select.appendChild(opt);
+        }
+      });
+    } catch (err) {
+      select.innerHTML = '<option value="">❌ Error al cargar borradores</option>';
+    }
+  }
+
+  function cargarProyecto(clave) {
+    if (!clave || !window.proyectosNube) return;
+    const estado = window.proyectosNube[clave];
+    if (!estado) return;
+
+    document.getElementById('req-proyecto').value = estado.proyecto || '';
+    document.getElementById('req-fecha').value = estado.fecha || '';
+    document.getElementById('req-tecnico').value = estado.tecnico || '';
+
+    historialGlobal = estado.historial || [];
+    renderizarTablaHistorial();
+
+    document.getElementById('nombre_firma_tecnico').value = estado.nombre_tecnico || '';
+    cargarImagenEnCanvas('canvas_tecnico', estado.firma_tecnico);
+
+    document.getElementById('nombre_firma_cliente').value = estado.nombre_cliente || '';
+    cargarImagenEnCanvas('canvas_cliente', estado.firma_cliente);
+
+    if (estado.camarasLista && estado.camarasLista.length > 0) {
+      generarCamarasPorNumero(estado.camarasLista, false);
+    }
+  }
+
+  function renderizarTablaHistorial() {
     const tbody = document.getElementById('tabla-historial-body');
-    if (!tbody) return;
-
-    tbody.innerHTML = '';
-
-    if (!historialArray || historialArray.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#888;">Sin cambios registrados</td></tr>`;
+    if (!historialGlobal || historialGlobal.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #888;">Sin historial disponible.</td></tr>';
       return;
     }
 
-    historialArray.forEach(item => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td style="white-space: nowrap;">${item.fecha || '-'}</td>
-        <td><strong>${item.usuario || 'Desconocido'}</strong></td>
-        <td>${item.accion || 'Sin detalle'}</td>
-      `;
-      tbody.appendChild(tr);
-    });
+    tbody.innerHTML = historialGlobal.map(item => `
+      <tr>
+        <td style="white-space:nowrap;">${item.fecha || '-'}</td>
+        <td><strong>${item.usuario || 'Anónimo'}</strong></td>
+        <td>${item.accion || 'Edición de datos'}</td>
+      </tr>
+    `).join('');
   }
 
-  // Funciones de Dibujo en Canvas para Firmas
-  function initCanvas(id) {
-    const canvas = document.getElementById(id);
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    let dib = false;
+  async function eliminarDeNube() {
+    const select = document.getElementById('select-proyectos');
+    const clave = select.value;
+    if (!clave) { alert("⚠️ Selecciona un borrador para eliminar."); return; }
 
-    function resize() {
-      canvas.width = canvas.parentElement.clientWidth - 20;
-      canvas.height = 120;
+    if (!confirm(`🗑️ ¿Deseas eliminar el registro seleccionado?`)) return;
+
+    const btnEliminar = document.getElementById('btn-eliminar');
+    btnEliminar.disabled = true;
+
+    try {
+      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
+      let data = await res.json();
+      let proyectos = data.record.proyectos || {};
+
+      if (proyectos[clave]) {
+        delete proyectos[clave];
+        await fetch(URL_NUBE, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
+          body: JSON.stringify({ proyectos: proyectos })
+        });
+        alert(`🗑️ Eliminado exitosamente.`);
+        nuevoProyecto();
+        await cargarProyectosDesdeNube();
+      }
+    } catch (e) {
+      alert("⚠️ Error al eliminar.");
+    } finally {
+      btnEliminar.disabled = false;
     }
-    resize();
+  }
 
-    function getPos(e) {
+  function nuevoProyecto() {
+    document.getElementById('req-proyecto').value = '';
+    document.getElementById('req-fecha').valueAsDate = new Date();
+    document.getElementById('req-tecnico').value = '';
+
+    historialGlobal = [];
+    renderizarTablaHistorial();
+
+    document.getElementById('nombre_firma_tecnico').value = '';
+    limpiarCanvas('canvas_tecnico');
+
+    document.getElementById('nombre_firma_cliente').value = '';
+    limpiarCanvas('canvas_cliente');
+
+    document.getElementById('cant-camaras').value = 4;
+    generarCamarasPorNumero(null, true);
+
+    document.getElementById('select-proyectos').value = '';
+  }
+
+  /* Canvas Firmas */
+  function inicializarCanvas(idCanvas) {
+    const canvas = document.getElementById(idCanvas);
+    const ctx = canvas.getContext('2d');
+    let dibujando = false;
+
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#1b365d';
+
+    function obtenerPosicion(e) {
       const rect = canvas.getBoundingClientRect();
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
       return { x: clientX - rect.left, y: clientY - rect.top };
     }
 
-    function start(e) { dib = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); }
-    function move(e) {
-      if (!dib) return;
+    function iniciarDibujo(e) {
+      dibujando = true;
+      const pos = obtenerPosicion(e);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+    }
+
+    function dibujar(e) {
+      if (!dibujando) return;
       e.preventDefault();
-      const p = getPos(e);
-      ctx.lineTo(p.x, p.y);
+      const pos = obtenerPosicion(e);
+      ctx.lineTo(pos.x, pos.y);
       ctx.stroke();
     }
-    function stop() { 
-      if(dib) {
-        dib = false; 
-        canvasStates[id] = canvas.toDataURL();
+
+    function detenerDibujo() {
+      if (dibujando) {
+        dibujando = false;
+        canvasStates[idCanvas] = canvas.toDataURL();
       }
     }
 
-    canvas.addEventListener('mousedown', start);
-    canvas.addEventListener('mousemove', move);
-    window.addEventListener('mouseup', stop);
+    canvas.addEventListener('mousedown', iniciarDibujo);
+    canvas.addEventListener('mousemove', dibujar);
+    canvas.addEventListener('mouseup', detenerDibujo);
+    canvas.addEventListener('mouseleave', detenerDibujo);
 
-    canvas.addEventListener('touchstart', start);
-    canvas.addEventListener('touchmove', move);
-    canvas.addEventListener('touchend', stop);
+    canvas.addEventListener('touchstart', iniciarDibujo);
+    canvas.addEventListener('touchmove', dibujar);
+    canvas.addEventListener('touchend', detenerDibujo);
   }
 
-  function limpiarCanvas(id) {
-    const canvas = document.getElementById(id);
-    if (!canvas) return;
+  function limpiarCanvas(idCanvas) {
+    const canvas = document.getElementById(idCanvas);
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    delete canvasStates[id];
+    delete canvasStates[idCanvas];
+  }
+
+  function cargarImagenEnCanvas(idCanvas, dataUrl) {
+    const canvas = document.getElementById(idCanvas);
+    const ctx = canvas.getContext('2d');
+    limpiarCanvas(idCanvas);
+
+    if (dataUrl) {
+      const img = new Image();
+      img.onload = function() {
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvasStates[idCanvas] = dataUrl;
+      };
+      img.src = dataUrl;
+    }
+  }
+
+  function descargarPDF() {
+    const proyecto = document.getElementById('req-proyecto').value.trim();
+    if (!proyecto) { alert("⚠️ Asigna un nombre al Proyecto."); return; }
+
+    const elemento = document.getElementById('formato-app');
+    document.querySelectorAll('details').forEach(d => d.open = true);
+
+    const opciones = {
+      margin: 8,
+      filename: `Recepcion_CCTV_${proyecto}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opciones).from(elemento).save().then(() => {
+      document.querySelectorAll('details').forEach(d => d.open = false);
+    });
   }
 </script>
 
