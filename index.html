@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<script>
+  if (sessionStorage.getItem("synergo_auth") !== "true") {
+    window.location.href = "login.html";
+  }
+</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sistema de Recepción y Formato - Synergo Sistemas</title>
@@ -27,6 +32,17 @@
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       text-align: center;
+    }
+
+    .user-info {
+      font-size: 12px;
+      background: #eef4fb;
+      color: #1b365d;
+      padding: 6px 12px;
+      border-radius: 20px;
+      display: inline-block;
+      margin-bottom: 15px;
+      font-weight: bold;
     }
 
     h1 {
@@ -59,31 +75,29 @@
       transform: scale(0.98);
     }
 
-    /* Colores por módulo */
-    .btn-visita {
-      background: #e65100; /* Naranja */
+    .btn-visita { background: #e65100; }
+    .btn-recorrido { background: #0288d1; }
+    .btn-voz { background: #1b365d; }
+    .btn-cctv { background: #2e7d32; }
+    .btn-logout {
+      background: #757575;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      margin-top: 10px;
     }
 
-    .btn-recorrido {
-      background: #0288d1; /* Azul Celeste / CCTV Previo */
-    }
-
-    .btn-voz {
-      background: #1b365d; /* Azul marino */
-    }
-
-    .btn-cctv {
-      background: #2e7d32; /* Verde */
-    }
-
-    .btn-menu:hover {
-      opacity: 0.9;
-    }
+    .btn-menu:hover { opacity: 0.9; }
   </style>
 </head>
 <body>
 
   <div class="container">
+    <div class="user-info" id="user-badge">👤 Usuario: Detectando...</div>
+
     <h1>Synergo Sistemas</h1>
     <p>Selecciona el módulo de inspección o recepción a gestionar:</p>
 
@@ -107,7 +121,20 @@
       📹 Recepción CCTV
     </a>
 
+    <button class="btn-logout" onclick="cerrarSesion()">🔒 Cerrar Sesión</button>
   </div>
+
+<script>
+  window.onload = function() {
+    const usuario = sessionStorage.getItem("synergo_user") || "Usuario";
+    document.getElementById("user-badge").textContent = `👤 Sesión: ${usuario}`;
+  };
+
+  function cerrarSesion() {
+    sessionStorage.clear();
+    window.location.href = "login.html";
+  }
+</script>
 
 </body>
 </html>
