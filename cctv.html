@@ -89,18 +89,52 @@
     .form-group label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 3px; color: #444; text-transform: uppercase; }
 
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #f0f4f8;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px dashed #1b365d;
+      margin-bottom: 10px;
+    }
+
+    .last-editor-badge {
+      background: #e3f2fd;
+      border-left: 4px solid #1976d2;
+      padding: 8px 12px;
+      margin-bottom: 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #0d47a1;
+      display: none;
+    }
+
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 11px;
+    }
+    .history-table th, .history-table td {
+      border: 1px solid #e0e0e0;
+      padding: 6px;
+      text-align: left;
+    }
+    .history-table th { background: #f0f4f8; color: #1b365d; }
+
     @media (max-width: 600px) {
-      .grid-4 { grid-template-columns: 1fr 1fr; }
+      .grid-4, .grid-3 { grid-template-columns: 1fr; }
       .grid-2 { grid-template-columns: 1fr; }
     }
 
-    /* Acordeón / Bloques de Cámaras */
     details { background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; margin-bottom: 8px; padding: 6px 10px; }
     summary { font-weight: bold; cursor: pointer; padding: 6px 0; color: #1b365d; display: flex; justify-content: space-between; align-items: center; }
 
-    /* Canvas Firma */
     .signature-pad {
       border: 2px dashed #1b365d;
       border-radius: 6px;
@@ -117,12 +151,32 @@
 <body>
 
 <div class="top-bar">
-  <div style="font-weight: bold; font-size: 14px;">🎥 Recepción CCTV (Sincronizado)</div>
-  <div style="margin-top: 5px;">
-    <select id="select-proyectos" onchange="cargarProyecto(this.value)">
-      <option value="">⏳ Cargando borradores...</option>
-    </select>
+  <div style="font-weight: bold; font-size: 14px;">🎥 Recepción CCTV (Sincronizado con Historial)</div>
+  
+  <div class="grid-2" style="margin-top: 8px;">
+    <div>
+      <label style="color: #bdd7ee; font-size: 10px; font-weight: bold;">SELECCIONAR BORRADOR:</label>
+      <select id="select-proyectos" onchange="cargarProyecto(this.value)">
+        <option value="">⏳ Cargando borradores...</option>
+      </select>
+    </div>
+    <div>
+      <label style="color: #ffcc80; font-size: 10px; font-weight: bold;">👤¿QUIÉN ESTÁ TRABAJANDO? (*):</label>
+      <select id="usuario-activo" onchange="evaluarOtroUsuario(this.value)">
+        <option value="">-- Seleccionar Usuario --</option>
+        <option value="Carlos">Carlos</option>
+        <option value="Ana">Ana</option>
+        <option value="Roberto">Roberto</option>
+        <option value="Sofía">Sofía</option>
+        <option value="OTRO">Otro Usuario...</option>
+      </select>
+    </div>
   </div>
+
+  <div id="group-usuario-otro" style="display: none; margin-top: 5px;">
+    <input type="text" id="usuario-activo-otro" placeholder="Escribe tu nombre completo...">
+  </div>
+
   <div class="top-bar-controls">
     <button class="btn btn-save" id="btn-guardar" onclick="guardarProgreso()">💾 Guardar</button>
     <button class="btn btn-delete" id="btn-eliminar" onclick="eliminarDeNube()">🗑️ Eliminar</button>
@@ -132,6 +186,11 @@
 </div>
 
 <div id="formato-app">
+
+  <!-- BADGE DE ÚLTIMO EDITOR -->
+  <div id="badge-editor" class="last-editor-badge">
+    ℹ️ <strong>Última edición por:</strong> <span id="lbl-ultimo-editor">-</span> el <span id="lbl-ultima-fecha">-</span>
+  </div>
 
   <!-- DATOS GENERALES -->
   <div class="card">
@@ -150,13 +209,104 @@
         <input type="date" id="req-fecha">
       </div>
       <div class="form-group">
-        <label>Técnico / Inspector:</label>
+        <label>Técnico / Inspector Principal:</label>
         <input type="text" id="req-tecnico" placeholder="Nombre de quien recibe">
       </div>
     </div>
   </div>
 
-  <!-- REGISTRO DE CÁMARAS (MÁXIMO 16) -->
+  <!-- ESPECIFICACIONES NVR/DVR -->
+  <div class="card">
+    <div class="card-title">🖥️ Especificaciones del Grabador / NVR / DVR</div>
+    
+    <div class="grid-3">
+      <div class="form-group">
+        <label>Marca del Sistema:</label>
+        <select id="nvr-marca" onchange="evaluarOtraMarca(this.value)">
+          <option value="">-- Seleccionar Marca --</option>
+          <option value="Dahua">Dahua</option>
+          <option value="Hikvision">Hikvision</option>
+          <option value="Hanwha / Wisenet">Hanwha / Wisenet</option>
+          <option value="Axis">Axis</option>
+          <option value="Uniarch / Uniview">Uniarch / Uniview</option>
+          <option value="OTRA">OTRA (Especificar)</option>
+        </select>
+      </div>
+
+      <div class="form-group" id="group-marca-otra" style="display: none;">
+        <label>Especificar Otra Marca:</label>
+        <input type="text" id="nvr-marca-otra" placeholder="Ej: Provision, Vivotek, etc.">
+      </div>
+
+      <div class="form-group">
+        <label>Modelo del Grabador:</label>
+        <input type="text" id="nvr-modelo" placeholder="Ej: DHI-NVR4216-16P-4KS2">
+      </div>
+
+      <div class="form-group">
+        <label>Almacenamiento (HDD):</label>
+        <select id="nvr-hdd">
+          <option value="">-- Seleccionar Capacidad --</option>
+          <option value="Sin Disco (Solo En vivo)">Sin Disco (Solo En vivo)</option>
+          <option value="1 TB">1 TB</option>
+          <option value="2 TB">2 TB</option>
+          <option value="4 TB">4 TB</option>
+          <option value="6 TB">6 TB</option>
+          <option value="8 TB">8 TB</option>
+          <option value="12 TB+">12 TB o superior</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="checkbox-container">
+      <input type="checkbox" id="chk-nvr-general" onchange="toggleChecklistNVR(this.checked)">
+      <label for="chk-nvr-general" style="cursor:pointer; margin:0; text-transform:none; font-weight:bold; color:#1b365d;">
+        ⚙️ Evaluar Estado General del Grabador (NVR/DVR/Rack)
+      </label>
+    </div>
+
+    <div id="bloque-nvr-checklist" style="display: none; border-top: 1px solid #ddd; padding-top: 8px;">
+      <div class="grid-4">
+        <div class="form-group">
+          <label>Encendido y Alimentación (UPS)</label>
+          <select id="nvr_pwr">
+            <option value="">-- Estado --</option>
+            <option value="CUMPLE">CUMPLE</option>
+            <option value="NO CUMPLE">NO CUMPLE</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Configuración de Red / IP</label>
+          <select id="nvr_net">
+            <option value="">-- Estado --</option>
+            <option value="CUMPLE">CUMPLE</option>
+            <option value="NO CUMPLE">NO CUMPLE</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Formato y Grabación Disco</label>
+          <select id="nvr_rec">
+            <option value="">-- Estado --</option>
+            <option value="CUMPLE">CUMPLE</option>
+            <option value="NO CUMPLE">NO CUMPLE</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Limpieza y Ventilación Rack</label>
+          <select id="nvr_rack">
+            <option value="">-- Estado --</option>
+            <option value="CUMPLE">CUMPLE</option>
+            <option value="NO CUMPLE">NO CUMPLE</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REGISTRO DE CÁMARAS (1 A 16) -->
   <div class="card">
     <div class="card-title">📹 Registro de Cámaras (1 a 16)</div>
     
@@ -191,12 +341,35 @@
     </div>
   </div>
 
+  <!-- HISTORIAL DE REVISIONES Y EDICIONES -->
+  <div class="card">
+    <details>
+      <summary style="font-size: 13px; font-weight: bold;">📜 Historial de Cambios y Revisiones por Usuario</summary>
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>Fecha y Hora</th>
+            <th>Usuario</th>
+            <th>Acción / Resumen</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-historial-body">
+          <tr>
+            <td colspan="3" style="text-align: center; color: #888;">Sin cambios registrados aún.</td>
+          </tr>
+        </tbody>
+      </table>
+    </details>
+  </div>
+
 </div>
 
 <script>
   const BIN_ID = "6a906a3af5f4af5e294a7049";
   const API_KEY = "$2a$10$5BDKoNaJb98nczPxrHl1Uuow.tck.XjCTrl6Cc7b.aZ3RbBRtHr4e";
   const URL_NUBE = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+
+  let historialGlobal = [];
 
   window.onload = function() {
     generarCamarasPorNumero(null, true);
@@ -205,13 +378,33 @@
     inicializarCanvas('canvas_cliente');
   };
 
-  /* --- GENERACIÓN DE CÁMARAS (LIMITADO STRICTAMENTE A 16) --- */
+  function evaluarOtroUsuario(val) {
+    const div = document.getElementById('group-usuario-otro');
+    div.style.display = (val === 'OTRO') ? 'block' : 'none';
+  }
+
+  function obtenerUsuarioActivo() {
+    const sel = document.getElementById('usuario-activo').value;
+    if (sel === 'OTRO') {
+      return document.getElementById('usuario-activo-otro').value.trim();
+    }
+    return sel;
+  }
+
+  function evaluarOtraMarca(valor) {
+    const divOtra = document.getElementById('group-marca-otra');
+    divOtra.style.display = (valor === 'OTRA') ? 'block' : 'none';
+  }
+
+  function toggleChecklistNVR(activado) {
+    document.getElementById('bloque-nvr-checklist').style.display = activado ? 'block' : 'none';
+  }
+
   function generarCamarasPorNumero(datosGuardados = null, esLimpiezaTotal = false) {
     const contenedor = document.getElementById('contenedor-camaras');
     const inputCant = document.getElementById('cant-camaras');
     let objetivo = parseInt(inputCant.value) || 16;
 
-    // Validación estricta del límite 16
     if (objetivo > 16) objetivo = 16;
     if (objetivo < 1) objetivo = 1;
     inputCant.value = objetivo;
@@ -311,6 +504,13 @@
       if (document.getElementById(`cam_tag_${i}`)) document.getElementById(`cam_tag_${i}`).value = 'CUMPLE';
       if (document.getElementById(`cam_video_${i}`)) document.getElementById(`cam_video_${i}`).value = 'CUMPLE';
     }
+
+    if (document.getElementById('chk-nvr-general').checked) {
+      if (document.getElementById('nvr_pwr')) document.getElementById('nvr_pwr').value = 'CUMPLE';
+      if (document.getElementById('nvr_net')) document.getElementById('nvr_net').value = 'CUMPLE';
+      if (document.getElementById('nvr_rec')) document.getElementById('nvr_rec').value = 'CUMPLE';
+      if (document.getElementById('nvr_rack')) document.getElementById('nvr_rack').value = 'CUMPLE';
+    }
   }
 
   function actualizarResumen(i) {
@@ -396,10 +596,17 @@
     }
   }
 
-  /* --- MANEJO DE NUBE Y PDF --- */
+  /* --- MANEJO DE NUBE E HISTORIAL --- */
   async function guardarProgreso() {
     const proyecto = document.getElementById('req-proyecto').value.trim();
     if (!proyecto) { alert("⚠️ Escribe el Nombre del Proyecto para guardar."); return; }
+
+    const usuario = obtenerUsuarioActivo();
+    if (!usuario) {
+      alert("⚠️ Por favor selecciona tu nombre en '¿QUIÉN ESTÁ TRABAJANDO?' para registrar tu edición.");
+      document.getElementById('usuario-activo').focus();
+      return;
+    }
 
     const btnGuardar = document.getElementById('btn-guardar');
     btnGuardar.disabled = true;
@@ -419,11 +626,41 @@
       });
     }
 
+    const ahora = new Date();
+    const fechaHoraStr = ahora.toLocaleDateString('es-MX') + ' ' + ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+
+    // Agregar nuevo elemento al historial
+    const nuevoRegistro = {
+      fecha: fechaHoraStr,
+      usuario: usuario,
+      accion: `Actualizó información / (${total} cámaras evaluadas)`
+    };
+
+    historialGlobal.unshift(nuevoRegistro);
+
     const estado = {
       tipo: "RECEPCION_CCTV",
       proyecto: proyecto,
       fecha: document.getElementById('req-fecha').value,
       tecnico: document.getElementById('req-tecnico').value,
+      
+      // Auditoría
+      ultimo_editor: usuario,
+      ultima_modificacion: fechaHoraStr,
+      historial: historialGlobal,
+
+      // Datos NVR
+      nvr_marca: document.getElementById('nvr-marca').value,
+      nvr_marca_otra: document.getElementById('nvr-marca-otra').value,
+      nvr_modelo: document.getElementById('nvr-modelo').value,
+      nvr_hdd: document.getElementById('nvr-hdd').value,
+      evaluar_nvr: document.getElementById('chk-nvr-general').checked,
+      nvr_pwr: document.getElementById('nvr_pwr') ? document.getElementById('nvr_pwr').value : '',
+      nvr_net: document.getElementById('nvr_net') ? document.getElementById('nvr_net').value : '',
+      nvr_rec: document.getElementById('nvr_rec') ? document.getElementById('nvr_rec').value : '',
+      nvr_rack: document.getElementById('nvr_rack') ? document.getElementById('nvr_rack').value : '',
+
+      // Firmas
       nombre_tecnico: document.getElementById('nombre_firma_tecnico').value,
       firma_tecnico: canvasStates['canvas_tecnico'] || null,
       nombre_cliente: document.getElementById('nombre_firma_cliente').value,
@@ -444,10 +681,10 @@
         body: JSON.stringify({ proyectos: proyectos })
       });
 
-      alert(`☁️ Recepción CCTV "${proyecto}" guardada exitosamente.`);
+      alert(`☁️ Guardado por ${usuario} exitosamente.`);
       await cargarProyectosDesdeNube(`CCTV_${proyecto}`);
     } catch (err) {
-      alert("❌ Error al conectar con la nube.");
+      alert("❌ Error al guardar en la nube.");
       console.error(err);
     } finally {
       btnGuardar.disabled = false;
@@ -489,6 +726,36 @@
     document.getElementById('req-fecha').value = estado.fecha || '';
     document.getElementById('req-tecnico').value = estado.tecnico || '';
 
+    // Carga Auditoría y Badge
+    if (estado.ultimo_editor) {
+      document.getElementById('badge-editor').style.display = 'block';
+      document.getElementById('lbl-ultimo-editor').textContent = estado.ultimo_editor;
+      document.getElementById('lbl-ultima-fecha').textContent = estado.ultima_modificacion || '';
+    } else {
+      document.getElementById('badge-editor').style.display = 'none';
+    }
+
+    historialGlobal = estado.historial || [];
+    renderizarTablaHistorial();
+
+    // Carga Datos NVR
+    document.getElementById('nvr-marca').value = estado.nvr_marca || '';
+    evaluarOtraMarca(estado.nvr_marca || '');
+    document.getElementById('nvr-marca-otra').value = estado.nvr_marca_otra || '';
+    document.getElementById('nvr-modelo').value = estado.nvr_modelo || '';
+    document.getElementById('nvr-hdd').value = estado.nvr_hdd || '';
+
+    const chkNvr = !!estado.evaluar_nvr;
+    document.getElementById('chk-nvr-general').checked = chkNvr;
+    toggleChecklistNVR(chkNvr);
+    if (chkNvr) {
+      if (document.getElementById('nvr_pwr')) document.getElementById('nvr_pwr').value = estado.nvr_pwr || '';
+      if (document.getElementById('nvr_net')) document.getElementById('nvr_net').value = estado.nvr_net || '';
+      if (document.getElementById('nvr_rec')) document.getElementById('nvr_rec').value = estado.nvr_rec || '';
+      if (document.getElementById('nvr_rack')) document.getElementById('nvr_rack').value = estado.nvr_rack || '';
+    }
+
+    // Carga Firmas
     document.getElementById('nombre_firma_tecnico').value = estado.nombre_tecnico || '';
     cargarImagenEnCanvas('canvas_tecnico', estado.firma_tecnico);
 
@@ -498,6 +765,22 @@
     if (estado.camarasLista && estado.camarasLista.length > 0) {
       generarCamarasPorNumero(estado.camarasLista, false);
     }
+  }
+
+  function renderizarTablaHistorial() {
+    const tbody = document.getElementById('tabla-historial-body');
+    if (!historialGlobal || historialGlobal.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #888;">Sin cambios registrados aún.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = historialGlobal.map(item => `
+      <tr>
+        <td>${item.fecha || '-'}</td>
+        <td><strong>${item.usuario || 'Anónimo'}</strong></td>
+        <td>${item.accion || 'Edición de datos'}</td>
+      </tr>
+    `).join('');
   }
 
   async function eliminarDeNube() {
@@ -538,6 +821,19 @@
     document.getElementById('req-proyecto').value = '';
     document.getElementById('req-fecha').value = '';
     document.getElementById('req-tecnico').value = '';
+
+    document.getElementById('badge-editor').style.display = 'none';
+    historialGlobal = [];
+    renderizarTablaHistorial();
+
+    document.getElementById('nvr-marca').value = '';
+    evaluarOtraMarca('');
+    document.getElementById('nvr-marca-otra').value = '';
+    document.getElementById('nvr-modelo').value = '';
+    document.getElementById('nvr-hdd').value = '';
+
+    document.getElementById('chk-nvr-general').checked = false;
+    toggleChecklistNVR(false);
 
     document.getElementById('nombre_firma_tecnico').value = '';
     limpiarCanvas('canvas_tecnico');
