@@ -1,425 +1,441 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<script>
+  if (sessionStorage.getItem("synergo_auth") !== "true") {
+    window.location.href = "login.html";
+  }
+</script>
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Checklist Adecuaciones Gomart - Synergo Sistemas</title>
-  <script>
-    if (sessionStorage.getItem("synergo_auth") !== "true") {
-      window.location.href = "login.html";
-    }
-  </script>
+  <title>Recepción de Voz y Datos - Visita en Sitio</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0; padding: 15px; background: #f4f6f9; color: #000; font-size: 12px;
-    }
-    
-    /* Barra Superior de Control */
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 10px; background: #f4f6f9; color: #333; font-size: 13px; }
+
+    /* Barra Superior */
     .top-bar {
-      position: sticky; top: 0; background: #1b365d; color: white; padding: 10px 15px;
-      border-radius: 8px; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+      position: sticky;
+      top: 0;
+      background: #1b365d;
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      z-index: 1000;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.15);
       margin-bottom: 15px;
     }
     .top-bar-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-    .btn { border: none; padding: 8px 12px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 12px; flex: 1; text-align: center; color: white; transition: all 0.2s; }
+    .btn { border: none; padding: 10px 12px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 13px; flex: 1; text-align: center; color: white; transition: all 0.2s; }
     .btn-save { background: #2e7d32; }
     .btn-save:disabled { background: #81c784; cursor: not-allowed; }
     .btn-delete { background: #e53935; }
     .btn-delete:disabled { background: #ef9a9a; cursor: not-allowed; }
     .btn-new { background: #555; }
     .btn-pdf { background: #d32f2f; }
-    .btn-menu { background: #4a5568; }
-    .btn-logout { background: #c62828; }
+    .btn-clear { background: #757575; padding: 4px 8px; font-size: 11px; margin-top: 4px; }
 
-    select.nube-select {
-      width: 100%; padding: 7px; border-radius: 6px; border: 1px solid #ccc; font-size: 12px; background: #fff;
+    /* Tarjeta de Avance */
+    .progress-card {
+      background: #fff;
+      border: 1px solid #bdd7ee;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
-    
-    .container { max-width: 900px; margin: 0 auto; background: white; padding: 20px; border: 2px solid #000; }
-    
-    .main-header { text-align: center; font-weight: bold; font-size: 14px; padding: 8px; border: 1px solid #000; background: #fff; margin-bottom: 10px; text-transform: uppercase; }
-    
-    table.meta-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-    table.meta-table td { border: 1px solid #000; padding: 5px; font-weight: bold; font-size: 11px; }
-    table.meta-table input { width: 100%; border: none; outline: none; font-size: 11px; background: transparent; }
-
-    .section-header {
-      background: #d9e1f2; font-weight: bold; padding: 6px; border: 1px solid #000;
-      margin-top: 15px; text-transform: uppercase; font-size: 11px;
+    .progress-bar-container {
+      background: #e0e0e0;
+      border-radius: 10px;
+      height: 18px;
+      width: 100%;
+      overflow: hidden;
+      margin: 8px 0;
+    }
+    .progress-bar-fill {
+      background: linear-gradient(90deg, #2e7d32, #4caf50);
+      height: 100%;
+      width: 0%;
+      transition: width 0.4s ease;
     }
 
-    table.checklist-table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
-    table.checklist-table th, table.checklist-table td { border: 1px solid #000; padding: 4px; text-align: left; }
-    table.checklist-table th { background: #d9e1f2; font-size: 10px; text-align: center; text-transform: uppercase; }
+    /* Tabla de Inspección Matriz */
+    .table-inspection {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 12px;
+    }
+    .table-inspection th, .table-inspection td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+    .table-inspection th { background: #1b365d; color: white; text-align: left; }
+    .table-inspection td:first-child { text-align: left; font-weight: 500; }
+    .table-inspection select { padding: 4px; border-radius: 4px; width: 100%; }
+
+    select, input[type="text"], input[type="date"], textarea { 
+      width: 100%; padding: 7px; border-radius: 6px; border: 1px solid #ccc; font-size: 12px; background: #fff; font-family: inherit;
+    }
+
+    .card { background: white; border-radius: 8px; padding: 12px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .card-title { font-weight: bold; font-size: 14px; color: #1b365d; border-bottom: 2px solid #bdd7ee; padding-bottom: 4px; margin-bottom: 10px; }
     
-    .col-num { width: 30px; text-align: center; }
-    .col-opt { width: 45px; text-align: center; }
-    .col-obs { width: 35%; }
-    .col-obs input { width: 100%; border: none; outline: none; font-size: 11px; }
+    .form-group { margin-bottom: 8px; }
+    .form-group label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 3px; color: #444; text-transform: uppercase; }
 
-    textarea.obs-general { width: 100%; border: 1px solid #000; min-height: 80px; padding: 5px; font-family: inherit; font-size: 11px; outline: none; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
-    @media print { .top-bar { display: none; } }
+    .user-badge-bar {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 11px;
+    }
+    .history-table th, .history-table td {
+      border: 1px solid #e0e0e0;
+      padding: 6px;
+      text-align: left;
+    }
+    .history-table th { background: #f0f4f8; color: #1b365d; }
+
+    .signature-pad {
+      border: 2px dashed #1b365d;
+      border-radius: 6px;
+      background: #fafafa;
+      touch-action: none;
+      width: 100%;
+      height: 120px;
+      cursor: crosshair;
+    }
+
+    @media print { .top-bar, .progress-card, .btn-clear { display: none; } }
   </style>
 </head>
 <body>
 
-  <div class="top-bar">
-    <div style="font-weight: bold; font-size: 14px;">☁️ Proyectos Sincronizados (Visita en Sitio)</div>
-    <div style="margin-top: 5px;">
-      <select id="select-proyectos" class="nube-select" onchange="cargarProyecto(this.value)">
+<div class="top-bar">
+  <div style="font-weight: bold; font-size: 14px;">☁️ Visita en Sitio - Voz y Datos</div>
+  
+  <div class="grid-2" style="margin-top: 8px; align-items: end;">
+    <div>
+      <label style="color: #bdd7ee; font-size: 10px; font-weight: bold;">SELECCIONAR BORRADOR:</label>
+      <select id="select-proyectos" onchange="cargarProyecto(this.value)">
         <option value="">⏳ Cargando borradores...</option>
       </select>
     </div>
-    <div class="top-bar-controls">
-      <button class="btn btn-save" id="btn-guardar" onclick="guardarEnNube()">💾 Guardar</button>
-      <button class="btn btn-delete" id="btn-eliminar" onclick="eliminarDeNube()">🗑️ Eliminar</button>
-      <button class="btn btn-new" onclick="nuevoProyecto()">➕ Nuevo</button>
-      <button class="btn btn-pdf" onclick="generarPDF()">📥 Exportar PDF</button>
-      <button class="btn btn-menu" onclick="window.location.href='index.html'">Menú</button>
-      <button class="btn btn-logout" onclick="cerrarSesion()">Salir</button>
+    
+    <div class="user-badge-bar">
+      <span>👤 Usuario activo:</span>
+      <strong id="lbl-sesion-usuario" style="color: #ffcc80;">Cargando...</strong>
     </div>
   </div>
 
-  <div class="container" id="contenido-pdf">
-    <div class="main-header">Checklist de Adecuaciones en Gomart</div>
+  <div class="top-bar-controls">
+    <button class="btn btn-save" id="btn-guardar" onclick="guardarProgreso()">💾 Guardar</button>
+    <button class="btn btn-delete" id="btn-eliminar" onclick="eliminarDeNube()">🗑️ Eliminar</button>
+    <button class="btn btn-new" onclick="nuevoProyecto()">➕ Nuevo</button>
+    <button class="btn btn-pdf" onclick="descargarPDF()">📥 Exportar PDF</button>
+  </div>
+</div>
 
-    <table class="meta-table">
-      <tr>
-        <td style="width: 20%;">GOMART:</td>
-        <td style="width: 45%;"><input type="text" id="tienda_gomart" placeholder="Nombre / Número de Tienda"></td>
-        <td style="width: 15%;">RESPONSABLE:</td>
-        <td style="width: 20%;"><input type="text" id="responsable" placeholder="Nombre y Firma"></td>
-      </tr>
-      <tr>
-        <td>FECHA DE REVISIÓN:</td>
-        <td><input type="date" id="fecha_revision"></td>
-        <td>HORA DE REVISIÓN:</td>
-        <td><input type="time" id="hora_revision"></td>
-      </tr>
-    </table>
+<div id="formato-app">
 
-    <!-- SECCIÓN A -->
-    <div class="section-header">A. NODOS DE RED Y CONTACTOS PISO DE VENTA</div>
-    <table class="checklist-table">
-      <thead>
-        <tr>
-          <th class="col-num">#</th>
-          <th>Descripción</th>
-          <th class="col-opt">SI</th>
-          <th class="col-opt">NO</th>
-          <th class="col-opt">N/A</th>
-          <th class="col-obs">Observaciones</th>
-        </tr>
-      </thead>
-      <tbody id="sec-A"></tbody>
-    </table>
+  <!-- INDICADOR DE AVANCE -->
+  <div class="progress-card">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-weight: bold; color: #1b365d;">📊 Avance de Inspección en Sitio</span>
+      <span id="lbl-porcentaje-avance" style="font-weight: bold; font-size: 16px; color: #2e7d32;">0%</span>
+    </div>
+    
+    <div class="progress-bar-container">
+      <div id="bar-avance-fill" class="progress-bar-fill"></div>
+    </div>
 
-    <!-- SECCIÓN B -->
-    <div class="section-header">B. NODOS DE RED Y CONTACTOS ELÉCTRICOS EQUIPO ADMINISTRATIVO</div>
-    <table class="checklist-table">
-      <thead>
-        <tr>
-          <th class="col-num">#</th>
-          <th>Descripción</th>
-          <th class="col-opt">SI</th>
-          <th class="col-opt">NO</th>
-          <th class="col-opt">N/A</th>
-          <th class="col-obs">Observaciones</th>
-        </tr>
-      </thead>
-      <tbody id="sec-B"></tbody>
-    </table>
-
-    <!-- SECCIÓN C -->
-    <div class="section-header">C. NODOS DE RED REGISTROS EQUIPO DE PUBLICIDAD</div>
-    <table class="checklist-table">
-      <thead>
-        <tr>
-          <th class="col-num">#</th>
-          <th>Descripción</th>
-          <th class="col-opt">SI</th>
-          <th class="col-opt">NO</th>
-          <th class="col-opt">N/A</th>
-          <th class="col-obs">Observaciones</th>
-        </tr>
-      </thead>
-      <tbody id="sec-C"></tbody>
-    </table>
-
-    <!-- SECCIÓN D -->
-    <div class="section-header">D. NODOS DE RED TORNIQUETE Y WIFI</div>
-    <table class="checklist-table">
-      <thead>
-        <tr>
-          <th class="col-num">#</th>
-          <th>Descripción</th>
-          <th class="col-opt">SI</th>
-          <th class="col-opt">NO</th>
-          <th class="col-opt">N/A</th>
-          <th class="col-obs">Observaciones</th>
-        </tr>
-      </thead>
-      <tbody id="sec-D"></tbody>
-    </table>
-
-    <!-- SECCIÓN E -->
-    <div class="section-header">E. ADECUACIONES PARA SITE TELECOMUNICACIONES (RACK/GABINETE)</div>
-    <table class="checklist-table">
-      <thead>
-        <tr>
-          <th class="col-num">#</th>
-          <th>Descripción</th>
-          <th class="col-opt">SI</th>
-          <th class="col-opt">NO</th>
-          <th class="col-opt">N/A</th>
-          <th class="col-obs">Observaciones</th>
-        </tr>
-      </thead>
-      <tbody id="sec-E"></tbody>
-    </table>
-
-    <!-- SECCIÓN F -->
-    <div class="section-header">F. LIMPIEZA Y ACABADOS CCTV</div>
-    <table class="checklist-table">
-      <thead>
-        <tr>
-          <th class="col-num">#</th>
-          <th>Descripción</th>
-          <th class="col-opt">SI</th>
-          <th class="col-opt">NO</th>
-          <th class="col-opt">N/A</th>
-          <th class="col-obs">Observaciones</th>
-        </tr>
-      </thead>
-      <tbody id="sec-F"></tbody>
-    </table>
-
-    <!-- SECCIÓN G -->
-    <div class="section-header">G. OBSERVACIONES GENERALES</div>
-    <div style="padding-top: 5px;">
-      <textarea id="observaciones_generales" class="obs-general" placeholder="Escriba aquí las observaciones finales..."></textarea>
+    <div style="display: flex; gap: 12px; font-size: 11px; font-weight: bold; margin-top: 6px;">
+      <span style="color: #2e7d32;">🟢 Cumple: <span id="cnt-cumple">0</span></span>
+      <span style="color: #d32f2f;">🔴 No Cumple: <span id="cnt-nocumple">0</span></span>
+      <span style="color: #757575;">⚪ Pendientes: <span id="cnt-pendientes">0</span></span>
     </div>
   </div>
+
+  <!-- DATOS GENERALES -->
+  <div class="card">
+    <div style="text-align: center; font-weight: bold; font-size: 16px; color: #1b365d; margin-bottom: 10px;">
+      RECEPCIÓN DE VOZ Y DATOS - VISITA EN SITIO
+    </div>
+    
+    <div class="form-group">
+      <label>Nombre del Proyecto / Sucursal:</label>
+      <input type="text" id="req-proyecto" placeholder="Ej: GC PALMA TROPICAL">
+    </div>
+
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Fecha de Visita:</label>
+        <input type="date" id="req-fecha">
+      </div>
+      <div class="form-group">
+        <label>Técnico / Inspector:</label>
+        <input type="text" id="req-tecnico" placeholder="Nombre del inspector">
+      </div>
+    </div>
+  </div>
+
+  <!-- MATRIZ SIMPLIFICADA DE INSPECCIÓN EN SITIO -->
+  <div class="card">
+    <div class="card-title">📌 Matriz Consolidada de Inspección por Áreas</div>
+    
+    <table class="table-inspection">
+      <thead>
+        <tr>
+          <th>Requerimiento / Elemento</th>
+          <th style="width: 18%;">Piso de Venta (TPV)</th>
+          <th style="width: 18%;">Eq. Administrativo</th>
+          <th style="width: 18%;">Publicidad</th>
+          <th style="width: 18%;">Torniquete / WiFi</th>
+        </tr>
+      </thead>
+      <tbody id="body-matriz-inspeccion">
+        <tr>
+          <td>1. Canalización / Registros</td>
+          <td><select class="chk-item" onchange="calcularAvance()"><option value="CUMPLE">CUMPLE</option><option value="NO CUMPLE">NO CUMPLE</option></select></td>
+          <td><select class="chk-item" onchange="calcularAvance()"><option value="CUMPLE">CUMPLE</option><option value="NO CUMPLE">NO CUMPLE</option></select></td>
+          <td><select class="chk-item" onchange="calcularAvance()"><option value="CUMPLE">CUMPLE</option><option value="NO CUMPLE">NO CUMPLE</option></select></td>
+          <td><select class="chk-item" onchange="calcularAvance()"><option value="CUMPLE">CUMPLE</option><option value="NO CUMPLE">NO CUMPLE</option></select></td>
+        </tr>
+        <tr>
+          <td>2. Contacto Doble NO Regulado</td>
+          <td><select class="chk-item" onchange="calcularAvance()"><option value="CUMPLE">CUMPLE</option><option value="NO CUMPLE">NO CUMPLE</option></select></td>
+          <td><select class="chk-item" onchange="calcularAvance()"><option value="CUMPLE">CUMPLE</option><option value="NO CUMPLE">NO CUMPLE</option></select></td>
+          <td><select class="chk-item" onchange="calcularAvance()"><option value="CUMPLE">CUMPLE</option><option value="NO CUMPLE">NO CUMPLE</option></select></td>
+          <td style="color:#aaa; background:#f9f9f9;">N/A</td>
+        </tr>
+        <tr>
+          <td>3. Voltaje Verificado en Contactos</td>
+          <td><select class="chk-item" onchange="calcularAvance()"><option value="CUMPLE">CUMPLE</option><option value="NO CUMPLE">NO CUMPLE</option></select></td>
+          <td><select class="chk-item" onchange="calcularAvance()"><option value="CUMPLE">CUMPLE</option><option value="NO CUMPLE">NO CUMPLE</option></select></td>
+          <td><select class="chk-item" onchange="calcularAvance()"><option value="CUMPLE">CUMPLE</option><option value="NO CUMPLE">NO CUMPLE</option></select></td>
+          <td style="color:#aaa; background:#f9f9f9;">N/A</td>
+        </tr>
+        <tr>
+          <td>4. Pases en los muebles</td>
+          <td><select class="chk-item" onchange="calcularAvance()"><option value="CUMPLE">CUMPLE</option><option value="NO CUMPLE">NO CUMPLE</option></select></td>
+          <td><select class="chk-item" onchange="calcularAvance()"><option value="CUMPLE">CUMPLE</option><option value="NO CUMPLE">NO CUMPLE</option></select></td>
+          <td style="color:#aaa; background:#f9f9f9;">N/A</td>
+          <td style="color:#aaa; background:#f9f9f9;">N/A</td>
+        </tr>
+        <tr>
+          <td>5. Repisa de 90x60 cm mínimo</td>
+          <td style="color:#aaa; background:#f9f9f9;">N/A</td>
+          <td><select class="chk-item" onchange="calcularAvance()"><option value="CUMPLE">CUMPLE</option><option value="NO CUMPLE">NO CUMPLE</option></select></td>
+          <td style="color:#aaa; background:#f9f9f9;">N/A</td>
+          <td style="color:#aaa; background:#f9f9f9;">N/A</td>
+        </tr>
+        <tr>
+          <td>6. Caja Estanca (300x250x150)</td>
+          <td style="color:#aaa; background:#f9f9f9;">N/A</td>
+          <td style="color:#aaa; background:#f9f9f9;">N/A</td>
+          <td><select class="chk-item" onchange="calcularAvance()"><option value="CUMPLE">CUMPLE</option><option value="NO CUMPLE">NO CUMPLE</option></select></td>
+          <td style="color:#aaa; background:#f9f9f9;">N/A</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="form-group" style="margin-top: 10px;">
+      <label>Observaciones de Visita en Sitio:</label>
+      <input type="text" id="obs-matriz" placeholder="Escribir observaciones puntuales o hallazgos...">
+    </div>
+  </div>
+
+  <!-- FIRMAS DIGITALES -->
+  <div class="card">
+    <div class="card-title">✍️ Firmas Digitales de Recibido</div>
+    
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Firma Inspector / Synergo:</label>
+        <input type="text" id="nombre_firma_tecnico" placeholder="Nombre completo del inspector" style="margin-bottom: 5px;">
+        <canvas id="canvas_tecnico" class="signature-pad"></canvas>
+        <button class="btn btn-clear" onclick="limpiarCanvas('canvas_tecnico')">🧹 Borrar Firma</button>
+      </div>
+
+      <div class="form-group">
+        <label>Firma Recibido / Cliente:</label>
+        <input type="text" id="nombre_firma_cliente" placeholder="Nombre completo de quien recibe" style="margin-bottom: 5px;">
+        <canvas id="canvas_cliente" class="signature-pad"></canvas>
+        <button class="btn btn-clear" onclick="limpiarCanvas('canvas_cliente')">🧹 Borrar Firma</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORIAL DE CAMBIOS -->
+  <div class="card">
+    <details open>
+      <summary style="font-size: 13px; font-weight: bold; cursor: pointer;">📜 Historial de Cambios por Usuario</summary>
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>Fecha y Hora</th>
+            <th>Usuario Autor</th>
+            <th>Acción / Detalle</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-historial-body">
+          <tr>
+            <td colspan="3" style="text-align: center; color: #888;">Sin historial disponible.</td>
+          </tr>
+        </tbody>
+      </table>
+    </details>
+  </div>
+
+</div>
 
 <script>
   const BIN_ID = "6a906a3af5f4af5e294a7049";
   const API_KEY = "$2a$10$5BDKoNaJb98nczPxrHl1Uuow.tck.XjCTrl6Cc7b.aZ3RbBRtHr4e";
   const URL_NUBE = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
-  const DATOS_FORMATO = {
-    A: [
-      "canalizaciones / Registros para datos en area de TPV",
-      "canalizaciones / Registros para microfono y boton de panico en area de TPV",
-      "Contactos doble NO regulados por cada TPV",
-      "Voltajes en Contactos doble NO regulados por cada TPV",
-      "Pasos interiores en los muebles de los TPV",
-      "Pasos en la Barra para los brazos de los TPV"
-    ],
-    B: [
-      "canalizaciones / Registros para datos",
-      "Contacto doble NO regulados",
-      "Voltajes en Contactos doble NO regulados por cada TPV",
-      "Repisa de 90x60 CM minimo"
-    ],
-    C: [
-      "canalizaciones / Registros para datos",
-      "Contacto doble NO regulado",
-      "Voltajes en Contactos doble NO regulados por cada TPV",
-      "Repisa de 90x60 CM minimo",
-      "Gabinete estanca con puerta de 300X250X150 en bodega para guardar la holgura (sobre el cuarto frio)"
-    ],
-    D: [
-      "canalizaciones / Registros para datos torniquete"
-    ],
-    E: [
-      "Todas las canalizaciones llegan al SITE / Gabinete",
-      "1 contacto doble NO regulado",
-      "Voltajes en Contactos doble NO regulados por cada TPV",
-      "Barra de tierra física",
-      "Acomodo del cableado",
-      "Limpieza del gabinete",
-      "Conexión a tierra física",
-      "Etiquetado de los patchcord"
-    ],
-    F: [
-      "Resanes bases y bajantes",
-      "Retoque de pintura en area de bases y bajantes de Cámaras",
-      "canalizacion y registro con tapa para cámaras de Beercave y cuarto frio.",
-      "Tapas de los registros",
-      "Bajantes (ubicaciones)"
-    ]
-  };
+  let historialGlobal = [];
+  const canvasStates = {};
+
+  function obtenerUsuarioAutenticado() {
+    return sessionStorage.getItem("synergo_user") || 
+           sessionStorage.getItem("usuario") || 
+           localStorage.getItem("synergo_user") || 
+           "Raul";
+  }
 
   window.onload = function() {
-    renderizarTablas();
+    document.getElementById('lbl-sesion-usuario').textContent = obtenerUsuarioAutenticado();
+    document.getElementById('req-fecha').valueAsDate = new Date();
+
+    inicializarCanvas('canvas_tecnico');
+    inicializarCanvas('canvas_cliente');
     cargarProyectosDesdeNube();
+    calcularAvance();
   };
 
-  function renderizarTablas() {
-    const hoy = new Date();
-    document.getElementById('fecha_revision').valueAsDate = hoy;
-    document.getElementById('hora_revision').value = hoy.toTimeString().substring(0,5);
+  /* --- CÁLCULO DE AVANCE Y MÉTRICAS --- */
+  function calcularAvance() {
+    const selects = document.querySelectorAll('.chk-item');
+    let cumple = 0;
+    let noCumple = 0;
+    let total = selects.length;
 
-    Object.keys(DATOS_FORMATO).forEach(sec => {
-      const tbody = document.getElementById(`sec-${sec}`);
-      if (!tbody) return;
-      tbody.innerHTML = '';
-
-      DATOS_FORMATO[sec].forEach((desc, idx) => {
-        const num = idx + 1;
-        const nameGroup = `rad_${sec}_${num}`;
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="col-num">${num}</td>
-          <td>${desc}</td>
-          <td class="col-opt"><input type="radio" name="${nameGroup}" value="SI"></td>
-          <td class="col-opt"><input type="radio" name="${nameGroup}" value="NO"></td>
-          <td class="col-opt"><input type="radio" name="${nameGroup}" value="N/A" checked></td>
-          <td class="col-obs"><input type="text" id="obs_${sec}_${num}" placeholder="..."></td>
-        `;
-        tbody.appendChild(tr);
-      });
-    });
-  }
-
-  function recopilarRespuestas() {
-    const data = {
-      tipo: "VISITA",
-      proyecto: document.getElementById('tienda_gomart').value.trim(),
-      responsable: document.getElementById('responsable').value.trim(),
-      fecha: document.getElementById('fecha_revision').value,
-      hora: document.getElementById('hora_revision').value,
-      observaciones_generales: document.getElementById('observaciones_generales').value.trim(),
-      usuario: sessionStorage.getItem('synergo_user') || 'anonimo',
-      secciones: {}
-    };
-
-    Object.keys(DATOS_FORMATO).forEach(sec => {
-      data.secciones[sec] = [];
-      DATOS_FORMATO[sec].forEach((desc, idx) => {
-        const num = idx + 1;
-        const nameGroup = `rad_${sec}_${num}`;
-        const radio = document.querySelector(`input[name="${nameGroup}"]:checked`);
-        const obs = document.getElementById(`obs_${sec}_${num}`).value.trim();
-        data.secciones[sec].push({
-          num: num,
-          descripcion: desc,
-          evaluacion: radio ? radio.value : 'N/A',
-          observacion: obs
-        });
-      });
+    selects.forEach(s => {
+      if (s.value === 'CUMPLE') cumple++;
+      else if (s.value === 'NO CUMPLE') noCumple++;
     });
 
-    return data;
+    let porcentaje = Math.round(((cumple + noCumple) / total) * 100);
+
+    document.getElementById('cnt-cumple').textContent = cumple;
+    document.getElementById('cnt-nocumple').textContent = noCumple;
+    document.getElementById('cnt-pendientes').textContent = total - (cumple + noCumple);
+    
+    document.getElementById('lbl-porcentaje-avance').textContent = porcentaje + '%';
+    document.getElementById('bar-avance-fill').style.width = porcentaje + '%';
+
+    return { porcentaje, cumple, noCumple };
   }
 
-  async function guardarEnNube() {
-    const tienda = document.getElementById('tienda_gomart').value.trim();
-    if (!tienda) { alert("⚠️ Escribe el Nombre / Número de Tienda para guardar."); return; }
+  /* --- ALMACENAMIENTO EN LA NUBE --- */
+  async function guardarProgreso() {
+    const proyecto = document.getElementById('req-proyecto').value.trim();
+    if (!proyecto) { alert("⚠️ Escribe el Nombre del Proyecto."); return; }
 
+    const usuario = obtenerUsuarioAutenticado();
     const btnGuardar = document.getElementById('btn-guardar');
     btnGuardar.disabled = true;
-    btnGuardar.innerHTML = "⏳ Guardando...";
 
-    const payload = recopilarRespuestas();
+    const stats = calcularAvance();
+    const matrizValores = Array.from(document.querySelectorAll('.chk-item')).map(s => s.value);
+
+    const estadoFormulario = {
+      proyecto: proyecto,
+      fecha: document.getElementById('req-fecha').value,
+      tecnico: document.getElementById('req-tecnico').value,
+      matrizValores: matrizValores,
+      obsMatriz: document.getElementById('obs-matriz').value,
+      nombre_tecnico: document.getElementById('nombre_firma_tecnico').value,
+      nombre_cliente: document.getElementById('nombre_firma_cliente').value,
+      firma_tecnico: canvasStates['canvas_tecnico'] || null,
+      firma_cliente: canvasStates['canvas_cliente'] || null,
+      avancePorcentaje: stats.porcentaje
+    };
 
     try {
       let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
       let data = await res.json();
       let proyectos = data.record.proyectos || {};
 
-      proyectos[`VISITA_${tienda}`] = payload;
+      const versionPrevia = proyectos[`VISITA_${proyecto}`] || null;
+      
+      let detalleAccion = `Guardado con avance del ${stats.porcentaje}% (${stats.cumple} Cumple, ${stats.noCumple} Hallazgos).`;
+      if (estadoFormulario.obsMatriz) {
+        detalleAccion += ` Obs: "${estadoFormulario.obsMatriz}"`;
+      }
+
+      const ahora = new Date();
+      const fechaHoraStr = ahora.toLocaleDateString('es-MX') + ' ' + ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+
+      let historialPrevio = (versionPrevia && versionPrevia.historial) ? versionPrevia.historial : [];
+      historialPrevio.unshift({ fecha: fechaHoraStr, usuario: usuario, accion: detalleAccion });
+
+      const estadoFinal = {
+        ...estadoFormulario,
+        tipo: "VISITA_SITIO",
+        ultimo_editor: usuario,
+        ultima_modificacion: fechaHoraStr,
+        historial: historialPrevio
+      };
+
+      proyectos[`VISITA_${proyecto}`] = estadoFinal;
 
       await fetch(URL_NUBE, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Master-Key": API_KEY
-        },
+        headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
         body: JSON.stringify({ proyectos: proyectos })
       });
 
-      alert(`☁️ Visita en sitio "${tienda}" guardada en la nube exitosamente.`);
-      await cargarProyectosDesdeNube(`VISITA_${tienda}`);
-    } catch (e) {
-      alert("⚠️ Error al guardar en la nube. Verifica tu conexión.");
-      console.error(e);
+      alert(`☁️ Guardado con éxito por ${usuario}.`);
+      await cargarProyectosDesdeNube(`VISITA_${proyecto}`);
+    } catch (err) {
+      alert("❌ Error al guardar en la nube.");
     } finally {
       btnGuardar.disabled = false;
-      btnGuardar.innerHTML = "💾 Guardar";
-    }
-  }
-
-  async function eliminarDeNube() {
-    const select = document.getElementById('select-proyectos');
-    const clave = select.value;
-
-    if (!clave) {
-      alert("⚠️ Selecciona un borrador del desplegable para eliminar.");
-      return;
-    }
-
-    const nombreMostrar = select.options[select.selectedIndex].text;
-    const confirmacion = confirm(`🗑️ ¿Estás seguro de que deseas eliminar permanentemente el proyecto "${nombreMostrar}"?`);
-    if (!confirmacion) return;
-
-    const btnEliminar = document.getElementById('btn-eliminar');
-    btnEliminar.disabled = true;
-    btnEliminar.innerHTML = "⏳ Eliminando...";
-
-    try {
-      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
-      let data = await res.json();
-      let proyectos = data.record.proyectos || {};
-
-      if (proyectos[clave]) {
-        delete proyectos[clave];
-
-        await fetch(URL_NUBE, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Master-Key": API_KEY
-          },
-          body: JSON.stringify({ proyectos: proyectos })
-        });
-
-        alert(`🗑️ El proyecto "${nombreMostrar}" fue eliminado exitosamente.`);
-        nuevoProyecto();
-        await cargarProyectosDesdeNube();
-      }
-    } catch (e) {
-      alert("⚠️ Error al eliminar el proyecto de la nube.");
-      console.error(e);
-    } finally {
-      btnEliminar.disabled = false;
-      btnEliminar.innerHTML = "🗑️ Eliminar";
     }
   }
 
   async function cargarProyectosDesdeNube(seleccionado = '') {
     const select = document.getElementById('select-proyectos');
-    select.innerHTML = '<option value="">⏳ Cargando desde la nube...</option>';
+    select.innerHTML = '<option value="">⏳ Cargando borradores...</option>';
 
     try {
       let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
       let data = await res.json();
       window.proyectosNube = data.record.proyectos || {};
 
-      select.innerHTML = '<option value="">-- Cargar Borrador Guardado --</option>';
+      select.innerHTML = '<option value="">-- Seleccionar Borrador --</option>';
       Object.keys(window.proyectosNube).forEach(clave => {
         let item = window.proyectosNube[clave];
-
-        const esVisita = (item.tipo === "VISITA" || clave.startsWith("VISITA_")) && 
-                          item.tipo !== "VOZ_DATOS" && 
-                          item.tipo !== "CCTV" && 
-                          !clave.startsWith("CCTV_");
-
-        if (esVisita) {
+        if (item.tipo === "VISITA_SITIO" || clave.startsWith("VISITA_")) {
           let opt = document.createElement('option');
           opt.value = clave;
           opt.textContent = item.proyecto || clave.replace("VISITA_", "");
@@ -437,52 +453,183 @@
     const estado = window.proyectosNube[clave];
     if (!estado) return;
 
-    document.getElementById('tienda_gomart').value = estado.proyecto || '';
-    document.getElementById('responsable').value = estado.responsable || '';
-    document.getElementById('fecha_revision').value = estado.fecha || '';
-    document.getElementById('hora_revision').value = estado.hora || '';
-    document.getElementById('observaciones_generales').value = estado.observaciones_generales || '';
+    document.getElementById('req-proyecto').value = estado.proyecto || '';
+    document.getElementById('req-fecha').value = estado.fecha || '';
+    document.getElementById('req-tecnico').value = estado.tecnico || '';
+    document.getElementById('obs-matriz').value = estado.obsMatriz || '';
 
-    if (estado.secciones) {
-      Object.keys(estado.secciones).forEach(sec => {
-        estado.secciones[sec].forEach((item) => {
-          const num = item.num;
-          const nameGroup = `rad_${sec}_${num}`;
-          const radio = document.querySelector(`input[name="${nameGroup}"][value="${item.evaluacion}"]`);
-          if (radio) radio.checked = true;
-
-          const obsInput = document.getElementById(`obs_${sec}_${num}`);
-          if (obsInput) obsInput.value = item.observacion || '';
-        });
+    if (estado.matrizValores && Array.isArray(estado.matrizValores)) {
+      const selects = document.querySelectorAll('.chk-item');
+      selects.forEach((sel, i) => {
+        if (estado.matrizValores[i]) sel.value = estado.matrizValores[i];
       });
+    }
+
+    historialGlobal = estado.historial || [];
+    renderizarTablaHistorial();
+
+    document.getElementById('nombre_firma_tecnico').value = estado.nombre_tecnico || '';
+    cargarImagenEnCanvas('canvas_tecnico', estado.firma_tecnico);
+
+    document.getElementById('nombre_firma_cliente').value = estado.nombre_cliente || '';
+    cargarImagenEnCanvas('canvas_cliente', estado.firma_cliente);
+
+    calcularAvance();
+  }
+
+  function renderizarTablaHistorial() {
+    const tbody = document.getElementById('tabla-historial-body');
+    if (!historialGlobal || historialGlobal.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #888;">Sin historial disponible.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = historialGlobal.map(item => `
+      <tr>
+        <td style="white-space:nowrap;">${item.fecha || '-'}</td>
+        <td><strong>${item.usuario || 'Anónimo'}</strong></td>
+        <td>${item.accion || 'Edición de datos'}</td>
+      </tr>
+    `).join('');
+  }
+
+  async function eliminarDeNube() {
+    const select = document.getElementById('select-proyectos');
+    const clave = select.value;
+    if (!clave) { alert("⚠️ Selecciona un borrador para eliminar."); return; }
+
+    if (!confirm("🗑️ ¿Deseas eliminar este borrador?")) return;
+
+    try {
+      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
+      let data = await res.json();
+      let proyectos = data.record.proyectos || {};
+
+      if (proyectos[clave]) {
+        delete proyectos[clave];
+        await fetch(URL_NUBE, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
+          body: JSON.stringify({ proyectos: proyectos })
+        });
+        alert(`🗑️ Eliminado exitosamente.`);
+        nuevoProyecto();
+        await cargarProyectosDesdeNube();
+      }
+    } catch (e) {
+      alert("⚠️ Error al eliminar.");
     }
   }
 
   function nuevoProyecto() {
-    document.getElementById('tienda_gomart').value = '';
-    document.getElementById('responsable').value = '';
-    document.getElementById('observaciones_generales').value = '';
-    renderizarTablas();
+    document.getElementById('req-proyecto').value = '';
+    document.getElementById('req-fecha').valueAsDate = new Date();
+    document.getElementById('req-tecnico').value = '';
+    document.getElementById('obs-matriz').value = '';
+
+    document.querySelectorAll('.chk-item').forEach(s => s.value = 'CUMPLE');
+
+    historialGlobal = [];
+    renderizarTablaHistorial();
+
+    limpiarCanvas('canvas_tecnico');
+    limpiarCanvas('canvas_cliente');
+    document.getElementById('nombre_firma_tecnico').value = '';
+    document.getElementById('nombre_firma_cliente').value = '';
+
+    calcularAvance();
     document.getElementById('select-proyectos').value = '';
   }
 
-  function generarPDF() {
-    const element = document.getElementById('contenido-pdf');
-    const tienda = document.getElementById('tienda_gomart').value || "Gomart";
-    const opt = {
-      margin: 0.3,
-      filename: `Checklist_Adecuaciones_${tienda}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-    };
-    html2pdf().set(opt).from(element).save();
+  /* --- MANEJO DE CANVAS / FIRMAS --- */
+  function inicializarCanvas(idCanvas) {
+    const canvas = document.getElementById(idCanvas);
+    const ctx = canvas.getContext('2d');
+    let dibujando = false;
+
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#1b365d';
+
+    function obtenerPosicion(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return { x: clientX - rect.left, y: clientY - rect.top };
+    }
+
+    function iniciarDibujo(e) {
+      dibujando = true;
+      const pos = obtenerPosicion(e);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+    }
+
+    function dibujar(e) {
+      if (!dibujando) return;
+      e.preventDefault();
+      const pos = obtenerPosicion(e);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+    }
+
+    function detenerDibujo() {
+      if (dibujando) {
+        dibujando = false;
+        canvasStates[idCanvas] = canvas.toDataURL();
+      }
+    }
+
+    canvas.addEventListener('mousedown', iniciarDibujo);
+    canvas.addEventListener('mousemove', dibujar);
+    canvas.addEventListener('mouseup', detenerDibujo);
+    canvas.addEventListener('mouseleave', detenerDibujo);
+
+    canvas.addEventListener('touchstart', iniciarDibujo);
+    canvas.addEventListener('touchmove', dibujar);
+    canvas.addEventListener('touchend', detenerDibujo);
   }
 
-  function cerrarSesion() {
-    sessionStorage.removeItem("synergo_auth");
-    sessionStorage.removeItem("synergo_user");
-    window.location.href = "login.html";
+  function limpiarCanvas(idCanvas) {
+    const canvas = document.getElementById(idCanvas);
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    delete canvasStates[idCanvas];
+  }
+
+  function cargarImagenEnCanvas(idCanvas, dataUrl) {
+    const canvas = document.getElementById(idCanvas);
+    const ctx = canvas.getContext('2d');
+    limpiarCanvas(idCanvas);
+
+    if (dataUrl) {
+      const img = new Image();
+      img.onload = function() {
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvasStates[idCanvas] = dataUrl;
+      };
+      img.src = dataUrl;
+    }
+  }
+
+  function descargarPDF() {
+    const proyecto = document.getElementById('req-proyecto').value.trim();
+    if (!proyecto) { alert("⚠️ Asigna un nombre al Proyecto."); return; }
+
+    const elemento = document.getElementById('formato-app');
+
+    const opciones = {
+      margin: 8,
+      filename: `Visita_Sitio_${proyecto}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opciones).from(elemento).save();
   }
 </script>
 
