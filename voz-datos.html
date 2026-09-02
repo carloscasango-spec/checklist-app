@@ -433,9 +433,19 @@
     if (span) span.textContent = ubi ? `(${ubi})` : '';
   }
 
-  /* --- COMPARADOR DE CAMBIOS PARA HISTORIAL --- */
+  /* --- COMPARADOR DE CAMBIOS DETALLADO PARA HISTORIAL --- */
   function generarDetalleCambios(previo, actual) {
-    if (!previo) return "Creación inicial del reporte de recepción Voz y Datos.";
+    if (!previo) {
+      // Detalle amplio en creación inicial
+      const totalNodos = actual.nodosLista ? actual.nodosLista.length : 0;
+      let detalleInicial = `Creación inicial del reporte con ${totalNodos} nodos registrados.`;
+      
+      const nodosConUbi = (actual.nodosLista || []).filter(n => n.ubicacion);
+      if (nodosConUbi.length > 0) {
+        detalleInicial += " Nodos configurados: " + nodosConUbi.map(n => `#${n.num} (${n.ubicacion})`).join(", ");
+      }
+      return detalleInicial;
+    }
 
     const cambios = [];
     if (previo.tecnico !== actual.tecnico && actual.tecnico) cambios.push(`Técnico: "${actual.tecnico}"`);
@@ -453,25 +463,23 @@
       const tagNodo = nodoAct.ubicacion ? `Nodo #${idx + 1} (${nodoAct.ubicacion})` : `Nodo #${idx + 1}`;
       const diffs = [];
 
-      if (nodoPrev.ubicacion !== nodoAct.ubicacion && nodoAct.ubicacion && nodoPrev.ubicacion) diffs.push(`Ubicación: "${nodoAct.ubicacion}"`);
+      if (nodoPrev.ubicacion !== nodoAct.ubicacion && nodoAct.ubicacion) diffs.push(`Ubi: "${nodoAct.ubicacion}"`);
       if (nodoPrev.cableado !== nodoAct.cableado && nodoAct.cableado) diffs.push(`Cableado: ${nodoAct.cableado}`);
       if (nodoPrev.etiquetado !== nodoAct.etiquetado && nodoAct.etiquetado) diffs.push(`Etiquetado: ${nodoAct.etiquetado}`);
       if (nodoPrev.limpieza !== nodoAct.limpieza && nodoAct.limpieza) diffs.push(`Limpieza: ${nodoAct.limpieza}`);
       if (nodoPrev.pruebas !== nodoAct.pruebas && nodoAct.pruebas) diffs.push(`Pruebas: ${nodoAct.pruebas}`);
       if (nodoPrev.obs !== nodoAct.obs && nodoAct.obs) diffs.push(`Obs: "${nodoAct.obs}"`);
 
-      if (diffs.length > 0) resumenNodos.push(`${tagNodo} [${diffs.join(', ')}]`);
+      if (diffs.length > 0) {
+        resumenNodos.push(`${tagNodo}: [${diffs.join(', ')}]`);
+      }
     });
 
     if (resumenNodos.length > 0) {
-      if (resumenNodos.length <= 3) {
-        cambios.push(resumenNodos.join('; '));
-      } else {
-        cambios.push(`${resumenNodos.length} nodos actualizados (${resumenNodos.slice(0, 2).join('; ')}...)`);
-      }
+      cambios.push("Detalle de nodos -> " + resumenNodos.join(' | '));
     }
 
-    return cambios.length > 0 ? cambios.join(' | ') : "Guardado sin modificaciones detectadas.";
+    return cambios.length > 0 ? cambios.join(' ; ') : "Sin modificaciones de campos respecto a la versión anterior.";
   }
 
   /* --- SINCRO NUBE Y PROYECTOS --- */
