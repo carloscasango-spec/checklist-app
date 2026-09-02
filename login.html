@@ -51,25 +51,24 @@
   </div>
 
 <script>
-  // Configura aquí tus 5 usuarios y sus claves (en minúsculas preferentemente)
   const USUARIOS = {
     "admin": "synergo2026",
-    "Raul": "raul123",
-    "Alex": "alex123",
-    "tecnico3": "campo789",
+    "raul": "raul123",
+    "alex": "alex123",
+    "ruben": "ruben123",
     "sistemas": "sistemas2026"
   };
 
   function validarLogin(e) {
     e.preventDefault();
-    const u = document.getElementById('usuario').value.trim().toLowerCase();
+    const inputU = document.getElementById('usuario').value.trim();
+    const u = inputU.toLowerCase();
     const p = document.getElementById('password').value.trim();
     const errorDiv = document.getElementById('error');
 
-    // Valida si el usuario existe y la contraseña coincide
     if (USUARIOS[u] && USUARIOS[u] === p) {
       sessionStorage.setItem("synergo_auth", "true");
-      sessionStorage.setItem("synergo_user", u); // Guarda el nombre del usuario activo
+      sessionStorage.setItem("synergo_user", inputU);
       window.location.href = "index.html";
     } else {
       errorDiv.style.display = "block";
