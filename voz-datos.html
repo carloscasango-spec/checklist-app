@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <script>
+  // Validar sesión activa al cargar
   if (sessionStorage.getItem("synergo_auth") !== "true") {
     window.location.href = "login.html";
   }
@@ -109,6 +110,30 @@
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 
+    .user-badge-bar {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 11px;
+    }
+    .history-table th, .history-table td {
+      border: 1px solid #e0e0e0;
+      padding: 6px;
+      text-align: left;
+    }
+    .history-table th { background: #f0f4f8; color: #1b365d; }
+
     @media (max-width: 600px) {
       .grid-4 { grid-template-columns: 1fr 1fr; }
       .grid-2 { grid-template-columns: 1fr; }
@@ -135,12 +160,23 @@
 <body>
 
 <div class="top-bar">
-  <div style="font-weight: bold; font-size: 14px;">☁️ Proyectos Sincronizados (Voz y Datos)</div>
-  <div style="margin-top: 5px;">
-    <select id="select-proyectos" onchange="cargarProyecto(this.value)">
-      <option value="">⏳ Cargando borradores...</option>
-    </select>
+  <div style="font-weight: bold; font-size: 14px;">☁️ Recepción de Voz y Datos</div>
+  
+  <div class="grid-2" style="margin-top: 8px; align-items: end;">
+    <div>
+      <label style="color: #bdd7ee; font-size: 10px; font-weight: bold;">SELECCIONAR BORRADOR:</label>
+      <select id="select-proyectos" onchange="cargarProyecto(this.value)">
+        <option value="">⏳ Cargando borradores...</option>
+      </select>
+    </div>
+    
+    <!-- USUARIO AUTOMÁTICO DESDE SESIÓN -->
+    <div class="user-badge-bar">
+      <span>👤 Usuario activo:</span>
+      <strong id="lbl-sesion-usuario" style="color: #ffcc80;">Cargando...</strong>
+    </div>
   </div>
+
   <div class="top-bar-controls">
     <button class="btn btn-save" id="btn-guardar" onclick="guardarProgreso()">💾 Guardar</button>
     <button class="btn btn-delete" id="btn-eliminar" onclick="eliminarDeNube()">🗑️ Eliminar</button>
@@ -159,7 +195,7 @@
     
     <div class="form-group">
       <label>Nombre del Proyecto / Sucursal:</label>
-      <input type="text" id="req-proyecto" placeholder="Ej: GC PALMA TROPICA">
+      <input type="text" id="req-proyecto" placeholder="Ej: GC PALMA TROPICAL">
     </div>
 
     <div class="grid-2">
@@ -212,6 +248,27 @@
     </div>
   </div>
 
+  <!-- HISTORIAL DE REVISIONES -->
+  <div class="card">
+    <details open>
+      <summary style="font-size: 13px; font-weight: bold;">📜 Historial de Cambios por Usuario</summary>
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>Fecha y Hora</th>
+            <th>Usuario Autor</th>
+            <th>Acción / Detalle</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-historial-body">
+          <tr>
+            <td colspan="3" style="text-align: center; color: #888;">Sin historial disponible.</td>
+          </tr>
+        </tbody>
+      </table>
+    </details>
+  </div>
+
 </div>
 
 <script>
@@ -219,7 +276,21 @@
   const API_KEY = "$2a$10$5BDKoNaJb98nczPxrHl1Uuow.tck.XjCTrl6Cc7b.aZ3RbBRtHr4e";
   const URL_NUBE = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
+  let historialGlobal = [];
+  const canvasStates = {};
+
+  // Leer sesión del usuario de forma automática
+  function obtenerUsuarioAutenticado() {
+    return sessionStorage.getItem("synergo_user") || 
+           sessionStorage.getItem("usuario") || 
+           localStorage.getItem("synergo_user") || 
+           "Usuario Autenticado";
+  }
+
   window.onload = function() {
+    document.getElementById('lbl-sesion-usuario').textContent = obtenerUsuarioAutenticado();
+    document.getElementById('req-fecha').valueAsDate = new Date();
+
     generarCamarasPorNumero(null, true);
     cargarProyectosDesdeNube();
     inicializarCanvas('canvas_tecnico');
@@ -248,6 +319,7 @@
       bloques.forEach((b, idx) => {
         const i = idx + 1;
         datosPrevios.push({
+          num: i,
           ubicacion: document.getElementById(`nodo_ubi_${i}`) ? document.getElementById(`nodo_ubi_${i}`).value : '',
           cableado: document.getElementById(`nodo_cabling_${i}`) ? document.getElementById(`nodo_cabling_${i}`).value : '',
           etiquetado: document.getElementById(`nodo_tag_${i}`) ? document.getElementById(`nodo_tag_${i}`).value : '',
@@ -269,6 +341,8 @@
   function crearBloqueNodoHTML(i, info, contenedor) {
     const details = document.createElement('details');
     details.id = `bloque_nodo_${i}`;
+    if (i === 1) details.open = true;
+
     details.innerHTML = `
       <summary>
         Nodo de Red #${i} <span id="resumen_nodo_${i}" style="font-weight:normal; font-size:11px; color:#666;"></span> <span>▼</span>
@@ -336,7 +410,6 @@
     inputCant.value = nuevoTotal;
     crearBloqueNodoHTML(nuevoTotal, {}, contenedor);
     
-    // Abre automáticamente el nuevo nodo agregado
     const nuevoBloque = document.getElementById(`bloque_nodo_${nuevoTotal}`);
     if (nuevoBloque) nuevoBloque.open = true;
   }
@@ -360,9 +433,243 @@
     if (span) span.textContent = ubi ? `(${ubi})` : '';
   }
 
-  /* --- CANVAS DE FIRMAS DIGITALES --- */
-  const canvasStates = {};
+  /* --- COMPARADOR DE CAMBIOS PARA HISTORIAL --- */
+  function generarDetalleCambios(previo, actual) {
+    if (!previo) return "Creación inicial del reporte de recepción Voz y Datos.";
 
+    const cambios = [];
+    if (previo.tecnico !== actual.tecnico && actual.tecnico) cambios.push(`Técnico: "${actual.tecnico}"`);
+    if (previo.fecha !== actual.fecha && actual.fecha) cambios.push(`Fecha: ${actual.fecha}`);
+    if (!previo.firma_tecnico && actual.firma_tecnico) cambios.push("Añadió firma técnico");
+    if (!previo.firma_cliente && actual.firma_cliente) cambios.push("Añadió firma cliente");
+
+    const listaPrevia = previo.nodosLista || [];
+    const listaActual = actual.nodosLista || [];
+
+    let resumenNodos = [];
+
+    listaActual.forEach((nodoAct, idx) => {
+      const nodoPrev = listaPrevia[idx] || {};
+      const tagNodo = nodoAct.ubicacion ? `Nodo #${idx + 1} (${nodoAct.ubicacion})` : `Nodo #${idx + 1}`;
+      const diffs = [];
+
+      if (nodoPrev.ubicacion !== nodoAct.ubicacion && nodoAct.ubicacion && nodoPrev.ubicacion) diffs.push(`Ubicación: "${nodoAct.ubicacion}"`);
+      if (nodoPrev.cableado !== nodoAct.cableado && nodoAct.cableado) diffs.push(`Cableado: ${nodoAct.cableado}`);
+      if (nodoPrev.etiquetado !== nodoAct.etiquetado && nodoAct.etiquetado) diffs.push(`Etiquetado: ${nodoAct.etiquetado}`);
+      if (nodoPrev.limpieza !== nodoAct.limpieza && nodoAct.limpieza) diffs.push(`Limpieza: ${nodoAct.limpieza}`);
+      if (nodoPrev.pruebas !== nodoAct.pruebas && nodoAct.pruebas) diffs.push(`Pruebas: ${nodoAct.pruebas}`);
+      if (nodoPrev.obs !== nodoAct.obs && nodoAct.obs) diffs.push(`Obs: "${nodoAct.obs}"`);
+
+      if (diffs.length > 0) resumenNodos.push(`${tagNodo} [${diffs.join(', ')}]`);
+    });
+
+    if (resumenNodos.length > 0) {
+      if (resumenNodos.length <= 3) {
+        cambios.push(resumenNodos.join('; '));
+      } else {
+        cambios.push(`${resumenNodos.length} nodos actualizados (${resumenNodos.slice(0, 2).join('; ')}...)`);
+      }
+    }
+
+    return cambios.length > 0 ? cambios.join(' | ') : "Guardado sin modificaciones detectadas.";
+  }
+
+  /* --- SINCRO NUBE Y PROYECTOS --- */
+  async function guardarProgreso() {
+    const proyecto = document.getElementById('req-proyecto').value.trim();
+    if (!proyecto) { alert("⚠️ Escribe el Nombre del Proyecto para guardar."); return; }
+
+    const usuario = obtenerUsuarioAutenticado();
+    const btnGuardar = document.getElementById('btn-guardar');
+    btnGuardar.disabled = true;
+    btnGuardar.innerHTML = "⏳ Guardando...";
+
+    const nodosData = [];
+    const total = document.getElementById('contenedor-nodos').querySelectorAll('details').length;
+    
+    for (let i = 1; i <= total; i++) {
+      nodosData.push({
+        num: i,
+        ubicacion: document.getElementById(`nodo_ubi_${i}`) ? document.getElementById(`nodo_ubi_${i}`).value.trim() : '',
+        cableado: document.getElementById(`nodo_cabling_${i}`) ? document.getElementById(`nodo_cabling_${i}`).value : '',
+        etiquetado: document.getElementById(`nodo_tag_${i}`) ? document.getElementById(`nodo_tag_${i}`).value : '',
+        limpieza: document.getElementById(`nodo_clean_${i}`) ? document.getElementById(`nodo_clean_${i}`).value : '',
+        pruebas: document.getElementById(`nodo_test_${i}`) ? document.getElementById(`nodo_test_${i}`).value : '',
+        obs: document.getElementById(`nodo_obs_${i}`) ? document.getElementById(`nodo_obs_${i}`).value.trim() : ''
+      });
+    }
+
+    const estadoFormulario = {
+      proyecto: proyecto,
+      fecha: document.getElementById('req-fecha').value,
+      tecnico: document.getElementById('req-tecnico').value,
+      nombre_tecnico: document.getElementById('nombre_firma_tecnico').value,
+      nombre_cliente: document.getElementById('nombre_firma_cliente').value,
+      firma_tecnico: canvasStates['canvas_tecnico'] || null,
+      firma_cliente: canvasStates['canvas_cliente'] || null,
+      nodosLista: nodosData
+    };
+
+    try {
+      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
+      let data = await res.json();
+      let proyectos = data.record.proyectos || {};
+
+      const versionPrevia = proyectos[`VYD_${proyecto}`] || null;
+      const detalleAccion = generarDetalleCambios(versionPrevia, estadoFormulario);
+
+      const ahora = new Date();
+      const fechaHoraStr = ahora.toLocaleDateString('es-MX') + ' ' + ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+
+      let historialPrevio = (versionPrevia && versionPrevia.historial) ? versionPrevia.historial : [];
+      historialPrevio.unshift({ fecha: fechaHoraStr, usuario: usuario, accion: detalleAccion });
+
+      const estadoFinal = {
+        ...estadoFormulario,
+        tipo: "RECEPCION_VOZ_DATOS",
+        ultimo_editor: usuario,
+        ultima_modificacion: fechaHoraStr,
+        historial: historialPrevio
+      };
+
+      proyectos[`VYD_${proyecto}`] = estadoFinal;
+
+      await fetch(URL_NUBE, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
+        body: JSON.stringify({ proyectos: proyectos })
+      });
+
+      alert(`☁️ Guardado con éxito por ${usuario}.`);
+      await cargarProyectosDesdeNube(`VYD_${proyecto}`);
+    } catch (err) {
+      alert("❌ Error al guardar en el servidor.");
+      console.error(err);
+    } finally {
+      btnGuardar.disabled = false;
+      btnGuardar.innerHTML = "💾 Guardar";
+    }
+  }
+
+  async function cargarProyectosDesdeNube(seleccionado = '') {
+    const select = document.getElementById('select-proyectos');
+    select.innerHTML = '<option value="">⏳ Cargando borradores...</option>';
+
+    try {
+      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
+      let data = await res.json();
+      window.proyectosNube = data.record.proyectos || {};
+
+      select.innerHTML = '<option value="">-- Seleccionar Borrador --</option>';
+      Object.keys(window.proyectosNube).forEach(clave => {
+        let item = window.proyectosNube[clave];
+        if (item.tipo === "RECEPCION_VOZ_DATOS" || clave.startsWith("VYD_")) {
+          let opt = document.createElement('option');
+          opt.value = clave;
+          opt.textContent = item.proyecto || clave.replace("VYD_", "");
+          if (clave === seleccionado) opt.selected = true;
+          select.appendChild(opt);
+        }
+      });
+    } catch (err) {
+      select.innerHTML = '<option value="">❌ Error al cargar borradores</option>';
+    }
+  }
+
+  function cargarProyecto(clave) {
+    if (!clave || !window.proyectosNube) return;
+    const estado = window.proyectosNube[clave];
+    if (!estado) return;
+
+    document.getElementById('req-proyecto').value = estado.proyecto || '';
+    document.getElementById('req-fecha').value = estado.fecha || '';
+    document.getElementById('req-tecnico').value = estado.tecnico || '';
+
+    historialGlobal = estado.historial || [];
+    renderizarTablaHistorial();
+
+    document.getElementById('nombre_firma_tecnico').value = estado.nombre_tecnico || '';
+    cargarImagenEnCanvas('canvas_tecnico', estado.firma_tecnico);
+
+    document.getElementById('nombre_firma_cliente').value = estado.nombre_cliente || '';
+    cargarImagenEnCanvas('canvas_cliente', estado.firma_cliente);
+
+    if (estado.nodosLista && estado.nodosLista.length > 0) {
+      generarCamarasPorNumero(estado.nodosLista, false);
+    }
+  }
+
+  function renderizarTablaHistorial() {
+    const tbody = document.getElementById('tabla-historial-body');
+    if (!historialGlobal || historialGlobal.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #888;">Sin historial disponible.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = historialGlobal.map(item => `
+      <tr>
+        <td style="white-space:nowrap;">${item.fecha || '-'}</td>
+        <td><strong>${item.usuario || 'Anónimo'}</strong></td>
+        <td>${item.accion || 'Edición de datos'}</td>
+      </tr>
+    `).join('');
+  }
+
+  async function eliminarDeNube() {
+    const select = document.getElementById('select-proyectos');
+    const clave = select.value;
+    if (!clave) { alert("⚠️ Selecciona un borrador para eliminar."); return; }
+
+    const nombreMostrar = select.options[select.selectedIndex].text;
+    if (!confirm(`🗑️ ¿Deseas eliminar "${nombreMostrar}"?`)) return;
+
+    const btnEliminar = document.getElementById('btn-eliminar');
+    btnEliminar.disabled = true;
+
+    try {
+      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
+      let data = await res.json();
+      let proyectos = data.record.proyectos || {};
+
+      if (proyectos[clave]) {
+        delete proyectos[clave];
+        await fetch(URL_NUBE, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
+          body: JSON.stringify({ proyectos: proyectos })
+        });
+        alert(`🗑️ Eliminado exitosamente.`);
+        nuevoProyecto();
+        await cargarProyectosDesdeNube();
+      }
+    } catch (e) {
+      alert("⚠️ Error al eliminar.");
+    } finally {
+      btnEliminar.disabled = false;
+    }
+  }
+
+  function nuevoProyecto() {
+    document.getElementById('req-proyecto').value = '';
+    document.getElementById('req-fecha').valueAsDate = new Date();
+    document.getElementById('req-tecnico').value = '';
+
+    historialGlobal = [];
+    renderizarTablaHistorial();
+
+    document.getElementById('nombre_firma_tecnico').value = '';
+    limpiarCanvas('canvas_tecnico');
+
+    document.getElementById('nombre_firma_cliente').value = '';
+    limpiarCanvas('canvas_cliente');
+
+    document.getElementById('cant-camaras').value = 24;
+    generarCamarasPorNumero(null, true);
+    
+    document.getElementById('select-proyectos').value = '';
+  }
+
+  /* --- CANVAS DE FIRMAS DIGITALES --- */
   function inicializarCanvas(idCanvas) {
     const canvas = document.getElementById(idCanvas);
     const ctx = canvas.getContext('2d');
@@ -418,7 +725,7 @@
     const canvas = document.getElementById(idCanvas);
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    canvasStates[idCanvas] = null;
+    delete canvasStates[idCanvas];
   }
 
   function cargarImagenEnCanvas(idCanvas, dataUrl) {
@@ -434,161 +741,6 @@
       };
       img.src = dataUrl;
     }
-  }
-
-  /* --- SINCRO NUBE Y PROYECTOS --- */
-  async function guardarProgreso() {
-    const proyecto = document.getElementById('req-proyecto').value.trim();
-    if (!proyecto) { alert("⚠️ Escribe el Nombre del Proyecto para guardar."); return; }
-
-    const btnGuardar = document.getElementById('btn-guardar');
-    btnGuardar.disabled = true;
-    btnGuardar.innerHTML = "⏳ Guardando...";
-
-    const nodosData = [];
-    const total = document.getElementById('contenedor-nodos').querySelectorAll('details').length;
-    
-    for (let i = 1; i <= total; i++) {
-      nodosData.push({
-        ubicacion: document.getElementById(`nodo_ubi_${i}`) ? document.getElementById(`nodo_ubi_${i}`).value : '',
-        cableado: document.getElementById(`nodo_cabling_${i}`) ? document.getElementById(`nodo_cabling_${i}`).value : '',
-        etiquetado: document.getElementById(`nodo_tag_${i}`) ? document.getElementById(`nodo_tag_${i}`).value : '',
-        limpieza: document.getElementById(`nodo_clean_${i}`) ? document.getElementById(`nodo_clean_${i}`).value : '',
-        pruebas: document.getElementById(`nodo_test_${i}`) ? document.getElementById(`nodo_test_${i}`).value : '',
-        obs: document.getElementById(`nodo_obs_${i}`) ? document.getElementById(`nodo_obs_${i}`).value : ''
-      });
-    }
-
-    const estado = {
-      tipo: "RECEPCION_VOZ_DATOS",
-      proyecto: proyecto,
-      fecha: document.getElementById('req-fecha').value,
-      tecnico: document.getElementById('req-tecnico').value,
-      nombre_tecnico: document.getElementById('nombre_firma_tecnico').value,
-      firma_tecnico: canvasStates['canvas_tecnico'] || null,
-      nombre_cliente: document.getElementById('nombre_firma_cliente').value,
-      firma_cliente: canvasStates['canvas_cliente'] || null,
-      nodosLista: nodosData
-    };
-
-    try {
-      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
-      let data = await res.json();
-      let proyectos = data.record.proyectos || {};
-
-      proyectos[`VYD_${proyecto}`] = estado;
-
-      await fetch(URL_NUBE, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
-        body: JSON.stringify({ proyectos: proyectos })
-      });
-
-      alert(`☁️ Recepción Voz y Datos "${proyecto}" guardada exitosamente.`);
-      await cargarProyectosDesdeNube(`VYD_${proyecto}`);
-    } catch (err) {
-      alert("❌ Error al conectar con la nube.");
-      console.error(err);
-    } finally {
-      btnGuardar.disabled = false;
-      btnGuardar.innerHTML = "💾 Guardar";
-    }
-  }
-
-  async function cargarProyectosDesdeNube(seleccionado = '') {
-    const select = document.getElementById('select-proyectos');
-    select.innerHTML = '<option value="">⏳ Cargando desde la nube...</option>';
-
-    try {
-      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
-      let data = await res.json();
-      window.proyectosNube = data.record.proyectos || {};
-
-      select.innerHTML = '<option value="">-- Cargar Borrador Guardado --</option>';
-      Object.keys(window.proyectosNube).forEach(clave => {
-        let item = window.proyectosNube[clave];
-        if (item.tipo === "RECEPCION_VOZ_DATOS" || clave.startsWith("VYD_")) {
-          let opt = document.createElement('option');
-          opt.value = clave;
-          opt.textContent = item.proyecto || clave.replace("VYD_", "");
-          if (clave === seleccionado) opt.selected = true;
-          select.appendChild(opt);
-        }
-      });
-    } catch (err) {
-      select.innerHTML = '<option value="">❌ Error al cargar borradores</option>';
-    }
-  }
-
-  function cargarProyecto(clave) {
-    if (!clave || !window.proyectosNube) return;
-    const estado = window.proyectosNube[clave];
-    if (!estado) return;
-
-    document.getElementById('req-proyecto').value = estado.proyecto || '';
-    document.getElementById('req-fecha').value = estado.fecha || '';
-    document.getElementById('req-tecnico').value = estado.tecnico || '';
-
-    document.getElementById('nombre_firma_tecnico').value = estado.nombre_tecnico || '';
-    cargarImagenEnCanvas('canvas_tecnico', estado.firma_tecnico);
-
-    document.getElementById('nombre_firma_cliente').value = estado.nombre_cliente || '';
-    cargarImagenEnCanvas('canvas_cliente', estado.firma_cliente);
-
-    if (estado.nodosLista && estado.nodosLista.length > 0) {
-      generarCamarasPorNumero(estado.nodosLista, false);
-    }
-  }
-
-  async function eliminarDeNube() {
-    const select = document.getElementById('select-proyectos');
-    const clave = select.value;
-    if (!clave) { alert("⚠️ Selecciona un borrador para eliminar."); return; }
-
-    const nombreMostrar = select.options[select.selectedIndex].text;
-    if (!confirm(`🗑️ ¿Deseas eliminar "${nombreMostrar}"?`)) return;
-
-    const btnEliminar = document.getElementById('btn-eliminar');
-    btnEliminar.disabled = true;
-
-    try {
-      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
-      let data = await res.json();
-      let proyectos = data.record.proyectos || {};
-
-      if (proyectos[clave]) {
-        delete proyectos[clave];
-        await fetch(URL_NUBE, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
-          body: JSON.stringify({ proyectos: proyectos })
-        });
-        alert(`🗑️ Eliminado exitosamente.`);
-        nuevoProyecto();
-        await cargarProyectosDesdeNube();
-      }
-    } catch (e) {
-      alert("⚠️ Error al eliminar.");
-    } finally {
-      btnEliminar.disabled = false;
-    }
-  }
-
-  function nuevoProyecto() {
-    document.getElementById('req-proyecto').value = '';
-    document.getElementById('req-fecha').value = '';
-    document.getElementById('req-tecnico').value = '';
-
-    document.getElementById('nombre_firma_tecnico').value = '';
-    limpiarCanvas('canvas_tecnico');
-
-    document.getElementById('nombre_firma_cliente').value = '';
-    limpiarCanvas('canvas_cliente');
-
-    document.getElementById('cant-camaras').value = 24;
-    generarCamarasPorNumero(null, true);
-    
-    document.getElementById('select-proyectos').value = '';
   }
 
   function descargarPDF() {
