@@ -1,43 +1,40 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<script>
-  if (sessionStorage.getItem("synergo_auth") !== "true") {
-    window.location.href = "login.html";
-  }
-</script>
-
+  <script>
+    if (sessionStorage.getItem("synergo_auth") !== "true") {
+      window.location.href = "login.html";
+    }
+  </script>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Recepción de Voz y Datos - Visita en Sitio</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 10px; background: #f4f6f9; color: #333; font-size: 13px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 10px; background: #f0f2f5; color: #333; font-size: 13px; }
 
-    /* Barra Superior */
+    /* Header Sticky */
     .top-bar {
       position: sticky;
       top: 0;
       background: #1b365d;
       color: white;
-      padding: 10px;
+      padding: 12px;
       border-radius: 8px;
       z-index: 1000;
       box-shadow: 0 4px 6px rgba(0,0,0,0.15);
       margin-bottom: 15px;
     }
-    .top-bar-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-    .btn { border: none; padding: 10px 12px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 13px; flex: 1; text-align: center; color: white; transition: all 0.2s; }
+    .top-bar-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+    .btn { border: none; padding: 10px 8px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 12px; text-align: center; color: white; transition: background 0.2s; }
     .btn-save { background: #2e7d32; }
-    .btn-save:disabled { background: #81c784; cursor: not-allowed; }
     .btn-delete { background: #e53935; }
-    .btn-delete:disabled { background: #ef9a9a; cursor: not-allowed; }
     .btn-new { background: #555; }
     .btn-pdf { background: #d32f2f; }
-    .btn-clear { background: #757575; padding: 4px 8px; font-size: 11px; margin-top: 4px; }
+    .btn-clear { background: #757575; padding: 6px 10px; font-size: 11px; margin-top: 6px; border-radius: 4px; }
 
-    /* Tarjeta de Avance */
+    /* Indicador de Avance */
     .progress-card {
       background: #fff;
       border: 1px solid #bdd7ee;
@@ -49,7 +46,7 @@
     .progress-bar-container {
       background: #e0e0e0;
       border-radius: 10px;
-      height: 18px;
+      height: 14px;
       width: 100%;
       overflow: hidden;
       margin: 8px 0;
@@ -61,57 +58,100 @@
       transition: width 0.4s ease;
     }
 
-    /* Tabla de Inspección Matriz */
-    .table-inspection {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 8px;
-      font-size: 12px;
-    }
-    .table-inspection th, .table-inspection td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: center;
-    }
-    .table-inspection th { background: #1b365d; color: white; text-align: left; }
-    .table-inspection td:first-child { text-align: left; font-weight: 500; }
-    .table-inspection select { padding: 4px; border-radius: 4px; width: 100%; }
-
-    select, input[type="text"], input[type="date"], textarea { 
-      width: 100%; padding: 7px; border-radius: 6px; border: 1px solid #ccc; font-size: 12px; background: #fff; font-family: inherit;
-    }
-
     .card { background: white; border-radius: 8px; padding: 12px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     .card-title { font-weight: bold; font-size: 14px; color: #1b365d; border-bottom: 2px solid #bdd7ee; padding-bottom: 4px; margin-bottom: 10px; }
     
-    .form-group { margin-bottom: 8px; }
-    .form-group label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 3px; color: #444; text-transform: uppercase; }
+    .form-group { margin-bottom: 10px; }
+    .form-group label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 4px; color: #444; text-transform: uppercase; }
 
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr; gap: 8px; }
+    @media(min-width: 600px) {
+      .grid-2 { grid-template-columns: 1fr 1fr; }
+      .top-bar-controls { grid-template-columns: repeat(4, 1fr); }
+    }
 
-    .user-badge-bar {
-      background: rgba(255, 255, 255, 0.15);
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-size: 12px;
+    input[type="text"], input[type="date"], select, textarea {
+      width: 100%; padding: 9px; border-radius: 6px; border: 1px solid #ccc; font-size: 13px; background: #fff; font-family: inherit;
+    }
+
+    /* Tarjetas de Áreas Móviles */
+    .area-card {
+      border: 1px solid #d0d7de;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .area-header {
+      background: #1b365d;
+      color: white;
+      padding: 10px 12px;
+      font-weight: bold;
+      font-size: 13px;
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 6px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      cursor: pointer;
     }
+    .area-body { padding: 10px; display: flex; flex-direction: column; gap: 12px; }
 
-    .history-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 8px;
+    /* Filas de Ítems en Móvil */
+    .item-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 10px;
+      border: 1px solid #eee;
+      border-radius: 6px;
+      background: #fafafa;
+      transition: border-color 0.2s, background-color 0.2s;
+    }
+    .item-row.item-nocumple {
+      border: 1px solid #e53935;
+      background-color: #ffebee;
+    }
+    .item-row.item-cumple {
+      border: 1px solid #a5d6a7;
+      background-color: #f1f8e9;
+    }
+    .item-label { font-weight: 600; color: #333; font-size: 12px; }
+
+    /* Botones de Selección Táctil */
+    .status-group { display: flex; gap: 4px; }
+    .btn-status {
+      flex: 1;
+      padding: 8px 4px;
+      border: 1px solid #ccc;
+      background: #fff;
+      color: #666;
+      border-radius: 5px;
       font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+      text-align: center;
     }
-    .history-table th, .history-table td {
-      border: 1px solid #e0e0e0;
-      padding: 6px;
-      text-align: left;
+    .btn-status.active-cumple { background: #2e7d32; color: white; border-color: #2e7d32; }
+    .btn-status.active-nocumple { background: #d32f2f; color: white; border-color: #d32f2f; }
+
+    /* Sección Evidencia Foto */
+    .evidencia-box {
+      margin-top: 8px;
+      padding: 8px;
+      background: #fff;
+      border: 1px dashed #d32f2f;
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
-    .history-table th { background: #f0f4f8; color: #1b365d; }
+    .evidencia-preview {
+      max-width: 100%;
+      max-height: 180px;
+      object-fit: contain;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      margin-top: 4px;
+    }
 
     .signature-pad {
       border: 2px dashed #1b365d;
@@ -120,10 +160,13 @@
       touch-action: none;
       width: 100%;
       height: 120px;
-      cursor: crosshair;
     }
 
-    @media print { .top-bar, .progress-card, .btn-clear { display: none; } }
+    .history-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .history-table th, .history-table td { border: 1px solid #e0e0e0; padding: 6px; text-align: left; }
+    .history-table th { background: #f0f4f8; color: #1b365d; }
+
+    @media print { .top-bar, .progress-card, .btn-clear, input[type="file"] { display: none; } }
   </style>
 </head>
 <body>
@@ -131,17 +174,14 @@
 <div class="top-bar">
   <div style="font-weight: bold; font-size: 14px;">☁️ Visita en Sitio - Voz y Datos</div>
   
-  <div class="grid-2" style="margin-top: 8px; align-items: end;">
+  <div class="grid-2" style="margin-top: 8px;">
     <div>
-      <label style="color: #bdd7ee; font-size: 10px; font-weight: bold;">SELECCIONAR BORRADOR:</label>
       <select id="select-proyectos" onchange="cargarProyecto(this.value)">
         <option value="">⏳ Cargando borradores...</option>
       </select>
     </div>
-    
-    <div class="user-badge-bar">
-      <span>👤 Usuario activo:</span>
-      <strong id="lbl-sesion-usuario" style="color: #ffcc80;">Cargando...</strong>
+    <div style="font-size: 11px; color: #bdd7ee; align-self: center;">
+      👤 Usuario: <strong id="lbl-sesion-usuario" style="color: #ffcc80;">Cargando...</strong>
     </div>
   </div>
 
@@ -149,7 +189,7 @@
     <button class="btn btn-save" id="btn-guardar" onclick="guardarProgreso()">💾 Guardar</button>
     <button class="btn btn-delete" id="btn-eliminar" onclick="eliminarDeNube()">🗑️ Eliminar</button>
     <button class="btn btn-new" onclick="nuevoProyecto()">➕ Nuevo</button>
-    <button class="btn btn-pdf" onclick="descargarPDF()">📥 Exportar PDF</button>
+    <button class="btn btn-pdf" onclick="descargarPDF()">📥 PDF</button>
   </div>
 </div>
 
@@ -158,15 +198,15 @@
   <!-- INDICADOR DE AVANCE -->
   <div class="progress-card">
     <div style="display: flex; justify-content: space-between; align-items: center;">
-      <span style="font-weight: bold; color: #1b365d;">📊 Avance de Inspección en Sitio</span>
-      <span id="lbl-porcentaje-avance" style="font-weight: bold; font-size: 16px; color: #2e7d32;">0%</span>
+      <span style="font-weight: bold; color: #1b365d;">📊 Avance de Inspección</span>
+      <span id="lbl-porcentaje-avance" style="font-weight: bold; font-size: 15px; color: #2e7d32;">0%</span>
     </div>
     
     <div class="progress-bar-container">
       <div id="bar-avance-fill" class="progress-bar-fill"></div>
     </div>
 
-    <div style="display: flex; gap: 12px; font-size: 11px; font-weight: bold; margin-top: 6px;">
+    <div style="display: flex; justify-content: space-around; font-size: 11px; font-weight: bold; margin-top: 6px;">
       <span style="color: #2e7d32;">🟢 Cumple: <span id="cnt-cumple">0</span></span>
       <span style="color: #d32f2f;">🔴 No Cumple: <span id="cnt-nocumple">0</span></span>
       <span style="color: #757575;">⚪ Pendientes: <span id="cnt-pendientes">0</span></span>
@@ -175,12 +215,12 @@
 
   <!-- DATOS GENERALES -->
   <div class="card">
-    <div style="text-align: center; font-weight: bold; font-size: 16px; color: #1b365d; margin-bottom: 10px;">
+    <div style="text-align: center; font-weight: bold; font-size: 15px; color: #1b365d; margin-bottom: 10px;">
       RECEPCIÓN DE VOZ Y DATOS - VISITA EN SITIO
     </div>
     
     <div class="form-group">
-      <label>Nombre del Proyecto / Sucursal:</label>
+      <label>Proyecto / Sucursal:</label>
       <input type="text" id="req-proyecto" placeholder="Ej: GC PALMA TROPICAL">
     </div>
 
@@ -196,94 +236,32 @@
     </div>
   </div>
 
-  <!-- MATRIZ SIMPLIFICADA DE INSPECCIÓN EN SITIO -->
+  <!-- SECCIÓN DE INSPECCIÓN POR ÁREAS -->
   <div class="card">
-    <div class="card-title">📌 Matriz Consolidada de Inspección por Áreas</div>
-    
-    <table class="table-inspection">
-      <thead>
-        <tr>
-          <th>Requerimiento / Elemento</th>
-          <th style="width: 18%;">Piso de Venta (TPV)</th>
-          <th style="width: 18%;">Eq. Administrativo</th>
-          <th style="width: 18%;">Publicidad</th>
-          <th style="width: 18%;">Torniquete / WiFi</th>
-        </tr>
-      </thead>
-      <tbody id="body-matriz-inspeccion">
-        <tr>
-          <td>1. Canalización / Registros</td>
-          <td><select class="chk-item" onchange="calcularAvance()"><option value="CUMPLE">CUMPLE</option><option value="NO CUMPLE">NO CUMPLE</option></select></td>
-          <td><select class="chk-item" onchange="calcularAvance()"><option value="CUMPLE">CUMPLE</option><option value="NO CUMPLE">NO CUMPLE</option></select></td>
-          <td><select class="chk-item" onchange="calcularAvance()"><option value="CUMPLE">CUMPLE</option><option value="NO CUMPLE">NO CUMPLE</option></select></td>
-          <td><select class="chk-item" onchange="calcularAvance()"><option value="CUMPLE">CUMPLE</option><option value="NO CUMPLE">NO CUMPLE</option></select></td>
-        </tr>
-        <tr>
-          <td>2. Contacto Doble NO Regulado</td>
-          <td><select class="chk-item" onchange="calcularAvance()"><option value="CUMPLE">CUMPLE</option><option value="NO CUMPLE">NO CUMPLE</option></select></td>
-          <td><select class="chk-item" onchange="calcularAvance()"><option value="CUMPLE">CUMPLE</option><option value="NO CUMPLE">NO CUMPLE</option></select></td>
-          <td><select class="chk-item" onchange="calcularAvance()"><option value="CUMPLE">CUMPLE</option><option value="NO CUMPLE">NO CUMPLE</option></select></td>
-          <td style="color:#aaa; background:#f9f9f9;">N/A</td>
-        </tr>
-        <tr>
-          <td>3. Voltaje Verificado en Contactos</td>
-          <td><select class="chk-item" onchange="calcularAvance()"><option value="CUMPLE">CUMPLE</option><option value="NO CUMPLE">NO CUMPLE</option></select></td>
-          <td><select class="chk-item" onchange="calcularAvance()"><option value="CUMPLE">CUMPLE</option><option value="NO CUMPLE">NO CUMPLE</option></select></td>
-          <td><select class="chk-item" onchange="calcularAvance()"><option value="CUMPLE">CUMPLE</option><option value="NO CUMPLE">NO CUMPLE</option></select></td>
-          <td style="color:#aaa; background:#f9f9f9;">N/A</td>
-        </tr>
-        <tr>
-          <td>4. Pases en los muebles</td>
-          <td><select class="chk-item" onchange="calcularAvance()"><option value="CUMPLE">CUMPLE</option><option value="NO CUMPLE">NO CUMPLE</option></select></td>
-          <td><select class="chk-item" onchange="calcularAvance()"><option value="CUMPLE">CUMPLE</option><option value="NO CUMPLE">NO CUMPLE</option></select></td>
-          <td style="color:#aaa; background:#f9f9f9;">N/A</td>
-          <td style="color:#aaa; background:#f9f9f9;">N/A</td>
-        </tr>
-        <tr>
-          <td>5. Repisa de 90x60 cm mínimo</td>
-          <td style="color:#aaa; background:#f9f9f9;">N/A</td>
-          <td><select class="chk-item" onchange="calcularAvance()"><option value="CUMPLE">CUMPLE</option><option value="NO CUMPLE">NO CUMPLE</option></select></td>
-          <td style="color:#aaa; background:#f9f9f9;">N/A</td>
-          <td style="color:#aaa; background:#f9f9f9;">N/A</td>
-        </tr>
-        <tr>
-          <td>6. Barra de tierra física</td>
-          <td style="color:#aaa; background:#f9f9f9;">N/A</td>
-          <td><select class="chk-item" onchange="calcularAvance()"><option value="CUMPLE">CUMPLE</option><option value="NO CUMPLE">NO CUMPLE</option></select></td>
-          <td style="color:#aaa; background:#f9f9f9;">N/A</td>
-          <td style="color:#aaa; background:#f9f9f9;">N/A</td>
-        </tr>
-        <tr>
-          <td>7. Caja Estanca (300x250x150)</td>
-          <td style="color:#aaa; background:#f9f9f9;">N/A</td>
-          <td style="color:#aaa; background:#f9f9f9;">N/A</td>
-          <td><select class="chk-item" onchange="calcularAvance()"><option value="CUMPLE">CUMPLE</option><option value="NO CUMPLE">NO CUMPLE</option></select></td>
-          <td style="color:#aaa; background:#f9f9f9;">N/A</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="card-title">📌 Inspección por Áreas</div>
+    <div id="contenedor-areas"></div>
 
-    <div class="form-group" style="margin-top: 10px;">
+    <div class="form-group" style="margin-top: 12px;">
       <label>Observaciones de Visita en Sitio:</label>
-      <input type="text" id="obs-matriz" placeholder="Escribir observaciones puntuales o hallazgos...">
+      <input type="text" id="obs-matriz" placeholder="Escribir observaciones generales...">
     </div>
   </div>
 
   <!-- FIRMAS DIGITALES -->
   <div class="card">
-    <div class="card-title">✍️ Firmas Digitales de Recibido</div>
+    <div class="card-title">✍️ Firmas Digitales</div>
     
     <div class="grid-2">
       <div class="form-group">
         <label>Firma Inspector / Synergo:</label>
-        <input type="text" id="nombre_firma_tecnico" placeholder="Nombre completo del inspector" style="margin-bottom: 5px;">
+        <input type="text" id="nombre_firma_tecnico" placeholder="Nombre completo" style="margin-bottom: 5px;">
         <canvas id="canvas_tecnico" class="signature-pad"></canvas>
         <button class="btn btn-clear" onclick="limpiarCanvas('canvas_tecnico')">🧹 Borrar Firma</button>
       </div>
 
       <div class="form-group">
         <label>Firma Recibido / Cliente:</label>
-        <input type="text" id="nombre_firma_cliente" placeholder="Nombre completo de quien recibe" style="margin-bottom: 5px;">
+        <input type="text" id="nombre_firma_cliente" placeholder="Nombre completo" style="margin-bottom: 5px;">
         <canvas id="canvas_cliente" class="signature-pad"></canvas>
         <button class="btn btn-clear" onclick="limpiarCanvas('canvas_cliente')">🧹 Borrar Firma</button>
       </div>
@@ -292,20 +270,18 @@
 
   <!-- HISTORIAL DE CAMBIOS -->
   <div class="card">
-    <details open>
-      <summary style="font-size: 13px; font-weight: bold; cursor: pointer;">📜 Historial de Cambios por Usuario</summary>
-      <table class="history-table">
+    <details>
+      <summary style="font-size: 12px; font-weight: bold; cursor: pointer;">📜 Historial de Cambios</summary>
+      <table class="history-table" style="margin-top: 8px;">
         <thead>
           <tr>
-            <th>Fecha y Hora</th>
-            <th>Usuario Autor</th>
-            <th>Acción / Detalle</th>
+            <th>Fecha</th>
+            <th>Usuario</th>
+            <th>Acción</th>
           </tr>
         </thead>
         <tbody id="tabla-historial-body">
-          <tr>
-            <td colspan="3" style="text-align: center; color: #888;">Sin historial disponible.</td>
-          </tr>
+          <tr><td colspan="3" style="text-align: center; color: #888;">Sin historial.</td></tr>
         </tbody>
       </table>
     </details>
@@ -318,39 +294,221 @@
   const API_KEY = "$2a$10$5BDKoNaJb98nczPxrHl1Uuow.tck.XjCTrl6Cc7b.aZ3RbBRtHr4e";
   const URL_NUBE = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
+  const estructuraAreas = [
+    {
+      id: "tpv",
+      titulo: "🛒 Piso de Venta (TPV)",
+      items: [
+        { id: "tpv_1", texto: "1. Canalización / Registros" },
+        { id: "tpv_2", texto: "2. Contacto Doble NO Regulado" },
+        { id: "tpv_3", texto: "3. Voltaje Verificado en Contactos" },
+        { id: "tpv_4", texto: "4. Pases en los muebles" }
+      ]
+    },
+    {
+      id: "admin",
+      titulo: "🏢 Eq. Administrativo",
+      items: [
+        { id: "admin_1", texto: "1. Canalización / Registros" },
+        { id: "admin_2", texto: "2. Contacto Doble NO Regulado" },
+        { id: "admin_3", texto: "3. Voltaje Verificado en Contactos" },
+        { id: "admin_4", texto: "4. Pases en los muebles" },
+        { id: "admin_5", texto: "5. Repisa de 90x60 cm mínimo" },
+        { id: "admin_6", texto: "6. Barra de tierra física" }
+      ]
+    },
+    {
+      id: "pub",
+      titulo: "📢 Publicidad",
+      items: [
+        { id: "pub_1", texto: "1. Canalización / Registros" },
+        { id: "pub_2", texto: "2. Contacto Doble NO Regulado" },
+        { id: "pub_3", texto: "3. Voltaje Verificado en Contactos" },
+        { id: "pub_7", texto: "7. Caja Estanca (300x250x150)" }
+      ]
+    },
+    {
+      id: "torniquete",
+      titulo: "🌐 Torniquete / WiFi",
+      items: [
+        { id: "tor_1", texto: "1. Canalización / Registros" }
+      ]
+    }
+  ];
+
   let historialGlobal = [];
   const canvasStates = {};
+  const estadoInspeccion = {};
+  const detallesEvidencia = {};
 
   function obtenerUsuarioAutenticado() {
     return sessionStorage.getItem("synergo_user") || 
            sessionStorage.getItem("usuario") || 
            localStorage.getItem("synergo_user") || 
-           "Raul";
+           "Inspector";
   }
 
   window.onload = function() {
     document.getElementById('lbl-sesion-usuario').textContent = obtenerUsuarioAutenticado();
     document.getElementById('req-fecha').valueAsDate = new Date();
 
+    renderizarAreas();
     inicializarCanvas('canvas_tecnico');
     inicializarCanvas('canvas_cliente');
     cargarProyectosDesdeNube();
-    calcularAvance();
   };
 
-  /* --- CÁLCULO DE AVANCE Y MÉTRICAS --- */
-  function calcularAvance() {
-    const selects = document.querySelectorAll('.chk-item');
-    let cumple = 0;
-    let noCumple = 0;
-    let total = selects.length;
+  /* RENDERIZADO CON SOPORTE DE EVIDENCIA DE FOTO */
+  function renderizarAreas() {
+    const contenedor = document.getElementById('contenedor-areas');
+    contenedor.innerHTML = '';
 
-    selects.forEach(s => {
-      if (s.value === 'CUMPLE') cumple++;
-      else if (s.value === 'NO CUMPLE') noCumple++;
+    estructuraAreas.forEach(area => {
+      const card = document.createElement('div');
+      card.className = 'area-card';
+
+      let itemsHTML = area.items.map(item => {
+        const est = estadoInspeccion[item.id] || "CUMPLE";
+        estadoInspeccion[item.id] = est;
+
+        const evidencia = detallesEvidencia[item.id] || { foto: '', obs: '' };
+        const esNoCumple = (est === 'NO CUMPLE');
+        const esCumple = (est === 'CUMPLE');
+
+        return `
+          <div class="item-row ${esNoCumple ? 'item-nocumple' : (esCumple ? 'item-cumple' : '')}" id="row-${item.id}">
+            <span class="item-label">${item.texto}</span>
+            <div class="status-group" data-item="${item.id}">
+              <button type="button" class="btn-status ${esCumple ? 'active-cumple' : ''}" onclick="seleccionarEstado('${item.id}', 'CUMPLE')">CUMPLE</button>
+              <button type="button" class="btn-status ${esNoCumple ? 'active-nocumple' : ''}" onclick="seleccionarEstado('${item.id}', 'NO CUMPLE')">NO CUMPLE</button>
+            </div>
+
+            <!-- EVIDENCIA DE NO CUMPLE -->
+            <div class="evidencia-box" id="box-evidencia-${item.id}" style="display: ${esNoCumple ? 'flex' : 'none'};">
+              <span style="font-size: 11px; font-weight: bold; color: #d32f2f;">📷 Evidencia de Incumplimiento:</span>
+              <input type="file" accept="image/*" capture="environment" onchange="capturarFoto(event, '${item.id}')">
+              
+              <img id="img-prev-${item.id}" class="evidencia-preview" src="${evidencia.foto || ''}" style="display: ${evidencia.foto ? 'block' : 'none'};">
+              
+              <input type="text" id="obs-item-${item.id}" placeholder="Detalle o motivo del fallo..." value="${evidencia.obs || ''}" onchange="guardarObsItem('${item.id}', this.value)">
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      card.innerHTML = `
+        <div class="area-header" onclick="toggleArea('${area.id}')">
+          <span>${area.titulo}</span>
+          <span id="icon-${area.id}">▼</span>
+        </div>
+        <div class="area-body" id="body-${area.id}">
+          ${itemsHTML}
+        </div>
+      `;
+      contenedor.appendChild(card);
     });
 
-    let porcentaje = Math.round(((cumple + noCumple) / total) * 100);
+    calcularAvance();
+  }
+
+  function toggleArea(id) {
+    const body = document.getElementById(`body-${id}`);
+    const icon = document.getElementById(`icon-${id}`);
+    if (body.style.display === "none") {
+      body.style.display = "flex";
+      icon.textContent = "▼";
+    } else {
+      body.style.display = "none";
+      icon.textContent = "▶";
+    }
+  }
+
+  function seleccionarEstado(itemId, estado) {
+    estadoInspeccion[itemId] = estado;
+    
+    const row = document.getElementById(`row-${itemId}`);
+    const evidenciaBox = document.getElementById(`box-evidencia-${itemId}`);
+    const container = document.querySelector(`[data-item="${itemId}"]`);
+
+    if (!container) return;
+
+    const btns = container.querySelectorAll('.btn-status');
+    btns.forEach(btn => btn.classList.remove('active-cumple', 'active-nocumple'));
+    row.classList.remove('item-cumple', 'item-nocumple');
+
+    if (estado === 'CUMPLE') {
+      btns[0].classList.add('active-cumple');
+      row.classList.add('item-cumple');
+      evidenciaBox.style.display = 'none';
+    } else if (estado === 'NO CUMPLE') {
+      btns[1].classList.add('active-nocumple');
+      row.classList.add('item-nocumple');
+      evidenciaBox.style.display = 'flex';
+    }
+
+    calcularAvance();
+  }
+
+  /* CAPTURA Y COMPRESIÓN DE FOTO PARA MÓVIL */
+  function capturarFoto(e, itemId) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      const img = new Image();
+      img.onload = function() {
+        // Redimensionar imagen para no saturar memoria/JSON
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 800;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > MAX_WIDTH) {
+          height = Math.round((height * MAX_WIDTH) / width);
+          width = MAX_WIDTH;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const dataUrlReducida = canvas.toDataURL('image/jpeg', 0.7);
+
+        detallesEvidencia[itemId] = detallesEvidencia[itemId] || {};
+        detallesEvidencia[itemId].foto = dataUrlReducida;
+
+        const imgPrev = document.getElementById(`img-prev-${itemId}`);
+        if (imgPrev) {
+          imgPrev.src = dataUrlReducida;
+          imgPrev.style.display = 'block';
+        }
+      };
+      img.src = evt.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function guardarObsItem(itemId, valor) {
+    detallesEvidencia[itemId] = detallesEvidencia[itemId] || {};
+    detallesEvidencia[itemId].obs = valor;
+  }
+
+  /* CÁLCULO DE AVANCE */
+  function calcularAvance() {
+    let cumple = 0;
+    let noCumple = 0;
+    const keys = Object.keys(estadoInspeccion);
+    const total = keys.length;
+
+    keys.forEach(k => {
+      if (estadoInspeccion[k] === 'CUMPLE') cumple++;
+      if (estadoInspeccion[k] === 'NO CUMPLE') noCumple++;
+    });
+
+    let porcentaje = total > 0 ? Math.round(((cumple + noCumple) / total) * 100) : 0;
 
     document.getElementById('cnt-cumple').textContent = cumple;
     document.getElementById('cnt-nocumple').textContent = noCumple;
@@ -362,7 +520,7 @@
     return { porcentaje, cumple, noCumple };
   }
 
-  /* --- ALMACENAMIENTO EN LA NUBE --- */
+  /* ALMACENAMIENTO EN NUBE */
   async function guardarProgreso() {
     const proyecto = document.getElementById('req-proyecto').value.trim();
     if (!proyecto) { alert("⚠️ Escribe el Nombre del Proyecto."); return; }
@@ -372,13 +530,13 @@
     btnGuardar.disabled = true;
 
     const stats = calcularAvance();
-    const matrizValores = Array.from(document.querySelectorAll('.chk-item')).map(s => s.value);
 
     const estadoFormulario = {
       proyecto: proyecto,
       fecha: document.getElementById('req-fecha').value,
       tecnico: document.getElementById('req-tecnico').value,
-      matrizValores: matrizValores,
+      estadoInspeccion: estadoInspeccion,
+      detallesEvidencia: detallesEvidencia,
       obsMatriz: document.getElementById('obs-matriz').value,
       nombre_tecnico: document.getElementById('nombre_firma_tecnico').value,
       nombre_cliente: document.getElementById('nombre_firma_cliente').value,
@@ -393,11 +551,7 @@
       let proyectos = data.record.proyectos || {};
 
       const versionPrevia = proyectos[`VISITA_${proyecto}`] || null;
-      
-      let detalleAccion = `Guardado con avance del ${stats.porcentaje}% (${stats.cumple} Cumple, ${stats.noCumple} Hallazgos).`;
-      if (estadoFormulario.obsMatriz) {
-        detalleAccion += ` Obs: "${estadoFormulario.obsMatriz}"`;
-      }
+      let detalleAccion = `Guardado con avance del ${stats.porcentaje}% (${stats.cumple} Cumple, ${stats.noCumple} Hallazgos con evidencia).`;
 
       const ahora = new Date();
       const fechaHoraStr = ahora.toLocaleDateString('es-MX') + ' ' + ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
@@ -421,10 +575,10 @@
         body: JSON.stringify({ proyectos: proyectos })
       });
 
-      alert(`☁️ Guardado con éxito por ${usuario}.`);
+      alert(`☁️ Guardado exitosamente.`);
       await cargarProyectosDesdeNube(`VISITA_${proyecto}`);
     } catch (err) {
-      alert("❌ Error al guardar en la nube.");
+      alert("❌ Error al guardar.");
     } finally {
       btnGuardar.disabled = false;
     }
@@ -432,7 +586,7 @@
 
   async function cargarProyectosDesdeNube(seleccionado = '') {
     const select = document.getElementById('select-proyectos');
-    select.innerHTML = '<option value="">⏳ Cargando borradores...</option>';
+    select.innerHTML = '<option value="">⏳ Cargando...</option>';
 
     try {
       let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
@@ -451,7 +605,7 @@
         }
       });
     } catch (err) {
-      select.innerHTML = '<option value="">❌ Error al cargar borradores</option>';
+      select.innerHTML = '<option value="">❌ Error al cargar</option>';
     }
   }
 
@@ -465,12 +619,15 @@
     document.getElementById('req-tecnico').value = estado.tecnico || '';
     document.getElementById('obs-matriz').value = estado.obsMatriz || '';
 
-    if (estado.matrizValores && Array.isArray(estado.matrizValores)) {
-      const selects = document.querySelectorAll('.chk-item');
-      selects.forEach((sel, i) => {
-        if (estado.matrizValores[i]) sel.value = estado.matrizValores[i];
-      });
+    if (estado.estadoInspeccion) {
+      Object.assign(estadoInspeccion, estado.estadoInspeccion);
     }
+
+    if (estado.detallesEvidencia) {
+      Object.assign(detallesEvidencia, estado.detallesEvidencia);
+    }
+
+    renderizarAreas();
 
     historialGlobal = estado.historial || [];
     renderizarTablaHistorial();
@@ -480,22 +637,20 @@
 
     document.getElementById('nombre_firma_cliente').value = estado.nombre_cliente || '';
     cargarImagenEnCanvas('canvas_cliente', estado.firma_cliente);
-
-    calcularAvance();
   }
 
   function renderizarTablaHistorial() {
     const tbody = document.getElementById('tabla-historial-body');
     if (!historialGlobal || historialGlobal.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #888;">Sin historial disponible.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #888;">Sin historial.</td></tr>';
       return;
     }
 
     tbody.innerHTML = historialGlobal.map(item => `
       <tr>
-        <td style="white-space:nowrap;">${item.fecha || '-'}</td>
+        <td>${item.fecha || '-'}</td>
         <td><strong>${item.usuario || 'Anónimo'}</strong></td>
-        <td>${item.accion || 'Edición de datos'}</td>
+        <td>${item.accion || 'Edición'}</td>
       </tr>
     `).join('');
   }
@@ -503,7 +658,7 @@
   async function eliminarDeNube() {
     const select = document.getElementById('select-proyectos');
     const clave = select.value;
-    if (!clave) { alert("⚠️ Selecciona un borrador para eliminar."); return; }
+    if (!clave) { alert("⚠️ Selecciona un borrador."); return; }
 
     if (!confirm("🗑️ ¿Deseas eliminar este borrador?")) return;
 
@@ -519,7 +674,7 @@
           headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
           body: JSON.stringify({ proyectos: proyectos })
         });
-        alert(`🗑️ Eliminado exitosamente.`);
+        alert(`🗑️ Eliminado.`);
         nuevoProyecto();
         await cargarProyectosDesdeNube();
       }
@@ -534,7 +689,9 @@
     document.getElementById('req-tecnico').value = '';
     document.getElementById('obs-matriz').value = '';
 
-    document.querySelectorAll('.chk-item').forEach(s => s.value = 'CUMPLE');
+    Object.keys(estadoInspeccion).forEach(k => estadoInspeccion[k] = "CUMPLE");
+    Object.keys(detallesEvidencia).forEach(k => delete detallesEvidencia[k]);
+    renderizarAreas();
 
     historialGlobal = [];
     renderizarTablaHistorial();
@@ -544,11 +701,10 @@
     document.getElementById('nombre_firma_tecnico').value = '';
     document.getElementById('nombre_firma_cliente').value = '';
 
-    calcularAvance();
     document.getElementById('select-proyectos').value = '';
   }
 
-  /* --- MANEJO DE CANVAS / FIRMAS --- */
+  /* CANVAS Y FIRMAS */
   function inicializarCanvas(idCanvas) {
     const canvas = document.getElementById(idCanvas);
     const ctx = canvas.getContext('2d');
@@ -629,7 +785,7 @@
     const elemento = document.getElementById('formato-app');
 
     const opciones = {
-      margin: 8,
+      margin: 6,
       filename: `Visita_Sitio_${proyecto}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { scale: 2 },
