@@ -317,7 +317,7 @@
   </div>
 
   <!-- Proyectos Guardados en la Nube -->
-  <div class="card">
+  <div class="card" id="card-nube">
     <div class="card-title">☁️ Cargar / Borrador desde Nube</div>
     <div class="form-grid">
       <div class="form-group" style="grid-column: 1 / -1;">
@@ -410,7 +410,7 @@
         <input type="text" id="nombre_firma_tecnico" placeholder="Nombre completo">
         <label style="margin-top: 5px;">Firma Digital</label>
         <canvas id="canvas_tecnico" class="canvas-box"></canvas>
-        <button type="button" class="btn btn-secondary" style="padding: 4px; font-size: 0.75rem; margin-top: 4px;" onclick="limpiarCanvas('canvas_tecnico')">Limpiar Firma</button>
+        <button type="button" class="btn btn-secondary no-pdf" style="padding: 4px; font-size: 0.75rem; margin-top: 4px;" onclick="limpiarCanvas('canvas_tecnico')">Limpiar Firma</button>
       </div>
 
       <div class="form-group">
@@ -418,13 +418,13 @@
         <input type="text" id="nombre_firma_cliente" placeholder="Nombre completo">
         <label style="margin-top: 5px;">Firma Digital</label>
         <canvas id="canvas_cliente" class="canvas-box"></canvas>
-        <button type="button" class="btn btn-secondary" style="padding: 4px; font-size: 0.75rem; margin-top: 4px;" onclick="limpiarCanvas('canvas_cliente')">Limpiar Firma</button>
+        <button type="button" class="btn btn-secondary no-pdf" style="padding: 4px; font-size: 0.75rem; margin-top: 4px;" onclick="limpiarCanvas('canvas_cliente')">Limpiar Firma</button>
       </div>
     </div>
   </div>
 
   <!-- Historial de Modificaciones -->
-  <div class="card">
+  <div class="card" id="card-historial">
     <div class="card-title">📜 Historial de Cambios en Nube</div>
     <table class="table-historial">
       <thead>
@@ -441,7 +441,7 @@
   </div>
 
   <!-- Panel de Acciones -->
-  <div class="actions-panel">
+  <div class="actions-panel no-pdf">
     <button type="button" class="btn btn-success" id="btn-guardar" onclick="guardarProgreso()">💾 Guardar en Nube</button>
     <button type="button" class="btn btn-primary" onclick="descargarPDF()">📥 Exportar PDF</button>
     <button type="button" class="btn btn-warning" onclick="nuevoProyecto()">✨ Nuevo Proyecto</button>
@@ -610,7 +610,7 @@
               </span>
               <input type="text" id="obs-item-${item.id}" placeholder="Escribe tus notas aquí..." value="${evidencia.obs || ''}" onkeyup="guardarObsItem('${item.id}', this.value)" onchange="guardarObsItem('${item.id}', this.value)">
               <span style="font-size: 10px; color: #666; margin-top: 2px;">📷 Adjuntar Foto (En la nube):</span>
-              <input type="file" accept="image/*" capture="environment" onchange="capturarFoto(event, '${item.id}')">
+              <input type="file" accept="image/*" capture="environment" class="no-pdf" onchange="capturarFoto(event, '${item.id}')">
               <span id="estado-foto-${item.id}" class="estado-subida-foto"></span>
               <img id="img-prev-${item.id}" class="evidencia-preview" src="${evidencia.foto || ''}" style="display: ${evidencia.foto ? 'block' : 'none'};">
             </div>
@@ -976,64 +976,43 @@
     if (!confirm("🗑️ ¿Deseas eliminar permanentemente este proyecto de la nube?")) return;
 
     try {
-      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
+      let res = await fetch(URL_NUBE, {
+        headers: { "X-Master-Key": API_KEY, "Cache-Control": "no-cache" }
+      });
+      if (!res.ok) throw new Error("Error al consultar servidor.");
+      
       let data = await res.json();
       let proyectos = (data && data.record && data.record.proyectos) ? data.record.proyectos : {};
 
-      if (proyectos[clave]) {
-        delete proyectos[clave];
-        await fetch(URL_NUBE, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
-          body: JSON.stringify({ proyectos: proyectos })
-        });
-        alert(`🗑️ Eliminado permanentemente de la nube.`);
-        nuevoProyecto();
-        await cargarProyectosDesdeNube();
-      }
-    } catch (e) {
-      alert("⚠️ Error al comunicarse con el servidor para eliminar.");
+      delete proyectos[clave];
+
+      let resPut = await fetch(URL_NUBE, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
+        body: JSON.stringify({ proyectos: proyectos })
+      });
+
+      if (!resPut.ok) throw new Error("Error al actualizar la nube.");
+
+      alert("🗑️ Proyecto eliminado con éxito.");
+      nuevoProyecto();
+      await cargarProyectosDesdeNube();
+    } catch (err) {
+      alert(`❌ No se pudo eliminar de la nube: ${err.message}`);
     }
   }
 
-  function nuevoProyecto() {
-    document.getElementById('req-proyecto').value = '';
-    document.getElementById('req-fecha').valueAsDate = new Date();
-    document.getElementById('req-tecnico').value = '';
-    document.getElementById('obs-matriz').value = '';
-
-    const chkEnlace = document.getElementById('chk-aplica-enlace');
-    chkEnlace.checked = false;
-    toggleEnlaceEstacion(false);
-
-    Object.keys(estadoInspeccion).forEach(k => estadoInspeccion[k] = "CUMPLE");
-    Object.keys(detallesEvidencia).forEach(k => delete detallesEvidencia[k]);
-    renderizarAreas();
-
-    historialGlobal = [];
-    renderizarTablaHistorial();
-
-    limpiarCanvas('canvas_tecnico');
-    limpiarCanvas('canvas_cliente');
-    document.getElementById('nombre_firma_tecnico').value = '';
-    document.getElementById('nombre_firma_cliente').value = '';
-
-    document.getElementById('select-proyectos').value = '';
-  }
-
-  function inicializarCanvas(idCanvas) {
-    const canvas = document.getElementById(idCanvas);
+  /* --- CONTROLADORES DE CANVAS PARA FIRMAS --- */
+  function inicializarCanvas(id) {
+    const canvas = document.getElementById(id);
     if (!canvas) return;
-
     const ctx = canvas.getContext('2d');
-    let dibujando = false;
 
+    // Configurar dimensión real acorde al CSS
     canvas.width = canvas.offsetWidth || 300;
     canvas.height = canvas.offsetHeight || 120;
 
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = '#1b365d';
+    let dibujando = false;
 
     function obtenerPosicion(e) {
       const rect = canvas.getBoundingClientRect();
@@ -1045,77 +1024,126 @@
       };
     }
 
-    function empezarTrazo(e) {
+    function empezarDibujo(e) {
       dibujando = true;
       const pos = obtenerPosicion(e);
       ctx.beginPath();
       ctx.moveTo(pos.x, pos.y);
+      e.preventDefault();
     }
 
-    function dibujar(e) {
+    function moverDibujo(e) {
       if (!dibujando) return;
-      e.preventDefault();
       const pos = obtenerPosicion(e);
       ctx.lineTo(pos.x, pos.y);
+      ctx.strokeStyle = "#000";
+      ctx.lineWidth = 2;
+      ctx.lineCap = "round";
       ctx.stroke();
+      e.preventDefault();
     }
 
-    function detenerTrazo() {
+    function terminarDibujo() {
       if (dibujando) {
         dibujando = false;
-        canvasStates[idCanvas] = canvas.toDataURL();
+        canvasStates[id] = canvas.toDataURL();
       }
     }
 
-    canvas.addEventListener('mousedown', empezarTrazo);
-    canvas.addEventListener('mousemove', dibujar);
-    canvas.addEventListener('mouseup', detenerTrazo);
-    canvas.addEventListener('mouseleave', detenerTrazo);
+    canvas.addEventListener('mousedown', empezarDibujo);
+    canvas.addEventListener('mousemove', moverDibujo);
+    window.addEventListener('mouseup', terminarDibujo);
 
-    canvas.addEventListener('touchstart', empezarTrazo, { passive: false });
-    canvas.addEventListener('touchmove', dibujar, { passive: false });
-    canvas.addEventListener('touchend', detenerTrazo);
+    canvas.addEventListener('touchstart', empezarDibujo);
+    canvas.addEventListener('touchmove', moverDibujo);
+    canvas.addEventListener('touchend', terminarDibujo);
   }
 
-  function limpiarCanvas(idCanvas) {
-    const canvas = document.getElementById(idCanvas);
+  function limpiarCanvas(id) {
+    const canvas = document.getElementById(id);
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    delete canvasStates[idCanvas];
+    canvasStates[id] = null;
   }
 
-  function cargarImagenEnCanvas(idCanvas, dataUrl) {
-    if (!dataUrl) {
-      limpiarCanvas(idCanvas);
-      return;
-    }
-    const canvas = document.getElementById(idCanvas);
+  function cargarImagenEnCanvas(id, dataUrl) {
+    const canvas = document.getElementById(id);
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (!dataUrl) {
+      canvasStates[id] = null;
+      return;
+    }
+
     const img = new Image();
     img.onload = function() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      canvasStates[idCanvas] = dataUrl;
+      canvasStates[id] = dataUrl;
     };
     img.src = dataUrl;
   }
 
+  /* --- MÉTODOS DE SOPORTE GENERAL --- */
+  function nuevoProyecto() {
+    document.getElementById('req-proyecto').value = '';
+    document.getElementById('req-fecha').valueAsDate = new Date();
+    document.getElementById('req-tecnico').value = '';
+    document.getElementById('obs-matriz').value = '';
+    document.getElementById('nombre_firma_tecnico').value = '';
+    document.getElementById('nombre_firma_cliente').value = '';
+
+    const chkEnlace = document.getElementById('chk-aplica-enlace');
+    chkEnlace.checked = false;
+    toggleEnlaceEstacion(false);
+
+    Object.keys(estadoInspeccion).forEach(k => delete estadoInspeccion[k]);
+    Object.keys(detallesEvidencia).forEach(k => delete detallesEvidencia[k]);
+
+    limpiarCanvas('canvas_tecnico');
+    limpiarCanvas('canvas_cliente');
+
+    historialGlobal = [];
+    renderizarTablaHistorial();
+    renderizarAreas();
+
+    const select = document.getElementById('select-proyectos');
+    if (select) select.value = '';
+  }
+
   function descargarPDF() {
+    const proyecto = document.getElementById('req-proyecto').value || 'Informe_Inspeccion';
     const elemento = document.getElementById('formato-app');
-    const proyecto = document.getElementById('req-proyecto').value || 'Visita_Sitio';
+
+    // Desplegar todas las secciones para que aparezcan completas en el PDF
+    estructuraAreas.forEach(area => {
+      const body = document.getElementById(`body-${area.id}`);
+      if (body) body.style.display = 'flex';
+    });
+
+    // Ocultar elementos de control de pantalla no deseados en impresión
+    const elementosOcultos = document.querySelectorAll('.no-pdf, #card-nube, #card-historial');
+    elementosOcultos.forEach(el => el.style.display = 'none');
 
     const opciones = {
-      margin: 10,
-      filename: `Visita_Sitio_${proyecto.replace(/\s+/g, '_')}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      margin:       10,
+      filename:     `${proyecto.replace(/\s+/g, '_')}_Inspeccion.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    html2pdf().set(opciones).from(elemento).save();
+    html2pdf().set(opciones).from(elemento).save().then(() => {
+      // Restaurar visibilidad
+      elementosOcultos.forEach(el => el.style.display = '');
+    }).catch(err => {
+      console.error("Error exportando PDF:", err);
+      elementosOcultos.forEach(el => el.style.display = '');
+    });
   }
 </script>
+
 </body>
 </html>
