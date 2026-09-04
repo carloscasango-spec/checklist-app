@@ -430,6 +430,7 @@
     calcularAvance();
   }
 
+  // Reducción agresiva de tamaño de imagen para no saturar los 100KB de JSONBin
   function capturarFoto(e, itemId) {
     const file = e.target.files[0];
     if (!file) return;
@@ -439,7 +440,7 @@
       const img = new Image();
       img.onload = function() {
         const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 600;
+        const MAX_WIDTH = 400; // Ancho reducido
         let width = img.width;
         let height = img.height;
 
@@ -454,7 +455,8 @@
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
 
-        const dataUrlReducida = canvas.toDataURL('image/jpeg', 0.5);
+        // Calidad muy baja (0.3) para mantener el JSON comprimido al máximo
+        const dataUrlReducida = canvas.toDataURL('image/jpeg', 0.3);
 
         detallesEvidencia[itemId] = detallesEvidencia[itemId] || {};
         detallesEvidencia[itemId].foto = dataUrlReducida;
@@ -524,6 +526,15 @@
 
     const stats = calcularAvance();
 
+    // Limpiar evidencia vacía para liberar bytes
+    const detallesOptimizados = {};
+    Object.keys(detallesEvidencia).forEach(k => {
+      const item = detallesEvidencia[k];
+      if ((item && item.obs) || (item && item.foto)) {
+        detallesOptimizados[k] = item;
+      }
+    });
+
     const estadoFormulario = {
       proyecto: proyecto,
       fecha: document.getElementById('req-fecha').value,
@@ -532,7 +543,7 @@
       enlaceProveedor: document.getElementById('enlace-proveedor').value,
       enlaceIp: document.getElementById('enlace-ip').value,
       estadoInspeccion: estadoInspeccion,
-      detallesEvidencia: detallesEvidencia,
+      detallesEvidencia: detallesOptimizados,
       obsMatriz: document.getElementById('obs-matriz').value,
       nombre_tecnico: document.getElementById('nombre_firma_tecnico').value,
       nombre_cliente: document.getElementById('nombre_firma_cliente').value,
@@ -540,6 +551,9 @@
       firma_cliente: canvasStates['canvas_cliente'] || null,
       avancePorcentaje: stats.porcentaje
     };
+
+    // Guardado local de respaldo automático
+    localStorage.setItem(`VISITA_LOCAL_${proyecto}`, JSON.stringify(estadoFormulario));
 
     try {
       let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
@@ -554,6 +568,9 @@
 
       let historialPrevio = (versionPrevia && versionPrevia.historial) ? versionPrevia.historial : [];
       historialPrevio.unshift({ fecha: fechaHoraStr, usuario: usuario, accion: detalleAccion });
+
+      // Limitar el historial máximo a los últimos 5 registros para liberar espacio
+      if (historialPrevio.length > 5) historialPrevio = historialPrevio.slice(0, 5);
 
       const estadoFinal = {
         ...estadoFormulario,
@@ -576,10 +593,10 @@
         throw new Error(errData.message || "Error al actualizar la nube.");
       }
 
-      alert(`☁️ Guardado exitosamente.`);
+      alert(`☁️ Guardado exitosamente en la nube.`);
       await cargarProyectosDesdeNube(`VISITA_${proyecto}`);
     } catch (err) {
-      alert(`❌ Error al guardar en la nube:\n${err.message}`);
+      alert(`⚠️ Advertencia de peso:\n${err.message}\n\n✅ Tu información ha sido guardada en el ALMACENAMIENTO LOCAL de este dispositivo. Puedes generar tu PDF con normalidad.`);
     } finally {
       btnGuardar.disabled = false;
       btnGuardar.textContent = "💾 Guardar";
@@ -624,8 +641,19 @@
   }
 
   function cargarProyecto(clave) {
-    if (!clave || !window.proyectosNube) return;
-    const estado = window.proyectosNube[clave];
+    if (!clave && !window.proyectosNube) return;
+    
+    let estado = window.proyectosNube ? window.proyectosNube[clave] : null;
+
+    // Fallback al localStorage en caso de no encontrarse en la nube
+    if (!estado) {
+      const nombreProyecto = clave.replace("VISITA_", "");
+      const localData = localStorage.getItem(`VISITA_LOCAL_${nombreProyecto}`);
+      if (localData) {
+        estado = JSON.parse(localData);
+      }
+    }
+
     if (!estado) return;
 
     document.getElementById('req-proyecto').value = estado.proyecto || '';
@@ -697,12 +725,12 @@
           headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
           body: JSON.stringify({ proyectos: proyectos })
         });
-        alert(`🗑️ Eliminado.`);
+        alert(`🗑️ Eliminado de la nube.`);
         nuevoProyecto();
         await cargarProyectosDesdeNube();
       }
     } catch (e) {
-      alert("⚠️ Error al eliminar.");
+      alert("⚠️ Error al eliminar de la nube.");
     }
   }
 
