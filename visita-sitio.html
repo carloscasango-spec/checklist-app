@@ -96,7 +96,7 @@
     }
     .area-body { padding: 10px; display: flex; flex-direction: column; gap: 12px; }
 
-    /* Filas de Ítems en Móvil */
+    /* Filas de Ítems en Móvil con 3 Estados */
     .item-row {
       display: flex;
       flex-direction: column;
@@ -110,6 +110,10 @@
     .item-row.item-nocumple {
       border: 1px solid #e53935;
       background-color: #ffebee;
+    }
+    .item-row.item-observacion {
+      border: 1px solid #f57c00;
+      background-color: #fffde7;
     }
     .item-row.item-cumple {
       border: 1px solid #a5d6a7;
@@ -132,6 +136,7 @@
       text-align: center;
     }
     .btn-status.active-cumple { background: #2e7d32; color: white; border-color: #2e7d32; }
+    .btn-status.active-observacion { background: #f57c00; color: white; border-color: #f57c00; }
     .btn-status.active-nocumple { background: #d32f2f; color: white; border-color: #d32f2f; }
 
     /* Sección Evidencia Foto */
@@ -139,7 +144,7 @@
       margin-top: 8px;
       padding: 8px;
       background: #fff;
-      border: 1px dashed #d32f2f;
+      border: 1px dashed #ccc;
       border-radius: 6px;
       display: flex;
       flex-direction: column;
@@ -196,7 +201,6 @@
 
 <div id="formato-app">
 
-  <!-- INDICADOR DE AVANCE -->
   <div class="progress-card">
     <div style="display: flex; justify-content: space-between; align-items: center;">
       <span style="font-weight: bold; color: #1b365d;">📊 Avance de Inspección</span>
@@ -209,12 +213,12 @@
 
     <div style="display: flex; justify-content: space-around; font-size: 11px; font-weight: bold; margin-top: 6px;">
       <span style="color: #2e7d32;">🟢 Cumple: <span id="cnt-cumple">0</span></span>
+      <span style="color: #f57c00;">🟡 Observación: <span id="cnt-observacion">0</span></span>
       <span style="color: #d32f2f;">🔴 No Cumple: <span id="cnt-nocumple">0</span></span>
       <span style="color: #757575;">⚪ Pendientes: <span id="cnt-pendientes">0</span></span>
     </div>
   </div>
 
-  <!-- DATOS GENERALES -->
   <div class="card">
     <div style="text-align: center; font-weight: bold; font-size: 15px; color: #1b365d; margin-bottom: 10px;">
       RECEPCIÓN DE VOZ Y DATOS - VISITA EN SITIO
@@ -237,7 +241,33 @@
     </div>
   </div>
 
-  <!-- SECCIÓN DE INSPECCIÓN POR ÁREAS -->
+  <div class="card" style="border: 1px solid #1b365d;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #bdd7ee; padding-bottom: 6px; margin-bottom: 12px;">
+      <div style="font-weight: bold; font-size: 14px; color: #1b365d;">⛽ Enlace Estación</div>
+      <label style="font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #1b365d;">
+        <input type="checkbox" id="chk-aplica-enlace" onchange="toggleEnlaceEstacion(this.checked)" style="transform: scale(1.2); cursor: pointer;">
+        Aplica Enlace Estación
+      </label>
+    </div>
+
+    <div id="contenedor-enlace-estacion" style="opacity: 0.5; pointer-events: none; transition: all 0.3s ease;">
+      <div id="msg-no-aplica-enlace" style="background: #fff3cd; color: #856404; padding: 8px 12px; border-radius: 6px; font-size: 12px; margin-bottom: 12px;">
+        ⚠️ Esta opción está marcada como <strong>NO APLICA</strong>. Activa la casilla superior para habilitar sus campos.
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Proveedor / Tipo Enlace:</label>
+          <input type="text" class="input-enlace" id="enlace-proveedor" placeholder="Ej: Telmex, Izzi, Microondas" disabled>
+        </div>
+        <div class="form-group">
+          <label>IP / Referencia:</label>
+          <input type="text" class="input-enlace" id="enlace-ip" placeholder="Ej: 192.168.1.1" disabled>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="card">
     <div class="card-title">📌 Inspección por Áreas</div>
     <div id="contenedor-areas"></div>
@@ -248,7 +278,6 @@
     </div>
   </div>
 
-  <!-- FIRMAS DIGITALES -->
   <div class="card">
     <div class="card-title">✍️ Firmas Digitales</div>
     
@@ -269,7 +298,6 @@
     </div>
   </div>
 
-  <!-- HISTORIAL DE CAMBIOS -->
   <div class="card">
     <details>
       <summary style="font-size: 12px; font-weight: bold; cursor: pointer;">📜 Historial de Cambios</summary>
@@ -334,10 +362,20 @@
       items: [
         { id: "tor_1", texto: "1. Canalización / Registros" }
       ]
+    },
+    {
+      id: "enlace_sec",
+      titulo: "⛽ Enlace Estación (Inspección Física)",
+      esEnlace: true,
+      items: [
+        { id: "enlace_1", texto: "1. Canalización / Cableado de Enlace" },
+        { id: "enlace_2", texto: "2. Antena / Módulos de Comunicación" }
+      ]
     }
   ];
 
   let historialGlobal = [];
+  let aplicaEnlaceEstacion = false;
   const canvasStates = {};
   const estadoInspeccion = {};
   const detallesEvidencia = {};
@@ -345,473 +383,4 @@
   function obtenerUsuarioAutenticado() {
     return sessionStorage.getItem("synergo_user") || 
            sessionStorage.getItem("usuario") || 
-           localStorage.getItem("synergo_user") || 
-           "Inspector";
-  }
-
-  window.onload = function() {
-    document.getElementById('lbl-sesion-usuario').textContent = obtenerUsuarioAutenticado();
-    document.getElementById('req-fecha').valueAsDate = new Date();
-
-    renderizarAreas();
-    inicializarCanvas('canvas_tecnico');
-    inicializarCanvas('canvas_cliente');
-    cargarProyectosDesdeNube();
-  };
-
-  /* RENDERIZADO CON SINCRONIZACIÓN DE MEMORIA DE FOTOS */
-  function renderizarAreas() {
-    const contenedor = document.getElementById('contenedor-areas');
-    contenedor.innerHTML = '';
-
-    estructuraAreas.forEach(area => {
-      const card = document.createElement('div');
-      card.className = 'area-card';
-
-      let itemsHTML = area.items.map(item => {
-        const est = estadoInspeccion[item.id] || "CUMPLE";
-        estadoInspeccion[item.id] = est;
-
-        // Asegurar que la estructura en memoria existe
-        detallesEvidencia[item.id] = detallesEvidencia[item.id] || { foto: '', obs: '' };
-        const evidencia = detallesEvidencia[item.id];
-
-        const esNoCumple = (est === 'NO CUMPLE');
-        const esCumple = (est === 'CUMPLE');
-
-        return `
-          <div class="item-row ${esNoCumple ? 'item-nocumple' : (esCumple ? 'item-cumple' : '')}" id="row-${item.id}">
-            <span class="item-label">${item.texto}</span>
-            <div class="status-group" data-item="${item.id}">
-              <button type="button" class="btn-status ${esCumple ? 'active-cumple' : ''}" onclick="seleccionarEstado('${item.id}', 'CUMPLE')">CUMPLE</button>
-              <button type="button" class="btn-status ${esNoCumple ? 'active-nocumple' : ''}" onclick="seleccionarEstado('${item.id}', 'NO CUMPLE')">NO CUMPLE</button>
-            </div>
-
-            <!-- EVIDENCIA DE NO CUMPLE -->
-            <div class="evidencia-box" id="box-evidencia-${item.id}" style="display: ${esNoCumple ? 'flex' : 'none'};">
-              <span style="font-size: 11px; font-weight: bold; color: #d32f2f;">📷 Evidencia de Incumplimiento:</span>
-              <input type="file" accept="image/*" capture="environment" onchange="capturarFoto(event, '${item.id}')">
-              
-              <img id="img-prev-${item.id}" class="evidencia-preview" src="${evidencia.foto || ''}" style="display: ${evidencia.foto ? 'block' : 'none'};">
-              
-              <input type="text" id="obs-item-${item.id}" placeholder="Detalle o motivo del fallo..." value="${evidencia.obs || ''}" onkeyup="guardarObsItem('${item.id}', this.value)" onchange="guardarObsItem('${item.id}', this.value)">
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      card.innerHTML = `
-        <div class="area-header" onclick="toggleArea('${area.id}')">
-          <span>${area.titulo}</span>
-          <span id="icon-${area.id}">▼</span>
-        </div>
-        <div class="area-body" id="body-${area.id}">
-          ${itemsHTML}
-        </div>
-      `;
-      contenedor.appendChild(card);
-    });
-
-    calcularAvance();
-  }
-
-  function toggleArea(id) {
-    const body = document.getElementById(`body-${id}`);
-    const icon = document.getElementById(`icon-${id}`);
-    if (body.style.display === "none") {
-      body.style.display = "flex";
-      icon.textContent = "▼";
-    } else {
-      body.style.display = "none";
-      icon.textContent = "▶";
-    }
-  }
-
-  function seleccionarEstado(itemId, estado) {
-    estadoInspeccion[itemId] = estado;
-    
-    const row = document.getElementById(`row-${itemId}`);
-    const evidenciaBox = document.getElementById(`box-evidencia-${itemId}`);
-    const container = document.querySelector(`[data-item="${itemId}"]`);
-
-    if (!container) return;
-
-    const btns = container.querySelectorAll('.btn-status');
-    btns.forEach(btn => btn.classList.remove('active-cumple', 'active-nocumple'));
-    row.classList.remove('item-cumple', 'item-nocumple');
-
-    if (estado === 'CUMPLE') {
-      btns[0].classList.add('active-cumple');
-      row.classList.add('item-cumple');
-      evidenciaBox.style.display = 'none';
-    } else if (estado === 'NO CUMPLE') {
-      btns[1].classList.add('active-nocumple');
-      row.classList.add('item-nocumple');
-      evidenciaBox.style.display = 'flex';
-    }
-
-    calcularAvance();
-  }
-
-  /* COMPRESIÓN AGRESIVA PARA MÓVIL (MÁX 600PX, JPG QUALITY 0.5) */
-  function capturarFoto(e, itemId) {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(evt) {
-      const img = new Image();
-      img.onload = function() {
-        const canvas = document.createElement('canvas');
-        
-        // Reducción estricta para garantizar bajo consumo de KB
-        const MAX_WIDTH = 600;
-        let width = img.width;
-        let height = img.height;
-
-        if (width > MAX_WIDTH) {
-          height = Math.round((height * MAX_WIDTH) / width);
-          width = MAX_WIDTH;
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-
-        // Compresión agresiva JPEG 0.5 (~30-50KB por imagen)
-        const dataUrlReducida = canvas.toDataURL('image/jpeg', 0.5);
-
-        detallesEvidencia[itemId] = detallesEvidencia[itemId] || {};
-        detallesEvidencia[itemId].foto = dataUrlReducida;
-
-        const imgPrev = document.getElementById(`img-prev-${itemId}`);
-        if (imgPrev) {
-          imgPrev.src = dataUrlReducida;
-          imgPrev.style.display = 'block';
-        }
-      };
-      img.src = evt.target.result;
-    };
-    reader.readAsDataURL(file);
-  }
-
-  function guardarObsItem(itemId, valor) {
-    detallesEvidencia[itemId] = detallesEvidencia[itemId] || {};
-    detallesEvidencia[itemId].obs = valor;
-  }
-
-  /* CÁLCULO DE AVANCE */
-  function calcularAvance() {
-    let cumple = 0;
-    let noCumple = 0;
-    const keys = Object.keys(estadoInspeccion);
-    const total = keys.length;
-
-    keys.forEach(k => {
-      if (estadoInspeccion[k] === 'CUMPLE') cumple++;
-      if (estadoInspeccion[k] === 'NO CUMPLE') noCumple++;
-    });
-
-    let porcentaje = total > 0 ? Math.round(((cumple + noCumple) / total) * 100) : 0;
-
-    document.getElementById('cnt-cumple').textContent = cumple;
-    document.getElementById('cnt-nocumple').textContent = noCumple;
-    document.getElementById('cnt-pendientes').textContent = total - (cumple + noCumple);
-    
-    document.getElementById('lbl-porcentaje-avance').textContent = porcentaje + '%';
-    document.getElementById('bar-avance-fill').style.width = porcentaje + '%';
-
-    return { porcentaje, cumple, noCumple };
-  }
-
-  /* ALMACENAMIENTO CON CONTROL DE ERRORES EXPLÍCITO */
-  async function guardarProgreso() {
-    const proyecto = document.getElementById('req-proyecto').value.trim();
-    if (!proyecto) { alert("⚠️ Escribe el Nombre del Proyecto."); return; }
-
-    const usuario = obtenerUsuarioAutenticado();
-    const btnGuardar = document.getElementById('btn-guardar');
-    btnGuardar.disabled = true;
-    btnGuardar.textContent = "⏳ Guardando...";
-
-    const stats = calcularAvance();
-
-    const estadoFormulario = {
-      proyecto: proyecto,
-      fecha: document.getElementById('req-fecha').value,
-      tecnico: document.getElementById('req-tecnico').value,
-      estadoInspeccion: estadoInspeccion,
-      detallesEvidencia: detallesEvidencia,
-      obsMatriz: document.getElementById('obs-matriz').value,
-      nombre_tecnico: document.getElementById('nombre_firma_tecnico').value,
-      nombre_cliente: document.getElementById('nombre_firma_cliente').value,
-      firma_tecnico: canvasStates['canvas_tecnico'] || null,
-      firma_cliente: canvasStates['canvas_cliente'] || null,
-      avancePorcentaje: stats.porcentaje
-    };
-
-    try {
-      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
-      let data = await res.json();
-      let proyectos = data.record.proyectos || {};
-
-      const versionPrevia = proyectos[`VISITA_${proyecto}`] || null;
-      let detalleAccion = `Guardado con avance del ${stats.porcentaje}% (${stats.cumple} Cumple, ${stats.noCumple} Hallazgos).`;
-
-      const ahora = new Date();
-      const fechaHoraStr = ahora.toLocaleDateString('es-MX') + ' ' + ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-
-      let historialPrevio = (versionPrevia && versionPrevia.historial) ? versionPrevia.historial : [];
-      historialPrevio.unshift({ fecha: fechaHoraStr, usuario: usuario, accion: detalleAccion });
-
-      const estadoFinal = {
-        ...estadoFormulario,
-        tipo: "VISITA_SITIO",
-        ultimo_editor: usuario,
-        ultima_modificacion: fechaHoraStr,
-        historial: historialPrevio
-      };
-
-      proyectos[`VISITA_${proyecto}`] = estadoFinal;
-
-      let resPut = await fetch(URL_NUBE, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
-        body: JSON.stringify({ proyectos: proyectos })
-      });
-
-      if (!resPut.ok) {
-        let errData = await resPut.json();
-        throw new Error(errData.message || "Límite de tamaño alcanzado en JSONBin.");
-      }
-
-      alert(`☁️ Guardado exitosamente.`);
-      await cargarProyectosDesdeNube(`VISITA_${proyecto}`);
-    } catch (err) {
-      alert(`❌ Error al guardar en la nube:\n${err.message}\n\nPrueba reduciendo o borrando alguna foto si el problema persiste.`);
-    } finally {
-      btnGuardar.disabled = false;
-      btnGuardar.textContent = "💾 Guardar";
-    }
-  }
-
-  async function cargarProyectosDesdeNube(seleccionado = '') {
-    const select = document.getElementById('select-proyectos');
-    select.innerHTML = '<option value="">⏳ Cargando...</option>';
-
-    try {
-      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
-      let data = await res.json();
-      window.proyectosNube = data.record.proyectos || {};
-
-      select.innerHTML = '<option value="">-- Seleccionar Borrador --</option>';
-      Object.keys(window.proyectosNube).forEach(clave => {
-        let item = window.proyectosNube[clave];
-        if (item.tipo === "VISITA_SITIO" || clave.startsWith("VISITA_")) {
-          let opt = document.createElement('option');
-          opt.value = clave;
-          opt.textContent = item.proyecto || clave.replace("VISITA_", "");
-          if (clave === seleccionado) opt.selected = true;
-          select.appendChild(opt);
-        }
-      });
-    } catch (err) {
-      select.innerHTML = '<option value="">❌ Error al cargar</option>';
-    }
-  }
-
-  function cargarProyecto(clave) {
-    if (!clave || !window.proyectosNube) return;
-    const estado = window.proyectosNube[clave];
-    if (!estado) return;
-
-    document.getElementById('req-proyecto').value = estado.proyecto || '';
-    document.getElementById('req-fecha').value = estado.fecha || '';
-    document.getElementById('req-tecnico').value = estado.tecnico || '';
-    document.getElementById('obs-matriz').value = estado.obsMatriz || '';
-
-    // Limpiar estructuras previas
-    Object.keys(estadoInspeccion).forEach(k => delete estadoInspeccion[k]);
-    Object.keys(detallesEvidencia).forEach(k => delete detallesEvidencia[k]);
-
-    if (estado.estadoInspeccion) {
-      Object.assign(estadoInspeccion, estado.estadoInspeccion);
-    }
-
-    if (estado.detallesEvidencia) {
-      Object.assign(detallesEvidencia, estado.detallesEvidencia);
-    }
-
-    renderizarAreas();
-
-    historialGlobal = estado.historial || [];
-    renderizarTablaHistorial();
-
-    document.getElementById('nombre_firma_tecnico').value = estado.nombre_tecnico || '';
-    cargarImagenEnCanvas('canvas_tecnico', estado.firma_tecnico);
-
-    document.getElementById('nombre_firma_cliente').value = estado.nombre_cliente || '';
-    cargarImagenEnCanvas('canvas_cliente', estado.firma_cliente);
-  }
-
-  function renderizarTablaHistorial() {
-    const tbody = document.getElementById('tabla-historial-body');
-    if (!historialGlobal || historialGlobal.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #888;">Sin historial.</td></tr>';
-      return;
-    }
-
-    tbody.innerHTML = historialGlobal.map(item => `
-      <tr>
-        <td>${item.fecha || '-'}</td>
-        <td><strong>${item.usuario || 'Anónimo'}</strong></td>
-        <td>${item.accion || 'Edición'}</td>
-      </tr>
-    `).join('');
-  }
-
-  async function eliminarDeNube() {
-    const select = document.getElementById('select-proyectos');
-    const clave = select.value;
-    if (!clave) { alert("⚠️ Selecciona un borrador."); return; }
-
-    if (!confirm("🗑️ ¿Deseas eliminar este borrador?")) return;
-
-    try {
-      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
-      let data = await res.json();
-      let proyectos = data.record.proyectos || {};
-
-      if (proyectos[clave]) {
-        delete proyectos[clave];
-        await fetch(URL_NUBE, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
-          body: JSON.stringify({ proyectos: proyectos })
-        });
-        alert(`🗑️ Eliminado.`);
-        nuevoProyecto();
-        await cargarProyectosDesdeNube();
-      }
-    } catch (e) {
-      alert("⚠️ Error al eliminar.");
-    }
-  }
-
-  function nuevoProyecto() {
-    document.getElementById('req-proyecto').value = '';
-    document.getElementById('req-fecha').valueAsDate = new Date();
-    document.getElementById('req-tecnico').value = '';
-    document.getElementById('obs-matriz').value = '';
-
-    Object.keys(estadoInspeccion).forEach(k => estadoInspeccion[k] = "CUMPLE");
-    Object.keys(detallesEvidencia).forEach(k => delete detallesEvidencia[k]);
-    renderizarAreas();
-
-    historialGlobal = [];
-    renderizarTablaHistorial();
-
-    limpiarCanvas('canvas_tecnico');
-    limpiarCanvas('canvas_cliente');
-    document.getElementById('nombre_firma_tecnico').value = '';
-    document.getElementById('nombre_firma_cliente').value = '';
-
-    document.getElementById('select-proyectos').value = '';
-  }
-
-  /* CANVAS Y FIRMAS */
-  function inicializarCanvas(idCanvas) {
-    const canvas = document.getElementById(idCanvas);
-    const ctx = canvas.getContext('2d');
-    let dibujando = false;
-
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
-
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = '#1b365d';
-
-    function obtenerPosicion(e) {
-      const rect = canvas.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      return { x: clientX - rect.left, y: clientY - rect.top };
-    }
-
-    function iniciarDibujo(e) {
-      dibujando = true;
-      const pos = obtenerPosicion(e);
-      ctx.beginPath();
-      ctx.moveTo(pos.x, pos.y);
-    }
-
-    function dibujar(e) {
-      if (!dibujando) return;
-      e.preventDefault();
-      const pos = obtenerPosicion(e);
-      ctx.lineTo(pos.x, pos.y);
-      ctx.stroke();
-    }
-
-    function detenerDibujo() {
-      if (dibujando) {
-        dibujando = false;
-        canvasStates[idCanvas] = canvas.toDataURL();
-      }
-    }
-
-    canvas.addEventListener('mousedown', iniciarDibujo);
-    canvas.addEventListener('mousemove', dibujar);
-    canvas.addEventListener('mouseup', detenerDibujo);
-    canvas.addEventListener('mouseleave', detenerDibujo);
-
-    canvas.addEventListener('touchstart', iniciarDibujo);
-    canvas.addEventListener('touchmove', dibujar);
-    canvas.addEventListener('touchend', detenerDibujo);
-  }
-
-  function limpiarCanvas(idCanvas) {
-    const canvas = document.getElementById(idCanvas);
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    delete canvasStates[idCanvas];
-  }
-
-  function cargarImagenEnCanvas(idCanvas, dataUrl) {
-    const canvas = document.getElementById(idCanvas);
-    const ctx = canvas.getContext('2d');
-    limpiarCanvas(idCanvas);
-
-    if (dataUrl) {
-      const img = new Image();
-      img.onload = function() {
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvasStates[idCanvas] = dataUrl;
-      };
-      img.src = dataUrl;
-    }
-  }
-
-  function descargarPDF() {
-    const proyecto = document.getElementById('req-proyecto').value.trim();
-    if (!proyecto) { alert("⚠️ Asigna un nombre al Proyecto."); return; }
-
-    const elemento = document.getElementById('formato-app');
-
-    const opciones = {
-      margin: 6,
-      filename: `Visita_Sitio_${proyecto}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
-    };
-
-    html2pdf().set(opciones).from(elemento).save();
-  }
-</script>
-
-</body>
-</html>
+           localStorage.getItem("synergo_user") ||
