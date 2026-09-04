@@ -143,7 +143,7 @@
       height: 100%;
       background: var(--secondary);
       width: 0%;
-      transition: width 0.3s ease;
+      transition: width 0.3s ease, background-color 0.3s ease;
     }
 
     /* Tarjetas de áreas */
@@ -303,6 +303,29 @@
       background: #f0f4f8;
       color: var(--primary);
     }
+
+    /* Reglas para la generación correcta de PDF */
+    @media print {
+      body {
+        background: #ffffff !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .container {
+        box-shadow: none !important;
+        padding: 10px !important;
+        max-width: 100% !important;
+        width: 100% !important;
+      }
+      .card, .area-card {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        margin-bottom: 12px !important;
+      }
+      .no-pdf, #card-nube, #card-historial, .actions-panel {
+        display: none !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -376,8 +399,8 @@
   <!-- Progreso y Resumen -->
   <div class="card">
     <div class="card-title">
-      📊 Avance de la Inspección
-      <span id="lbl-porcentaje-avance" style="margin-left: auto; color: var(--secondary);">0%</span>
+      📊 Avance y Cumplimiento
+      <span id="lbl-porcentaje-avance" style="margin-left: auto; color: var(--secondary);">0% Cumplimiento</span>
     </div>
     <div class="progress-outer">
       <div class="progress-fill" id="bar-avance-fill"></div>
@@ -735,6 +758,7 @@
     detallesEvidencia[itemId].obs = valor;
   }
 
+  /* CÁLCULO DE AVANCE Y PORCENTAJE BASADO EN CUMPLIMIENTO REAL */
   function calcularAvance() {
     let cumple = 0;
     let observacion = 0;
@@ -750,7 +774,10 @@
     });
 
     let evaluados = cumple + observacion + noCumple;
-    let porcentaje = total > 0 ? Math.round((evaluados / total) * 100) : 0;
+    let pendientes = total - evaluados;
+
+    // Calculamos el porcentaje basado únicamente en los ítems que CUMPLEN
+    let porcentajeCumplimiento = total > 0 ? Math.round((cumple / total) * 100) : 0;
 
     const elCumple = document.getElementById('cnt-cumple');
     if (elCumple) elCumple.textContent = cumple;
@@ -762,17 +789,28 @@
     if (elNoCumple) elNoCumple.textContent = noCumple;
 
     const elPendientes = document.getElementById('cnt-pendientes');
-    if (elPendientes) elPendientes.textContent = total - evaluados;
+    if (elPendientes) elPendientes.textContent = pendientes;
 
     const elPorcentaje = document.getElementById('lbl-porcentaje-avance');
-    if (elPorcentaje) elPorcentaje.textContent = porcentaje + '%';
+    if (elPorcentaje) elPorcentaje.textContent = porcentajeCumplimiento + '% Cumplimiento';
 
     const elBar = document.getElementById('bar-avance-fill');
-    if (elBar) elBar.style.width = porcentaje + '%';
+    if (elBar) {
+      elBar.style.width = porcentajeCumplimiento + '%';
+      // Cambiar color de la barra según nivel de cumplimiento
+      if (porcentajeCumplimiento === 100) {
+        elBar.style.backgroundColor = 'var(--cumple)'; // Verde
+      } else if (porcentajeCumplimiento >= 80) {
+        elBar.style.backgroundColor = 'var(--observacion)'; // Naranja
+      } else {
+        elBar.style.backgroundColor = 'var(--nocumple)'; // Rojo
+      }
+    }
 
-    return { porcentaje, cumple, observacion, noCumple };
+    return { porcentaje: porcentajeCumplimiento, cumple, observacion, noCumple, pendientes };
   }
 
+  /* GUARDADO EN NUBE CON HISTORIAL DE DETALLES PRECISO */
   async function guardarProgreso() {
     const proyecto = document.getElementById('req-proyecto').value.trim();
     if (!proyecto) {
@@ -826,7 +864,46 @@
       let proyectos = (data && data.record && data.record.proyectos) ? data.record.proyectos : {};
 
       const versionPrevia = proyectos[`VISITA_${proyecto}`] || null;
-      let detalleAccion = `Actualizado en nube (${stats.porcentaje}% Avance)`;
+
+      // DETECCIÓN DETALLADA DE CAMBIOS
+      let listaCambios = [];
+
+      if (!versionPrevia) {
+        listaCambios.push("Creación de la inspección");
+      } else {
+        const estPrevio = versionPrevia.estadoInspeccion || {};
+        let cambiosEstadoCount = 0;
+        Object.keys(estadoInspeccion).forEach(itemId => {
+          if (estPrevio[itemId] !== estadoInspeccion[itemId]) {
+            cambiosEstadoCount++;
+          }
+        });
+        if (cambiosEstadoCount > 0) {
+          listaCambios.push(`Modificó ${cambiosEstadoCount} estado(s) de revisión`);
+        }
+
+        const evPrevia = versionPrevia.detallesEvidencia || {};
+        let fotosNuevas = 0;
+        Object.keys(detallesOptimizados).forEach(itemId => {
+          if (detallesOptimizados[itemId].foto && (!evPrevia[itemId] || !evPrevia[itemId].foto)) {
+            fotosNuevas++;
+          }
+        });
+        if (fotosNuevas > 0) {
+          listaCambios.push(`Añadió ${fotosNuevas} fotografía(s)`);
+        }
+
+        if (estadoFormulario.firma_tecnico && !versionPrevia.firma_tecnico) {
+          listaCambios.push("Agregó firma del técnico");
+        }
+        if (estadoFormulario.firma_cliente && !versionPrevia.firma_cliente) {
+          listaCambios.push("Agregó firma del cliente");
+        }
+      }
+
+      let detalleAccion = listaCambios.length > 0 
+        ? `${listaCambios.join(" • ")} (${stats.porcentaje}% Cumplimiento)` 
+        : `Actualización general (${stats.porcentaje}% Cumplimiento)`;
 
       const ahora = new Date();
       const fechaHoraStr = ahora.toLocaleDateString('es-MX') + ' ' + ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
@@ -834,7 +911,7 @@
       let historialPrevio = (versionPrevia && versionPrevia.historial) ? versionPrevia.historial : [];
       historialPrevio.unshift({ fecha: fechaHoraStr, usuario: usuario, accion: detalleAccion });
 
-      if (historialPrevio.length > 5) historialPrevio = historialPrevio.slice(0, 5);
+      if (historialPrevio.length > 10) historialPrevio = historialPrevio.slice(0, 10);
 
       const estadoFinal = {
         ...estadoFormulario,
@@ -860,7 +937,7 @@
       alert(`☁️ Proyecto sincronizado y actualizado para todos los usuarios.`);
       await cargarProyectosDesdeNube(`VISITA_${proyecto}`);
     } catch (err) {
-      alert(`❌ Error al guardar en la nube:\n${err.message}\n\nLa información NO fue guardada debido a la falta de conexión con el servidor.`);
+      alert(`❌ Error al guardar en la nube:\n${err.message}`);
     } finally {
       btnGuardar.disabled = false;
       btnGuardar.textContent = "💾 Guardar en Nube";
@@ -1008,7 +1085,6 @@
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
 
-    // Configurar dimensión real acorde al CSS
     canvas.width = canvas.offsetWidth || 300;
     canvas.height = canvas.offsetHeight || 120;
 
@@ -1113,35 +1189,47 @@
     if (select) select.value = '';
   }
 
-  function descargarPDF() {
-    const proyecto = document.getElementById('req-proyecto').value || 'Informe_Inspeccion';
+  /* EXPORTACIÓN A PDF OPTIMIZADA SIN HOJAS VACÍAS */
+  async function descargarPDF() {
+    const proyecto = document.getElementById('req-proyecto').value.trim() || 'Informe_Inspeccion';
     const elemento = document.getElementById('formato-app');
 
-    // Desplegar todas las secciones para que aparezcan completas en el PDF
+    // Desplegar todas las áreas para que aparezcan completas en el documento
     estructuraAreas.forEach(area => {
       const body = document.getElementById(`body-${area.id}`);
       if (body) body.style.display = 'flex';
     });
 
-    // Ocultar elementos de control de pantalla no deseados en impresión
+    // Ocultar botones e interfaces no imprimibles
     const elementosOcultos = document.querySelectorAll('.no-pdf, #card-nube, #card-historial');
     elementosOcultos.forEach(el => el.style.display = 'none');
 
+    // Mover pantalla al inicio para evitar márgenes superiores fantasma
+    window.scrollTo(0, 0);
+
     const opciones = {
-      margin:       10,
+      margin:       [8, 8, 8, 8],
       filename:     `${proyecto.replace(/\s+/g, '_')}_Inspeccion.pdf`,
       image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true },
+      html2canvas:  { 
+        scale: 2, 
+        useCORS: true, 
+        logging: false,
+        scrollY: 0,
+        windowWidth: document.documentElement.offsetWidth
+      },
+      pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] },
       jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    html2pdf().set(opciones).from(elemento).save().then(() => {
-      // Restaurar visibilidad
+    try {
+      await html2pdf().set(opciones).from(elemento).save();
+    } catch (err) {
+      console.error("Error al exportar PDF:", err);
+      alert("❌ Ocurrió un error al generar el PDF. Revisa la consola.");
+    } finally {
       elementosOcultos.forEach(el => el.style.display = '');
-    }).catch(err => {
-      console.error("Error exportando PDF:", err);
-      elementosOcultos.forEach(el => el.style.display = '');
-    });
+    }
   }
 </script>
 
