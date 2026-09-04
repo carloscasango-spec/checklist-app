@@ -238,15 +238,14 @@
         { id: "pub_7", texto: "7. Caja Estanca (300x250x150)" }
       ]
     },
-{
-    id: "torniquete",
-    titulo: "🌐 Torniquete",
-    items: [
-      { id: "tor_1", texto: "1. Canalización" },
-      { id: "tor_2", texto: "2. Ponchado de punta del UTP" }
-    ]
-  },
-    
+    {
+      id: "torniquete",
+      titulo: "🌐 Torniquete",
+      items: [
+        { id: "tor_1", texto: "1. Canalización" },
+        { id: "tor_2", texto: "2. Ponchado de punta del UTP" }
+      ]
+    },
     {
       id: "enlace_sec",
       titulo: "⛽ Enlace Estación (Inspección Física)",
@@ -796,30 +795,30 @@
     const canvas = document.getElementById(idCanvas);
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    limpiarCanvas(idCanvas);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (dataUrl) {
+      canvasStates[idCanvas] = dataUrl;
       const img = new Image();
       img.onload = function() {
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvasStates[idCanvas] = dataUrl;
       };
       img.src = dataUrl;
+    } else {
+      delete canvasStates[idCanvas];
     }
   }
 
   function descargarPDF() {
-    const proyecto = document.getElementById('req-proyecto').value.trim();
-    if (!proyecto) { alert("⚠️ Asigna un nombre al Proyecto."); return; }
-
     const elemento = document.getElementById('formato-app');
+    const proyecto = document.getElementById('req-proyecto').value.trim() || 'Visita_Sitio';
 
     const opciones = {
-      margin: 6,
-      filename: `Visita_Sitio_${proyecto}.pdf`,
+      margin: 10,
+      filename: `${proyecto}_Visita_Sitio.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
     html2pdf().set(opciones).from(elemento).save();
