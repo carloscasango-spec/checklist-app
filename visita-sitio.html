@@ -1,4 +1,457 @@
-const BIN_ID = "6a906a3af5f4af5e294a7049";
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visita a Sitio - Inspección Técnica</title>
+  <!-- Librería para la descarga e impresión en PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  
+  <style>
+    :root {
+      --primary: #1b365d;
+      --secondary: #007bff;
+      --bg-color: #f4f6f9;
+      --card-bg: #ffffff;
+      --cumple: #28a745;
+      --observacion: #f57c00;
+      --nocumple: #d32f2f;
+      --border-color: #e0e0e0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: #333;
+      padding: 15px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+
+    .header-panel {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 12px;
+      margin-bottom: 20px;
+    }
+
+    .header-panel h1 {
+      font-size: 1.4rem;
+      color: var(--primary);
+    }
+
+    .session-info {
+      font-size: 0.85rem;
+      color: #555;
+      background: #eef3f8;
+      padding: 6px 12px;
+      border-radius: 20px;
+    }
+
+    .card {
+      background: #fafafa;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .form-group label {
+      font-size: 0.82rem;
+      font-weight: bold;
+      color: #444;
+    }
+
+    .form-group input, .form-group select, .form-group textarea {
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 0.9rem;
+      width: 100%;
+    }
+
+    /* Avance y métricas */
+    .metrics-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .metric-badge {
+      flex: 1;
+      min-width: 100px;
+      padding: 8px;
+      border-radius: 6px;
+      text-align: center;
+      color: white;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+
+    .bg-cumple { background-color: var(--cumple); }
+    .bg-obs { background-color: var(--observacion); }
+    .bg-nocumple { background-color: var(--nocumple); }
+    .bg-pending { background-color: #6c757d; }
+
+    .progress-outer {
+      height: 12px;
+      background: #e0e0e0;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--secondary);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    /* Tarjetas de áreas */
+    .area-card {
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      margin-bottom: 12px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .area-header {
+      background: #f0f4f8;
+      padding: 12px 15px;
+      font-weight: bold;
+      color: var(--primary);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      user-select: none;
+    }
+
+    .area-body {
+      padding: 10px 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .item-row {
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+      border-radius: 6px;
+      background: #fafafa;
+      border-left: 4px solid #ccc;
+      gap: 8px;
+    }
+
+    .item-cumple { border-left-color: var(--cumple); }
+    .item-observacion { border-left-color: var(--observacion); }
+    .item-nocumple { border-left-color: var(--nocumple); }
+
+    .item-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .status-group {
+      display: flex;
+      gap: 6px;
+    }
+
+    .btn-status {
+      flex: 1;
+      padding: 6px;
+      border: 1px solid #ccc;
+      background: #fff;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .btn-status.active-cumple { background: var(--cumple); color: #fff; border-color: var(--cumple); }
+    .btn-status.active-observacion { background: var(--observacion); color: #fff; border-color: var(--observacion); }
+    .btn-status.active-nocumple { background: var(--nocumple); color: #fff; border-color: var(--nocumple); }
+
+    .evidencia-box {
+      flex-direction: column;
+      gap: 6px;
+      background: #fff;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px dashed #ccc;
+      margin-top: 5px;
+    }
+
+    .evidencia-preview {
+      max-width: 150px;
+      max-height: 150px;
+      border-radius: 5px;
+      margin-top: 5px;
+      object-fit: cover;
+    }
+
+    .estado-subida-foto {
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+
+    /* Firmas */
+    .signatures-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+
+    .canvas-box {
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      background: #fff;
+      touch-action: none;
+      width: 100%;
+      height: 120px;
+      cursor: crosshair;
+    }
+
+    /* Acciones */
+    .actions-panel {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+
+    .btn {
+      flex: 1;
+      min-width: 130px;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      color: white;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .btn-primary { background: var(--primary); }
+    .btn-success { background: var(--cumple); }
+    .btn-warning { background: var(--observacion); }
+    .btn-danger { background: var(--nocumple); }
+    .btn-secondary { background: #6c757d; }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* Tabla de Historial */
+    .table-historial {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+      margin-top: 10px;
+    }
+
+    .table-historial th, .table-historial td {
+      border: 1px solid #ddd;
+      padding: 6px 8px;
+      text-align: left;
+    }
+
+    .table-historial th {
+      background: #f0f4f8;
+      color: var(--primary);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container" id="formato-app">
+  <!-- Encabezado de Sesión -->
+  <div class="header-panel">
+    <h1>📝 Visita a Sitio - Inspección Técnica</h1>
+    <div class="session-info">
+      👤 Usuario: <strong id="lbl-sesion-usuario">Cargando...</strong>
+    </div>
+  </div>
+
+  <!-- Proyectos Guardados en la Nube -->
+  <div class="card">
+    <div class="card-title">☁️ Cargar / Borrador desde Nube</div>
+    <div class="form-grid">
+      <div class="form-group" style="grid-column: 1 / -1;">
+        <select id="select-proyectos" onchange="cargarProyecto(this.value)">
+          <option value="">⏳ Conectando con servidor...</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Datos Generales -->
+  <div class="card">
+    <div class="card-title">📌 Datos de la Inspección</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Nombre del Proyecto *</label>
+        <input type="text" id="req-proyecto" placeholder="Ej: Sucursal Centro">
+      </div>
+      <div class="form-group">
+        <label>Fecha de Inspección</label>
+        <input type="date" id="req-fecha">
+      </div>
+      <div class="form-group">
+        <label>Técnico Evaluador</label>
+        <input type="text" id="req-tecnico" placeholder="Nombre completo">
+      </div>
+    </div>
+  </div>
+
+  <!-- Opción Especial: Enlace Estación -->
+  <div class="card">
+    <div class="card-title">⛽ Enlace Estación</div>
+    <div class="form-group" style="margin-bottom: 10px;">
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" id="chk-aplica-enlace" onchange="toggleEnlaceEstacion(this.checked)">
+        ¿Aplica Inspección de Enlace Estación?
+      </label>
+    </div>
+
+    <p id="msg-no-aplica-enlace" style="font-size: 0.8rem; color: #888; font-style: italic;">
+      Esta sección no aplica para la inspección actual.
+    </p>
+
+    <div id="contenedor-enlace-estacion" class="form-grid" style="opacity: 0.5; pointer-events: none;">
+      <div class="form-group">
+        <label>Proveedor de Enlace</label>
+        <input type="text" id="enlace-proveedor" class="input-enlace" placeholder="Ej: Telmex, Izzi" disabled>
+      </div>
+      <div class="form-group">
+        <label>Dirección IP Asignada</label>
+        <input type="text" id="enlace-ip" class="input-enlace" placeholder="Ej: 192.168.1.254" disabled>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progreso y Resumen -->
+  <div class="card">
+    <div class="card-title">
+      📊 Avance de la Inspección
+      <span id="lbl-porcentaje-avance" style="margin-left: auto; color: var(--secondary);">0%</span>
+    </div>
+    <div class="progress-outer">
+      <div class="progress-fill" id="bar-avance-fill"></div>
+    </div>
+    <div class="metrics-bar">
+      <div class="metric-badge bg-cumple">Cumple: <span id="cnt-cumple">0</span></div>
+      <div class="metric-badge bg-obs">Observación: <span id="cnt-observacion">0</span></div>
+      <div class="metric-badge bg-nocumple">No Cumple: <span id="cnt-nocumple">0</span></div>
+      <div class="metric-badge bg-pending">Pendientes: <span id="cnt-pendientes">0</span></div>
+    </div>
+  </div>
+
+  <!-- Áreas de Inspección -->
+  <div id="contenedor-areas"></div>
+
+  <!-- Observaciones Generales -->
+  <div class="card">
+    <div class="card-title">📄 Observaciones Matriz / Comentarios Generales</div>
+    <div class="form-group">
+      <textarea id="obs-matriz" rows="3" placeholder="Añade notas generales del sitio o recomendaciones de la matriz..."></textarea>
+    </div>
+  </div>
+
+  <!-- Firmas Canvas -->
+  <div class="card">
+    <div class="card-title">✍️ Firmas de Conformidad</div>
+    <div class="signatures-grid">
+      <div class="form-group">
+        <label>Nombre del Técnico Evaluador</label>
+        <input type="text" id="nombre_firma_tecnico" placeholder="Nombre completo">
+        <label style="margin-top: 5px;">Firma Digital</label>
+        <canvas id="canvas_tecnico" class="canvas-box"></canvas>
+        <button type="button" class="btn btn-secondary" style="padding: 4px; font-size: 0.75rem; margin-top: 4px;" onclick="limpiarCanvas('canvas_tecnico')">Limpiar Firma</button>
+      </div>
+
+      <div class="form-group">
+        <label>Nombre del Cliente / Responsable</label>
+        <input type="text" id="nombre_firma_cliente" placeholder="Nombre completo">
+        <label style="margin-top: 5px;">Firma Digital</label>
+        <canvas id="canvas_cliente" class="canvas-box"></canvas>
+        <button type="button" class="btn btn-secondary" style="padding: 4px; font-size: 0.75rem; margin-top: 4px;" onclick="limpiarCanvas('canvas_cliente')">Limpiar Firma</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Historial de Modificaciones -->
+  <div class="card">
+    <div class="card-title">📜 Historial de Cambios en Nube</div>
+    <table class="table-historial">
+      <thead>
+        <tr>
+          <th>Fecha / Hora</th>
+          <th>Usuario</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody id="tabla-historial-body">
+        <tr><td colspan="3" style="text-align: center; color: #888;">Sin datos.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Panel de Acciones -->
+  <div class="actions-panel">
+    <button type="button" class="btn btn-success" id="btn-guardar" onclick="guardarProgreso()">💾 Guardar en Nube</button>
+    <button type="button" class="btn btn-primary" onclick="descargarPDF()">📥 Exportar PDF</button>
+    <button type="button" class="btn btn-warning" onclick="nuevoProyecto()">✨ Nuevo Proyecto</button>
+    <button type="button" class="btn btn-danger" onclick="eliminarDeNube()">🗑️ Eliminar de Nube</button>
+  </div>
+</div>
+
+<!-- LÓGICA JAVASCRIPT INTEGRADA -->
+<script>
+  const BIN_ID = "6a906a3af5f4af5e294a7049";
   const API_KEY = "$2a$10$5BDKoNaJb98nczPxrHl1Uuow.tck.XjCTrl6Cc7b.aZ3RbBRtHr4e";
   const URL_NUBE = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
   const API_KEY_IMGBB = "0bb345456eb469eeff7a736addd8c7fb";
@@ -78,13 +531,12 @@ const BIN_ID = "6a906a3af5f4af5e294a7049";
       if (elFecha) elFecha.valueAsDate = new Date();
 
       renderizarAreas();
-      
+
       setTimeout(() => {
         inicializarCanvas('canvas_tecnico');
         inicializarCanvas('canvas_cliente');
       }, 200);
 
-      // Cargar la lista directamente desde la nube sin guardar nada local
       cargarProyectosDesdeNube();
     } catch (err) {
       console.error("Error al inicializar interfaz:", err);
@@ -229,7 +681,6 @@ const BIN_ID = "6a906a3af5f4af5e294a7049";
     calcularAvance();
   }
 
-  // Sube únicamente a la nube ImgBB (Sin respaldo local)
   async function capturarFoto(e, itemId) {
     const file = e.target.files[0];
     if (!file) return;
@@ -303,29 +754,31 @@ const BIN_ID = "6a906a3af5f4af5e294a7049";
 
     const elCumple = document.getElementById('cnt-cumple');
     if (elCumple) elCumple.textContent = cumple;
-    
+
     const elObs = document.getElementById('cnt-observacion');
     if (elObs) elObs.textContent = observacion;
-    
+
     const elNoCumple = document.getElementById('cnt-nocumple');
     if (elNoCumple) elNoCumple.textContent = noCumple;
-    
+
     const elPendientes = document.getElementById('cnt-pendientes');
     if (elPendientes) elPendientes.textContent = total - evaluados;
-    
+
     const elPorcentaje = document.getElementById('lbl-porcentaje-avance');
     if (elPorcentaje) elPorcentaje.textContent = porcentaje + '%';
-    
+
     const elBar = document.getElementById('bar-avance-fill');
     if (elBar) elBar.style.width = porcentaje + '%';
 
     return { porcentaje, cumple, observacion, noCumple };
   }
 
-  // Guardado estrictamente NUBE (JSONBin)
   async function guardarProgreso() {
     const proyecto = document.getElementById('req-proyecto').value.trim();
-    if (!proyecto) { alert("⚠️ Escribe el Nombre del Proyecto."); return; }
+    if (!proyecto) {
+      alert("⚠️ Escribe el Nombre del Proyecto.");
+      return;
+    }
 
     const usuario = obtenerUsuarioAutenticado();
     const btnGuardar = document.getElementById('btn-guardar');
@@ -360,14 +813,14 @@ const BIN_ID = "6a906a3af5f4af5e294a7049";
     };
 
     try {
-      // 1. Obtener los proyectos existentes en la nube
-      let res = await fetch(URL_NUBE, { 
-        headers: { 
+      let res = await fetch(URL_NUBE, {
+        headers: {
           "X-Master-Key": API_KEY,
           "Cache-Control": "no-cache"
-        } 
+        }
       });
-      if(!res.ok) throw new Error("Error al comunicarse con la nube.");
+
+      if (!res.ok) throw new Error("Error al comunicarse con la nube.");
 
       let data = await res.json();
       let proyectos = (data && data.record && data.record.proyectos) ? data.record.proyectos : {};
@@ -393,7 +846,6 @@ const BIN_ID = "6a906a3af5f4af5e294a7049";
 
       proyectos[`VISITA_${proyecto}`] = estadoFinal;
 
-      // 2. Sobrescribir en la nube la nueva versión actualizada
       let resPut = await fetch(URL_NUBE, {
         method: "PUT",
         headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
@@ -411,11 +863,10 @@ const BIN_ID = "6a906a3af5f4af5e294a7049";
       alert(`❌ Error al guardar en la nube:\n${err.message}\n\nLa información NO fue guardada debido a la falta de conexión con el servidor.`);
     } finally {
       btnGuardar.disabled = false;
-      btnGuardar.textContent = "💾 Guardar";
+      btnGuardar.textContent = "💾 Guardar en Nube";
     }
   }
 
-  // Carga siempre fresca descartando la memoria en caché
   async function cargarProyectosDesdeNube(seleccionado = '') {
     const select = document.getElementById('select-proyectos');
     if (!select) return;
@@ -423,14 +874,15 @@ const BIN_ID = "6a906a3af5f4af5e294a7049";
     select.innerHTML = '<option value="">⏳ Obteniendo datos en tiempo real...</option>';
 
     try {
-      let res = await fetch(`${URL_NUBE}?nocache=${new Date().getTime()}`, { 
-        headers: { 
+      let res = await fetch(`${URL_NUBE}?nocache=${new Date().getTime()}`, {
+        headers: {
           "X-Master-Key": API_KEY,
           "Cache-Control": "no-cache"
-        } 
+        }
       });
+
       if (!res.ok) throw new Error("Error al consultar el servidor.");
-      
+
       let data = await res.json();
       window.proyectosNube = (data && data.record && data.record.proyectos) ? data.record.proyectos : {};
 
@@ -460,7 +912,7 @@ const BIN_ID = "6a906a3af5f4af5e294a7049";
 
   function cargarProyecto(clave) {
     if (!clave || !window.proyectosNube || !window.proyectosNube[clave]) return;
-    
+
     let estado = window.proyectosNube[clave];
 
     document.getElementById('req-proyecto').value = estado.proyecto || '';
@@ -516,7 +968,10 @@ const BIN_ID = "6a906a3af5f4af5e294a7049";
   async function eliminarDeNube() {
     const select = document.getElementById('select-proyectos');
     const clave = select.value;
-    if (!clave) { alert("⚠️ Selecciona un borrador."); return; }
+    if (!clave) {
+      alert("⚠️ Selecciona un borrador.");
+      return;
+    }
 
     if (!confirm("🗑️ ¿Deseas eliminar permanentemente este proyecto de la nube?")) return;
 
@@ -650,14 +1105,17 @@ const BIN_ID = "6a906a3af5f4af5e294a7049";
   function descargarPDF() {
     const elemento = document.getElementById('formato-app');
     const proyecto = document.getElementById('req-proyecto').value || 'Visita_Sitio';
-    
+
     const opciones = {
-      margin:       10,
-      filename:     `Visita_Sitio_${proyecto.replace(/\s+/g, '_')}.pdf`,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      margin: 10,
+      filename: `Visita_Sitio_${proyecto.replace(/\s+/g, '_')}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
     html2pdf().set(opciones).from(elemento).save();
   }
+</script>
+</body>
+</html>
