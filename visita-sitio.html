@@ -1,323 +1,3 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <script>
-    if (sessionStorage.getItem("synergo_auth") !== "true") {
-      window.location.href = "login.html";
-    }
-  </script>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Recepción de Voz y Datos - Visita en Sitio</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 10px; background: #f0f2f5; color: #333; font-size: 13px; }
-
-    /* Header Sticky */
-    .top-bar {
-      position: sticky;
-      top: 0;
-      background: #1b365d;
-      color: white;
-      padding: 12px;
-      border-radius: 8px;
-      z-index: 1000;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.15);
-      margin-bottom: 15px;
-    }
-    .top-bar-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
-    .btn { border: none; padding: 10px 8px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 12px; text-align: center; color: white; transition: background 0.2s; }
-    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-    .btn-save { background: #2e7d32; }
-    .btn-delete { background: #e53935; }
-    .btn-new { background: #555; }
-    .btn-pdf { background: #d32f2f; }
-    .btn-clear { background: #757575; padding: 6px 10px; font-size: 11px; margin-top: 6px; border-radius: 4px; }
-
-    /* Indicador de Avance */
-    .progress-card {
-      background: #fff;
-      border: 1px solid #bdd7ee;
-      border-radius: 8px;
-      padding: 12px;
-      margin-bottom: 12px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-    .progress-bar-container {
-      background: #e0e0e0;
-      border-radius: 10px;
-      height: 14px;
-      width: 100%;
-      overflow: hidden;
-      margin: 8px 0;
-    }
-    .progress-bar-fill {
-      background: linear-gradient(90deg, #2e7d32, #4caf50);
-      height: 100%;
-      width: 0%;
-      transition: width 0.4s ease;
-    }
-
-    .card { background: white; border-radius: 8px; padding: 12px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .card-title { font-weight: bold; font-size: 14px; color: #1b365d; border-bottom: 2px solid #bdd7ee; padding-bottom: 4px; margin-bottom: 10px; }
-    
-    .form-group { margin-bottom: 10px; }
-    .form-group label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 4px; color: #444; text-transform: uppercase; }
-
-    .grid-2 { display: grid; grid-template-columns: 1fr; gap: 8px; }
-    @media(min-width: 600px) {
-      .grid-2 { grid-template-columns: 1fr 1fr; }
-      .top-bar-controls { grid-template-columns: repeat(4, 1fr); }
-    }
-
-    input[type="text"], input[type="date"], select, textarea {
-      width: 100%; padding: 9px; border-radius: 6px; border: 1px solid #ccc; font-size: 13px; background: #fff; font-family: inherit;
-    }
-
-    /* Tarjetas de Áreas Móviles */
-    .area-card {
-      border: 1px solid #d0d7de;
-      border-radius: 8px;
-      margin-bottom: 10px;
-      overflow: hidden;
-      background: #fff;
-    }
-    .area-header {
-      background: #1b365d;
-      color: white;
-      padding: 10px 12px;
-      font-weight: bold;
-      font-size: 13px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: pointer;
-    }
-    .area-body { padding: 10px; display: flex; flex-direction: column; gap: 12px; }
-
-    /* Filas de Ítems en Móvil con 3 Estados */
-    .item-row {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      padding: 10px;
-      border: 1px solid #eee;
-      border-radius: 6px;
-      background: #fafafa;
-      transition: border-color 0.2s, background-color 0.2s;
-    }
-    .item-row.item-nocumple {
-      border: 1px solid #e53935;
-      background-color: #ffebee;
-    }
-    .item-row.item-observacion {
-      border: 1px solid #f57c00;
-      background-color: #fffde7;
-    }
-    .item-row.item-cumple {
-      border: 1px solid #a5d6a7;
-      background-color: #f1f8e9;
-    }
-    .item-label { font-weight: 600; color: #333; font-size: 12px; }
-
-    /* Botones de Selección Táctil */
-    .status-group { display: flex; gap: 4px; }
-    .btn-status {
-      flex: 1;
-      padding: 8px 4px;
-      border: 1px solid #ccc;
-      background: #fff;
-      color: #666;
-      border-radius: 5px;
-      font-size: 11px;
-      font-weight: bold;
-      cursor: pointer;
-      text-align: center;
-    }
-    .btn-status.active-cumple { background: #2e7d32; color: white; border-color: #2e7d32; }
-    .btn-status.active-observacion { background: #f57c00; color: white; border-color: #f57c00; }
-    .btn-status.active-nocumple { background: #d32f2f; color: white; border-color: #d32f2f; }
-
-    /* Sección Evidencia Foto */
-    .evidencia-box {
-      margin-top: 8px;
-      padding: 8px;
-      background: #fff;
-      border: 1px dashed #ccc;
-      border-radius: 6px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .evidencia-preview {
-      max-width: 100%;
-      max-height: 180px;
-      object-fit: contain;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      margin-top: 4px;
-    }
-
-    .signature-pad {
-      border: 2px dashed #1b365d;
-      border-radius: 6px;
-      background: #fafafa;
-      touch-action: none;
-      width: 100%;
-      height: 120px;
-    }
-
-    .history-table { width: 100%; border-collapse: collapse; font-size: 11px; }
-    .history-table th, .history-table td { border: 1px solid #e0e0e0; padding: 6px; text-align: left; }
-    .history-table th { background: #f0f4f8; color: #1b365d; }
-
-    @media print { .top-bar, .progress-card, .btn-clear, input[type="file"] { display: none; } }
-  </style>
-</head>
-<body>
-
-<div class="top-bar">
-  <div style="font-weight: bold; font-size: 14px;">☁️ Visita en Sitio - Voz y Datos</div>
-  
-  <div class="grid-2" style="margin-top: 8px;">
-    <div>
-      <select id="select-proyectos" onchange="cargarProyecto(this.value)">
-        <option value="">⏳ Cargando borradores...</option>
-      </select>
-    </div>
-    <div style="font-size: 11px; color: #bdd7ee; align-self: center;">
-      👤 Usuario: <strong id="lbl-sesion-usuario" style="color: #ffcc80;">Cargando...</strong>
-    </div>
-  </div>
-
-  <div class="top-bar-controls">
-    <button class="btn btn-save" id="btn-guardar" onclick="guardarProgreso()">💾 Guardar</button>
-    <button class="btn btn-delete" id="btn-eliminar" onclick="eliminarDeNube()">🗑️ Eliminar</button>
-    <button class="btn btn-new" onclick="nuevoProyecto()">➕ Nuevo</button>
-    <button class="btn btn-pdf" onclick="descargarPDF()">📥 PDF</button>
-  </div>
-</div>
-
-<div id="formato-app">
-
-  <div class="progress-card">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-      <span style="font-weight: bold; color: #1b365d;">📊 Avance de Inspección</span>
-      <span id="lbl-porcentaje-avance" style="font-weight: bold; font-size: 15px; color: #2e7d32;">0%</span>
-    </div>
-    
-    <div class="progress-bar-container">
-      <div id="bar-avance-fill" class="progress-bar-fill"></div>
-    </div>
-
-    <div style="display: flex; justify-content: space-around; font-size: 11px; font-weight: bold; margin-top: 6px;">
-      <span style="color: #2e7d32;">🟢 Cumple: <span id="cnt-cumple">0</span></span>
-      <span style="color: #f57c00;">🟡 Observación: <span id="cnt-observacion">0</span></span>
-      <span style="color: #d32f2f;">🔴 No Cumple: <span id="cnt-nocumple">0</span></span>
-      <span style="color: #757575;">⚪ Pendientes: <span id="cnt-pendientes">0</span></span>
-    </div>
-  </div>
-
-  <div class="card">
-    <div style="text-align: center; font-weight: bold; font-size: 15px; color: #1b365d; margin-bottom: 10px;">
-      RECEPCIÓN DE VOZ Y DATOS - VISITA EN SITIO
-    </div>
-    
-    <div class="form-group">
-      <label>Proyecto / Sucursal:</label>
-      <input type="text" id="req-proyecto" placeholder="Ej: GC PALMA TROPICAL">
-    </div>
-
-    <div class="grid-2">
-      <div class="form-group">
-        <label>Fecha de Visita:</label>
-        <input type="date" id="req-fecha">
-      </div>
-      <div class="form-group">
-        <label>Técnico / Inspector:</label>
-        <input type="text" id="req-tecnico" placeholder="Nombre del inspector">
-      </div>
-    </div>
-  </div>
-
-  <div class="card" style="border: 1px solid #1b365d;">
-    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #bdd7ee; padding-bottom: 6px; margin-bottom: 12px;">
-      <div style="font-weight: bold; font-size: 14px; color: #1b365d;">⛽ Enlace Estación</div>
-      <label style="font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #1b365d;">
-        <input type="checkbox" id="chk-aplica-enlace" onchange="toggleEnlaceEstacion(this.checked)" style="transform: scale(1.2); cursor: pointer;">
-        Aplica Enlace Estación
-      </label>
-    </div>
-
-    <div id="contenedor-enlace-estacion" style="opacity: 0.5; pointer-events: none; transition: all 0.3s ease;">
-      <div id="msg-no-aplica-enlace" style="background: #fff3cd; color: #856404; padding: 8px 12px; border-radius: 6px; font-size: 12px; margin-bottom: 12px;">
-        ⚠️ Esta opción está marcada como <strong>NO APLICA</strong>. Activa la casilla superior para habilitar sus campos.
-      </div>
-
-      <div class="grid-2">
-        <div class="form-group">
-          <label>Proveedor / Tipo Enlace:</label>
-          <input type="text" class="input-enlace" id="enlace-proveedor" placeholder="Ej: Telmex, Izzi, Microondas" disabled>
-        </div>
-        <div class="form-group">
-          <label>IP / Referencia:</label>
-          <input type="text" class="input-enlace" id="enlace-ip" placeholder="Ej: 192.168.1.1" disabled>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">📌 Inspección por Áreas</div>
-    <div id="contenedor-areas"></div>
-
-    <div class="form-group" style="margin-top: 12px;">
-      <label>Observaciones de Visita en Sitio:</label>
-      <input type="text" id="obs-matriz" placeholder="Escribir observaciones generales...">
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">✍️ Firmas Digitales</div>
-    
-    <div class="grid-2">
-      <div class="form-group">
-        <label>Firma Inspector / Synergo:</label>
-        <input type="text" id="nombre_firma_tecnico" placeholder="Nombre completo" style="margin-bottom: 5px;">
-        <canvas id="canvas_tecnico" class="signature-pad"></canvas>
-        <button class="btn btn-clear" onclick="limpiarCanvas('canvas_tecnico')">🧹 Borrar Firma</button>
-      </div>
-
-      <div class="form-group">
-        <label>Firma Recibido / Cliente:</label>
-        <input type="text" id="nombre_firma_cliente" placeholder="Nombre completo" style="margin-bottom: 5px;">
-        <canvas id="canvas_cliente" class="signature-pad"></canvas>
-        <button class="btn btn-clear" onclick="limpiarCanvas('canvas_cliente')">🧹 Borrar Firma</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <details>
-      <summary style="font-size: 12px; font-weight: bold; cursor: pointer;">📜 Historial de Cambios</summary>
-      <table class="history-table" style="margin-top: 8px;">
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th>Usuario</th>
-            <th>Acción</th>
-          </tr>
-        </thead>
-        <tbody id="tabla-historial-body">
-          <tr><td colspan="3" style="text-align: center; color: #888;">Sin historial.</td></tr>
-        </tbody>
-      </table>
-    </details>
-  </div>
-
-</div>
-
 <script>
   const BIN_ID = "6a906a3af5f4af5e294a7049";
   const API_KEY = "$2a$10$5BDKoNaJb98nczPxrHl1Uuow.tck.XjCTrl6Cc7b.aZ3RbBRtHr4e";
@@ -336,9 +16,9 @@
     },
     {
       id: "admin",
-      titulo: "🏢 Administrativo",
+      titulo: "🏢 Eq. Administrativo",
       items: [
-        { id: "admin_1", texto: "1. Nodo Doble" },
+        { id: "admin_1", texto: "1. Canalización / Registros" },
         { id: "admin_2", texto: "2. Contacto Doble NO Regulado" },
         { id: "admin_3", texto: "3. Voltaje Verificado en Contactos" },
         { id: "admin_4", texto: "4. Pases en los muebles" },
@@ -350,7 +30,7 @@
       id: "pub",
       titulo: "📢 Publicidad",
       items: [
-        { id: "pub_1", texto: "1. Nodo Ponchado" },
+        { id: "pub_1", texto: "1. Canalización / Registros" },
         { id: "pub_2", texto: "2. Contacto Doble NO Regulado" },
         { id: "pub_3", texto: "3. Voltaje Verificado en Contactos" },
         { id: "pub_7", texto: "7. Caja Estanca (300x250x150)" }
@@ -358,9 +38,9 @@
     },
     {
       id: "torniquete",
-      titulo: "🌐 Torniquete",
+      titulo: "🌐 Torniquete / WiFi",
       items: [
-        { id: "tor_1", texto: "1. Canalización y Ponchado del Nodo" }
+        { id: "tor_1", texto: "1. Canalización / Registros" }
       ]
     },
     {
@@ -368,8 +48,8 @@
       titulo: "⛽ Enlace Estación (Inspección Física)",
       esEnlace: true,
       items: [
-        { id: "enlace_1", texto: "1. Canalización" },
-        { id: "enlace_2", texto: "2. Calibre del cable UTP Correcto" }
+        { id: "enlace_1", texto: "1. Canalización / Cableado de Enlace" },
+        { id: "enlace_2", texto: "2. Antena / Módulos de Comunicación" }
       ]
     }
   ];
@@ -383,4 +63,546 @@
   function obtenerUsuarioAutenticado() {
     return sessionStorage.getItem("synergo_user") || 
            sessionStorage.getItem("usuario") || 
-           localStorage.getItem("synergo_user") ||
+           localStorage.getItem("synergo_user") || 
+           "Inspector / Usuario";
+  }
+
+  // Inicialización asegurada en orden secuencial síncrono
+  window.onload = function() {
+    // 1. Mostrar usuario inmediatamente
+    const usuarioActual = obtenerUsuarioAutenticado();
+    document.getElementById('lbl-sesion-usuario').textContent = usuarioActual;
+
+    // 2. Establecer fecha por defecto
+    document.getElementById('req-fecha').valueAsDate = new Date();
+
+    // 3. Renderizar interfaz física básica inmediatamente
+    renderizarAreas();
+    inicializarCanvas('canvas_tecnico');
+    inicializarCanvas('canvas_cliente');
+
+    // 4. Intentar cargar datos de la nube sin bloquear la interfaz
+    cargarProyectosDesdeNube();
+  };
+
+  function toggleEnlaceEstacion(aplica) {
+    aplicaEnlaceEstacion = aplica;
+    const contenedor = document.getElementById('contenedor-enlace-estacion');
+    const msgNoAplica = document.getElementById('msg-no-aplica-enlace');
+    const inputs = contenedor.querySelectorAll('.input-enlace');
+
+    if (aplica) {
+      contenedor.style.opacity = '1';
+      contenedor.style.pointerEvents = 'auto';
+      msgNoAplica.style.display = 'none';
+      inputs.forEach(i => i.removeAttribute('disabled'));
+    } else {
+      contenedor.style.opacity = '0.5';
+      contenedor.style.pointerEvents = 'none';
+      msgNoAplica.style.display = 'block';
+      inputs.forEach(i => {
+        i.setAttribute('disabled', 'true');
+        i.value = '';
+      });
+
+      delete estadoInspeccion['enlace_1'];
+      delete estadoInspeccion['enlace_2'];
+      delete detallesEvidencia['enlace_1'];
+      delete detallesEvidencia['enlace_2'];
+    }
+
+    renderizarAreas();
+  }
+
+  function renderizarAreas() {
+    const contenedor = document.getElementById('contenedor-areas');
+    if (!contenedor) return;
+    contenedor.innerHTML = '';
+
+    estructuraAreas.forEach(area => {
+      if (area.esEnlace && !aplicaEnlaceEstacion) return;
+
+      const card = document.createElement('div');
+      card.className = 'area-card';
+
+      let itemsHTML = area.items.map(item => {
+        const est = estadoInspeccion[item.id] || "CUMPLE";
+        estadoInspeccion[item.id] = est;
+
+        detallesEvidencia[item.id] = detallesEvidencia[item.id] || { foto: '', obs: '' };
+        const evidencia = detallesEvidencia[item.id];
+
+        const esCumple = (est === 'CUMPLE');
+        const esObservacion = (est === 'OBSERVACION');
+        const esNoCumple = (est === 'NO CUMPLE');
+        const mostrarCaja = esNoCumple || esObservacion;
+
+        return `
+          <div class="item-row ${esNoCumple ? 'item-nocumple' : (esObservacion ? 'item-observacion' : 'item-cumple')}" id="row-${item.id}">
+            <span class="item-label">${item.texto}</span>
+            <div class="status-group" data-item="${item.id}">
+              <button type="button" class="btn-status ${esCumple ? 'active-cumple' : ''}" onclick="seleccionarEstado('${item.id}', 'CUMPLE')">CUMPLE</button>
+              <button type="button" class="btn-status ${esObservacion ? 'active-observacion' : ''}" onclick="seleccionarEstado('${item.id}', 'OBSERVACION')">OBSERVACIÓN</button>
+              <button type="button" class="btn-status ${esNoCumple ? 'active-nocumple' : ''}" onclick="seleccionarEstado('${item.id}', 'NO CUMPLE')">NO CUMPLE</button>
+            </div>
+
+            <div class="evidencia-box" id="box-evidencia-${item.id}" style="display: ${mostrarCaja ? 'flex' : 'none'}; border-color: ${esNoCumple ? '#d32f2f' : '#f57c00'};">
+              <span style="font-size: 11px; font-weight: bold; color: ${esNoCumple ? '#d32f2f' : '#f57c00'};">
+                ${esNoCumple ? '⚠️ Detalle del Incumplimiento:' : '📝 Detalle de la Observación:'}
+              </span>
+              <input type="text" id="obs-item-${item.id}" placeholder="Escribe tus notas aquí..." value="${evidencia.obs || ''}" onkeyup="guardarObsItem('${item.id}', this.value)" onchange="guardarObsItem('${item.id}', this.value)">
+              <span style="font-size: 10px; color: #666; margin-top: 2px;">📷 Adjuntar Foto (Opcional):</span>
+              <input type="file" accept="image/*" capture="environment" onchange="capturarFoto(event, '${item.id}')">
+              <img id="img-prev-${item.id}" class="evidencia-preview" src="${evidencia.foto || ''}" style="display: ${evidencia.foto ? 'block' : 'none'};">
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      card.innerHTML = `
+        <div class="area-header" onclick="toggleArea('${area.id}')">
+          <span>${area.titulo}</span>
+          <span id="icon-${area.id}">▼</span>
+        </div>
+        <div class="area-body" id="body-${area.id}">
+          ${itemsHTML}
+        </div>
+      `;
+      contenedor.appendChild(card);
+    });
+
+    calcularAvance();
+  }
+
+  function toggleArea(id) {
+    const body = document.getElementById(`body-${id}`);
+    const icon = document.getElementById(`icon-${id}`);
+    if (body.style.display === "none") {
+      body.style.display = "flex";
+      icon.textContent = "▼";
+    } else {
+      body.style.display = "none";
+      icon.textContent = "▶";
+    }
+  }
+
+  function seleccionarEstado(itemId, estado) {
+    estadoInspeccion[itemId] = estado;
+    const row = document.getElementById(`row-${itemId}`);
+    const evidenciaBox = document.getElementById(`box-evidencia-${itemId}`);
+    const container = document.querySelector(`[data-item="${itemId}"]`);
+
+    if (!container) return;
+
+    const btns = container.querySelectorAll('.btn-status');
+    btns.forEach(btn => btn.classList.remove('active-cumple', 'active-nocumple', 'active-observacion'));
+    row.classList.remove('item-cumple', 'item-nocumple', 'item-observacion');
+
+    if (estado === 'CUMPLE') {
+      btns[0].classList.add('active-cumple');
+      row.classList.add('item-cumple');
+      if (evidenciaBox) evidenciaBox.style.display = 'none';
+    } else if (estado === 'OBSERVACION') {
+      btns[1].classList.add('active-observacion');
+      row.classList.add('item-observacion');
+      if (evidenciaBox) {
+        evidenciaBox.style.display = 'flex';
+        evidenciaBox.style.borderColor = '#f57c00';
+      }
+    } else if (estado === 'NO CUMPLE') {
+      btns[2].classList.add('active-nocumple');
+      row.classList.add('item-nocumple');
+      if (evidenciaBox) {
+        evidenciaBox.style.display = 'flex';
+        evidenciaBox.style.borderColor = '#d32f2f';
+      }
+    }
+
+    calcularAvance();
+  }
+
+  function capturarFoto(e, itemId) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 600;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > MAX_WIDTH) {
+          height = Math.round((height * MAX_WIDTH) / width);
+          width = MAX_WIDTH;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const dataUrlReducida = canvas.toDataURL('image/jpeg', 0.5);
+
+        detallesEvidencia[itemId] = detallesEvidencia[itemId] || {};
+        detallesEvidencia[itemId].foto = dataUrlReducida;
+
+        const imgPrev = document.getElementById(`img-prev-${itemId}`);
+        if (imgPrev) {
+          imgPrev.src = dataUrlReducida;
+          imgPrev.style.display = 'block';
+        }
+      };
+      img.src = evt.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function guardarObsItem(itemId, valor) {
+    detallesEvidencia[itemId] = detallesEvidencia[itemId] || {};
+    detallesEvidencia[itemId].obs = valor;
+  }
+
+  function calcularAvance() {
+    let cumple = 0;
+    let observacion = 0;
+    let noCumple = 0;
+
+    const keys = Object.keys(estadoInspeccion);
+    const total = keys.length;
+
+    keys.forEach(k => {
+      if (estadoInspeccion[k] === 'CUMPLE') cumple++;
+      if (estadoInspeccion[k] === 'OBSERVACION') observacion++;
+      if (estadoInspeccion[k] === 'NO CUMPLE') noCumple++;
+    });
+
+    let evaluados = cumple + observacion + noCumple;
+    let porcentaje = total > 0 ? Math.round((evaluados / total) * 100) : 0;
+
+    document.getElementById('cnt-cumple').textContent = cumple;
+    document.getElementById('cnt-observacion').textContent = observacion;
+    document.getElementById('cnt-nocumple').textContent = noCumple;
+    document.getElementById('cnt-pendientes').textContent = total - evaluados;
+    
+    document.getElementById('lbl-porcentaje-avance').textContent = porcentaje + '%';
+    document.getElementById('bar-avance-fill').style.width = porcentaje + '%';
+
+    return { porcentaje, cumple, observacion, noCumple };
+  }
+
+  async function guardarProgreso() {
+    const proyecto = document.getElementById('req-proyecto').value.trim();
+    if (!proyecto) { alert("⚠️ Escribe el Nombre del Proyecto."); return; }
+
+    const usuario = obtenerUsuarioAutenticado();
+    const btnGuardar = document.getElementById('btn-guardar');
+    btnGuardar.disabled = true;
+    btnGuardar.textContent = "⏳ Guardando...";
+
+    const stats = calcularAvance();
+
+    const estadoFormulario = {
+      proyecto: proyecto,
+      fecha: document.getElementById('req-fecha').value,
+      tecnico: document.getElementById('req-tecnico').value,
+      aplicaEnlaceEstacion: aplicaEnlaceEstacion,
+      enlaceProveedor: document.getElementById('enlace-proveedor').value,
+      enlaceIp: document.getElementById('enlace-ip').value,
+      estadoInspeccion: estadoInspeccion,
+      detallesEvidencia: detallesEvidencia,
+      obsMatriz: document.getElementById('obs-matriz').value,
+      nombre_tecnico: document.getElementById('nombre_firma_tecnico').value,
+      nombre_cliente: document.getElementById('nombre_firma_cliente').value,
+      firma_tecnico: canvasStates['canvas_tecnico'] || null,
+      firma_cliente: canvasStates['canvas_cliente'] || null,
+      avancePorcentaje: stats.porcentaje
+    };
+
+    try {
+      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
+      let data = await res.json();
+      let proyectos = (data && data.record && data.record.proyectos) ? data.record.proyectos : {};
+
+      const versionPrevia = proyectos[`VISITA_${proyecto}`] || null;
+      let detalleAccion = `Guardado (${stats.porcentaje}% Avance: ${stats.cumple} C, ${stats.observacion} Obs, ${stats.noCumple} NC).`;
+
+      const ahora = new Date();
+      const fechaHoraStr = ahora.toLocaleDateString('es-MX') + ' ' + ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+
+      let historialPrevio = (versionPrevia && versionPrevia.historial) ? versionPrevia.historial : [];
+      historialPrevio.unshift({ fecha: fechaHoraStr, usuario: usuario, accion: detalleAccion });
+
+      const estadoFinal = {
+        ...estadoFormulario,
+        tipo: "VISITA_SITIO",
+        ultimo_editor: usuario,
+        ultima_modificacion: fechaHoraStr,
+        historial: historialPrevio
+      };
+
+      proyectos[`VISITA_${proyecto}`] = estadoFinal;
+
+      let resPut = await fetch(URL_NUBE, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
+        body: JSON.stringify({ proyectos: proyectos })
+      });
+
+      if (!resPut.ok) {
+        let errData = await resPut.json();
+        throw new Error(errData.message || "Error al actualizar la nube.");
+      }
+
+      alert(`☁️ Guardado exitosamente.`);
+      await cargarProyectosDesdeNube(`VISITA_${proyecto}`);
+    } catch (err) {
+      alert(`❌ Error al guardar en la nube:\n${err.message}`);
+    } finally {
+      btnGuardar.disabled = false;
+      btnGuardar.textContent = "💾 Guardar";
+    }
+  }
+
+  async function cargarProyectosDesdeNube(seleccionado = '') {
+    const select = document.getElementById('select-proyectos');
+    if (!select) return;
+
+    select.innerHTML = '<option value="">⏳ Cargando borradores...</option>';
+
+    try {
+      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
+      if (!res.ok) throw new Error("Error en la conexión a la base de datos.");
+      
+      let data = await res.json();
+      window.proyectosNube = (data && data.record && data.record.proyectos) ? data.record.proyectos : {};
+
+      select.innerHTML = '<option value="">-- Seleccionar Borrador --</option>';
+      let contador = 0;
+
+      Object.keys(window.proyectosNube).forEach(clave => {
+        let item = window.proyectosNube[clave];
+        if (item && (item.tipo === "VISITA_SITIO" || clave.startsWith("VISITA_"))) {
+          let opt = document.createElement('option');
+          opt.value = clave;
+          opt.textContent = item.proyecto || clave.replace("VISITA_", "");
+          if (clave === seleccionado) opt.selected = true;
+          select.appendChild(opt);
+          contador++;
+        }
+      });
+
+      if (contador === 0) {
+        select.innerHTML = '<option value="">(Sin borradores guardados)</option>';
+      }
+    } catch (err) {
+      console.error("Error al obtener datos:", err);
+      select.innerHTML = '<option value="">⚠️ No se pudo conectar a la nube</option>';
+    }
+  }
+
+  function cargarProyecto(clave) {
+    if (!clave || !window.proyectosNube) return;
+    const estado = window.proyectosNube[clave];
+    if (!estado) return;
+
+    document.getElementById('req-proyecto').value = estado.proyecto || '';
+    document.getElementById('req-fecha').value = estado.fecha || '';
+    document.getElementById('req-tecnico').value = estado.tecnico || '';
+    document.getElementById('obs-matriz').value = estado.obsMatriz || '';
+
+    const chkEnlace = document.getElementById('chk-aplica-enlace');
+    chkEnlace.checked = !!estado.aplicaEnlaceEstacion;
+    toggleEnlaceEstacion(chkEnlace.checked);
+
+    if (chkEnlace.checked) {
+      document.getElementById('enlace-proveedor').value = estado.enlaceProveedor || '';
+      document.getElementById('enlace-ip').value = estado.enlaceIp || '';
+    }
+
+    Object.keys(estadoInspeccion).forEach(k => delete estadoInspeccion[k]);
+    Object.keys(detallesEvidencia).forEach(k => delete detallesEvidencia[k]);
+
+    if (estado.estadoInspeccion) Object.assign(estadoInspeccion, estado.estadoInspeccion);
+    if (estado.detallesEvidencia) Object.assign(detallesEvidencia, estado.detallesEvidencia);
+
+    renderizarAreas();
+
+    historialGlobal = estado.historial || [];
+    renderizarTablaHistorial();
+
+    document.getElementById('nombre_firma_tecnico').value = estado.nombre_tecnico || '';
+    cargarImagenEnCanvas('canvas_tecnico', estado.firma_tecnico);
+
+    document.getElementById('nombre_firma_cliente').value = estado.nombre_cliente || '';
+    cargarImagenEnCanvas('canvas_cliente', estado.firma_cliente);
+  }
+
+  function renderizarTablaHistorial() {
+    const tbody = document.getElementById('tabla-historial-body');
+    if (!tbody) return;
+
+    if (!historialGlobal || historialGlobal.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #888;">Sin historial.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = historialGlobal.map(item => `
+      <tr>
+        <td>${item.fecha || '-'}</td>
+        <td><strong>${item.usuario || 'Anónimo'}</strong></td>
+        <td>${item.accion || 'Edición'}</td>
+      </tr>
+    `).join('');
+  }
+
+  async function eliminarDeNube() {
+    const select = document.getElementById('select-proyectos');
+    const clave = select.value;
+    if (!clave) { alert("⚠️ Selecciona un borrador."); return; }
+
+    if (!confirm("🗑️ ¿Deseas eliminar este borrador?")) return;
+
+    try {
+      let res = await fetch(URL_NUBE, { headers: { "X-Master-Key": API_KEY } });
+      let data = await res.json();
+      let proyectos = (data && data.record && data.record.proyectos) ? data.record.proyectos : {};
+
+      if (proyectos[clave]) {
+        delete proyectos[clave];
+        await fetch(URL_NUBE, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
+          body: JSON.stringify({ proyectos: proyectos })
+        });
+        alert(`🗑️ Eliminado.`);
+        nuevoProyecto();
+        await cargarProyectosDesdeNube();
+      }
+    } catch (e) {
+      alert("⚠️ Error al eliminar.");
+    }
+  }
+
+  function nuevoProyecto() {
+    document.getElementById('req-proyecto').value = '';
+    document.getElementById('req-fecha').valueAsDate = new Date();
+    document.getElementById('req-tecnico').value = '';
+    document.getElementById('obs-matriz').value = '';
+
+    const chkEnlace = document.getElementById('chk-aplica-enlace');
+    chkEnlace.checked = false;
+    toggleEnlaceEstacion(false);
+
+    Object.keys(estadoInspeccion).forEach(k => estadoInspeccion[k] = "CUMPLE");
+    Object.keys(detallesEvidencia).forEach(k => delete detallesEvidencia[k]);
+    renderizarAreas();
+
+    historialGlobal = [];
+    renderizarTablaHistorial();
+
+    limpiarCanvas('canvas_tecnico');
+    limpiarCanvas('canvas_cliente');
+    document.getElementById('nombre_firma_tecnico').value = '';
+    document.getElementById('nombre_firma_cliente').value = '';
+
+    document.getElementById('select-proyectos').value = '';
+  }
+
+  function inicializarCanvas(idCanvas) {
+    const canvas = document.getElementById(idCanvas);
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    let dibujando = false;
+
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#1b365d';
+
+    function obtenerPosicion(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return { x: clientX - rect.left, y: clientY - rect.top };
+    }
+
+    function iniciarDibujo(e) {
+      dibujando = true;
+      const pos = obtenerPosicion(e);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+    }
+
+    function dibujar(e) {
+      if (!dibujando) return;
+      e.preventDefault();
+      const pos = obtenerPosicion(e);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+    }
+
+    function detenerDibujo() {
+      if (dibujando) {
+        dibujando = false;
+        canvasStates[idCanvas] = canvas.toDataURL();
+      }
+    }
+
+    canvas.addEventListener('mousedown', iniciarDibujo);
+    canvas.addEventListener('mousemove', dibujar);
+    canvas.addEventListener('mouseup', detenerDibujo);
+    canvas.addEventListener('mouseleave', detenerDibujo);
+
+    canvas.addEventListener('touchstart', iniciarDibujo);
+    canvas.addEventListener('touchmove', dibujar);
+    canvas.addEventListener('touchend', detenerDibujo);
+  }
+
+  function limpiarCanvas(idCanvas) {
+    const canvas = document.getElementById(idCanvas);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    delete canvasStates[idCanvas];
+  }
+
+  function cargarImagenEnCanvas(idCanvas, dataUrl) {
+    const canvas = document.getElementById(idCanvas);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    limpiarCanvas(idCanvas);
+
+    if (dataUrl) {
+      const img = new Image();
+      img.onload = function() {
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvasStates[idCanvas] = dataUrl;
+      };
+      img.src = dataUrl;
+    }
+  }
+
+  function descargarPDF() {
+    const proyecto = document.getElementById('req-proyecto').value.trim();
+    if (!proyecto) { alert("⚠️ Asigna un nombre al Proyecto."); return; }
+
+    const elemento = document.getElementById('formato-app');
+
+    const opciones = {
+      margin: 6,
+      filename: `Visita_Sitio_${proyecto}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opciones).from(elemento).save();
+  }
+</script>
