@@ -213,7 +213,7 @@
         { id: "tpv_1", texto: "1. Canalización" },
         { id: "tpv_2", texto: "2. Contacto Doble NO Regulado" },
         { id: "tpv_3", texto: "3. Voltaje Verificado en Contactos" },
-        { id: "tpv_4", texto: "4. Pases en los muebles" }
+        { id: "tpv_4", texto: "4. Pases en los muebles" },
         { id: "tpv_5", texto: "5. Canalización de micrófonos" }
       ]
     },
@@ -799,10 +799,10 @@
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (dataUrl) {
-      canvasStates[idCanvas] = dataUrl;
       const img = new Image();
       img.onload = function() {
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvasStates[idCanvas] = dataUrl;
       };
       img.src = dataUrl;
     } else {
@@ -812,17 +812,15 @@
 
   function descargarPDF() {
     const elemento = document.getElementById('formato-app');
-    const proyecto = document.getElementById('req-proyecto').value.trim() || 'Visita_Sitio';
-
-    const opciones = {
-      margin: 10,
-      filename: `${proyecto}_Visita_Sitio.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    const opt = {
+      margin:       0.3,
+      filename:     `Visita_Sitio_${document.getElementById('req-proyecto').value || 'Proyecto'}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2 },
+      jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
     };
 
-    html2pdf().set(opciones).from(elemento).save();
+    html2pdf().set(opt).from(elemento).save();
   }
 </script>
 </body>
