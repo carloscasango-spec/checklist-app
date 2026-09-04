@@ -1,3 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visita en Sitio - Voz y Datos</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    :root {
+      --primary: #1b365d;
+      --secondary: #4a90e2;
+      --success: #2e7d32;
+      --warning: #f57c00;
+      --danger: #d32f2f;
+      --bg: #f4f6f9;
+      --card-bg: #ffffff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: var(--bg); color: #333; padding: 15px; }
+
+    #formato-app { max-width: 1000px; margin: 0 auto; background: var(--card-bg); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 20px; }
+
+    .top-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; background: var(--primary); color: white; padding: 12px 20px; border-radius: 6px; margin-bottom: 20px; gap: 10px; }
+    .top-bar h2 { font-size: 1.1rem; display: flex; align-items: center; gap: 8px; }
+    .user-tag { background: rgba(255,255,255,0.15); padding: 4px 12px; border-radius: 12px; font-size: 0.85rem; }
+
+    .action-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+    .action-bar select, .action-bar button { padding: 10px 14px; border-radius: 6px; border: 1px solid #ccc; font-size: 0.9rem; cursor: pointer; font-weight: 600; }
+    .action-bar select { flex: 1; min-width: 200px; }
+    
+    .btn-save { background: var(--success); color: white; border: none !important; }
+    .btn-delete { background: var(--danger); color: white; border: none !important; }
+    .btn-new { background: #6c757d; color: white; border: none !important; }
+    .btn-pdf { background: #0288d1; color: white; border: none !important; }
+
+    .section-box { background: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; margin-bottom: 20px; }
+    .section-title { font-weight: 700; color: var(--primary); margin-bottom: 12px; font-size: 1rem; border-bottom: 2px solid var(--secondary); padding-bottom: 4px; }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group label { font-size: 0.8rem; font-weight: 700; color: #555; text-transform: uppercase; }
+    .form-group input, .form-group textarea { padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; width: 100%; }
+
+    .area-card { border: 1px solid #ddd; border-radius: 6px; margin-bottom: 12px; overflow: hidden; }
+    .area-header { background: #eef2f7; padding: 10px 15px; font-weight: 700; color: var(--primary); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+    .area-body { padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+
+    .item-row { padding: 10px; border-radius: 4px; border-left: 4px solid #ccc; background: #fafafa; display: flex; flex-direction: column; gap: 8px; }
+    .item-label { font-size: 0.9rem; font-weight: 600; }
+    .status-group { display: flex; gap: 8px; flex-wrap: wrap; }
+    
+    .btn-status { flex: 1; padding: 6px 10px; border: 1px solid #ccc; background: white; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
+    .active-cumple { background: var(--success) !important; color: white !important; border-color: var(--success) !important; }
+    .active-observacion { background: var(--warning) !important; color: white !important; border-color: var(--warning) !important; }
+    .active-nocumple { background: var(--danger) !important; color: white !important; border-color: var(--danger) !important; }
+
+    .evidencia-box { display: flex; flex-direction: column; gap: 6px; background: white; padding: 10px; border: 1px dashed #ccc; border-radius: 4px; margin-top: 6px; }
+    .evidencia-preview { max-width: 150px; max-height: 150px; border-radius: 4px; border: 1px solid #ddd; object-fit: cover; }
+
+    .canvas-container { border: 1px dashed #aaa; border-radius: 4px; background: #fff; height: 120px; width: 100%; position: relative; }
+    canvas { width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+    .btn-clear { margin-top: 4px; padding: 4px 8px; font-size: 0.75rem; background: #888; color: white; border: none; border-radius: 3px; cursor: pointer; }
+
+    .progress-bar-bg { background: #e0e0e0; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 8px; }
+    .progress-bar-fill { background: var(--success); height: 100%; width: 0%; transition: width 0.3s; }
+  </style>
+</head>
+<body>
+
+<div id="formato-app">
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <h2>☁️ Visita en Sitio - Voz y Datos</h2>
+    <div class="user-tag">👤 Usuario: <span id="lbl-sesion-usuario">Cargando...</span></div>
+  </div>
+
+  <!-- Actions -->
+  <div class="action-bar">
+    <select id="select-proyectos" onchange="cargarProyecto(this.value)">
+      <option value="">⏳ Cargando borradores...</option>
+    </select>
+    <button type="button" id="btn-guardar" class="btn-save" onclick="guardarProgreso()">💾 Guardar</button>
+    <button type="button" class="btn-delete" onclick="eliminarDeNube()">🗑️ Eliminar</button>
+    <button type="button" class="btn-new" onclick="nuevoProyecto()">➕ Nuevo</button>
+    <button type="button" class="btn-pdf" onclick="descargarPDF()">📄 PDF</button>
+  </div>
+
+  <!-- Progress -->
+  <div class="section-box">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-weight: 700; font-size: 0.9rem;">📊 Avance de Inspección</span>
+      <span id="lbl-porcentaje-avance" style="font-weight: bold; color: var(--success);">0%</span>
+    </div>
+    <div class="progress-bar-bg">
+      <div id="bar-avance-fill" class="progress-bar-fill"></div>
+    </div>
+    <div style="display: flex; justify-content: space-around; margin-top: 8px; font-size: 0.8rem; font-weight: 600;">
+      <span style="color: var(--success);">🟢 Cumple: <span id="cnt-cumple">0</span></span>
+      <span style="color: var(--warning);">🟡 Observación: <span id="cnt-observacion">0</span></span>
+      <span style="color: var(--danger);">🔴 No Cumple: <span id="cnt-nocumple">0</span></span>
+      <span style="color: #666;">⚪ Pendientes: <span id="cnt-pendientes">0</span></span>
+    </div>
+  </div>
+
+  <!-- General Info -->
+  <div class="section-box">
+    <div class="section-title">RECEPCIÓN DE VOZ Y DATOS - VISITA EN SITIO</div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label>PROYECTO / SUCURSAL:</label>
+        <input type="text" id="req-proyecto" placeholder="Ej: GC PALMA TROPICAL">
+      </div>
+      <div class="form-group">
+        <label>FECHA DE VISITA:</label>
+        <input type="date" id="req-fecha">
+      </div>
+      <div class="form-group" style="grid-column: 1 / -1;">
+        <label>TÉCNICO / INSPECTOR:</label>
+        <input type="text" id="req-tecnico" placeholder="Nombre del inspector">
+      </div>
+    </div>
+  </div>
+
+  <!-- Optional Enlace Station -->
+  <div class="section-box">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+      <span style="font-weight: 700; color: var(--primary);">🔖 Enlace Estación</span>
+      <label style="font-size: 0.85rem; font-weight: bold; cursor: pointer;">
+        <input type="checkbox" id="chk-aplica-enlace" onchange="toggleEnlaceEstacion(this.checked)"> Aplica Enlace Estación
+      </label>
+    </div>
+    <div id="msg-no-aplica-enlace" style="font-size: 0.85rem; color: #777; font-style: italic;">
+      ⚠️ Esta opción está marcada como NO APLICA. Activa la casilla superior para habilitar sus campos.
+    </div>
+    <div id="contenedor-enlace-estacion" class="grid-2" style="opacity: 0.5; pointer-events: none; margin-top: 10px;">
+      <div class="form-group">
+        <label>PROVEEDOR / TIPO ENLACE:</label>
+        <input type="text" id="enlace-proveedor" class="input-enlace" placeholder="Ej: Telmex, Izzi, Microondas" disabled>
+      </div>
+      <div class="form-group">
+        <label>IP / REFERENCIA:</label>
+        <input type="text" id="enlace-ip" class="input-enlace" placeholder="Ej: 192.168.1.1" disabled>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dynamic Areas -->
+  <div class="section-box">
+    <div class="section-title">📌 Inspección por Áreas</div>
+    <div id="contenedor-areas"></div>
+  </div>
+
+  <!-- General Observations -->
+  <div class="section-box">
+    <div class="section-title">OBSERVACIONES DE VISITA EN SITIO:</div>
+    <div class="form-group">
+      <textarea id="obs-matriz" rows="3" placeholder="Escribir observaciones generales..."></textarea>
+    </div>
+  </div>
+
+  <!-- Digital Signatures -->
+  <div class="section-box">
+    <div class="section-title">✍️ Firmas Digitales</div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label>FIRMA INSPECTOR / SYNERGO:</label>
+        <input type="text" id="nombre_firma_tecnico" placeholder="Nombre completo" style="margin-bottom: 6px;">
+        <div class="canvas-container">
+          <canvas id="canvas_tecnico"></canvas>
+        </div>
+        <button type="button" class="btn-clear" onclick="limpiarCanvas('canvas_tecnico')">🧹 Borrar Firma</button>
+      </div>
+      <div class="form-group">
+        <label>FIRMA RECIBIDO / CLIENTE:</label>
+        <input type="text" id="nombre_firma_cliente" placeholder="Nombre completo" style="margin-bottom: 6px;">
+        <div class="canvas-container">
+          <canvas id="canvas_cliente"></canvas>
+        </div>
+        <button type="button" class="btn-clear" onclick="limpiarCanvas('canvas_cliente')">🧹 Borrar Firma</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="section-box">
+    <div class="section-title">📜 Historial de Cambios</div>
+    <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+      <thead>
+        <tr style="background: #f0f0f0; text-align: left;">
+          <th style="padding: 6px; border: 1px solid #ddd;">Fecha/Hora</th>
+          <th style="padding: 6px; border: 1px solid #ddd;">Usuario</th>
+          <th style="padding: 6px; border: 1px solid #ddd;">Acción</th>
+        </tr>
+      </thead>
+      <tbody id="tabla-historial-body">
+        <tr><td colspan="3" style="text-align: center; color: #888; padding: 10px;">Sin historial.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
 <script>
   const BIN_ID = "6a906a3af5f4af5e294a7049";
   const API_KEY = "$2a$10$5BDKoNaJb98nczPxrHl1Uuow.tck.XjCTrl6Cc7b.aZ3RbBRtHr4e";
@@ -67,22 +269,26 @@
            "Inspector / Usuario";
   }
 
-  // Inicialización asegurada en orden secuencial síncrono
   window.onload = function() {
-    // 1. Mostrar usuario inmediatamente
-    const usuarioActual = obtenerUsuarioAutenticado();
-    document.getElementById('lbl-sesion-usuario').textContent = usuarioActual;
+    try {
+      const usuarioActual = obtenerUsuarioAutenticado();
+      const elUsuario = document.getElementById('lbl-sesion-usuario');
+      if (elUsuario) elUsuario.textContent = usuarioActual;
 
-    // 2. Establecer fecha por defecto
-    document.getElementById('req-fecha').valueAsDate = new Date();
+      const elFecha = document.getElementById('req-fecha');
+      if (elFecha) elFecha.valueAsDate = new Date();
 
-    // 3. Renderizar interfaz física básica inmediatamente
-    renderizarAreas();
-    inicializarCanvas('canvas_tecnico');
-    inicializarCanvas('canvas_cliente');
+      renderizarAreas();
+      
+      setTimeout(() => {
+        inicializarCanvas('canvas_tecnico');
+        inicializarCanvas('canvas_cliente');
+      }, 200);
 
-    // 4. Intentar cargar datos de la nube sin bloquear la interfaz
-    cargarProyectosDesdeNube();
+      cargarProyectosDesdeNube();
+    } catch (err) {
+      console.error("Error al inicializar interfaz:", err);
+    }
   };
 
   function toggleEnlaceEstacion(aplica) {
@@ -177,6 +383,7 @@
   function toggleArea(id) {
     const body = document.getElementById(`body-${id}`);
     const icon = document.getElementById(`icon-${id}`);
+    if (!body) return;
     if (body.style.display === "none") {
       body.style.display = "flex";
       icon.textContent = "▼";
@@ -283,13 +490,23 @@
     let evaluados = cumple + observacion + noCumple;
     let porcentaje = total > 0 ? Math.round((evaluados / total) * 100) : 0;
 
-    document.getElementById('cnt-cumple').textContent = cumple;
-    document.getElementById('cnt-observacion').textContent = observacion;
-    document.getElementById('cnt-nocumple').textContent = noCumple;
-    document.getElementById('cnt-pendientes').textContent = total - evaluados;
+    const elCumple = document.getElementById('cnt-cumple');
+    if (elCumple) elCumple.textContent = cumple;
     
-    document.getElementById('lbl-porcentaje-avance').textContent = porcentaje + '%';
-    document.getElementById('bar-avance-fill').style.width = porcentaje + '%';
+    const elObs = document.getElementById('cnt-observacion');
+    if (elObs) elObs.textContent = observacion;
+    
+    const elNoCumple = document.getElementById('cnt-nocumple');
+    if (elNoCumple) elNoCumple.textContent = noCumple;
+    
+    const elPendientes = document.getElementById('cnt-pendientes');
+    if (elPendientes) elPendientes.textContent = total - evaluados;
+    
+    const elPorcentaje = document.getElementById('lbl-porcentaje-avance');
+    if (elPorcentaje) elPorcentaje.textContent = porcentaje + '%';
+    
+    const elBar = document.getElementById('bar-avance-fill');
+    if (elBar) elBar.style.width = porcentaje + '%';
 
     return { porcentaje, cumple, observacion, noCumple };
   }
@@ -452,9 +669,9 @@
 
     tbody.innerHTML = historialGlobal.map(item => `
       <tr>
-        <td>${item.fecha || '-'}</td>
-        <td><strong>${item.usuario || 'Anónimo'}</strong></td>
-        <td>${item.accion || 'Edición'}</td>
+        <td style="padding: 6px; border: 1px solid #ddd;">${item.fecha || '-'}</td>
+        <td style="padding: 6px; border: 1px solid #ddd;"><strong>${item.usuario || 'Anónimo'}</strong></td>
+        <td style="padding: 6px; border: 1px solid #ddd;">${item.accion || 'Edición'}</td>
       </tr>
     `).join('');
   }
@@ -519,8 +736,8 @@
     const ctx = canvas.getContext('2d');
     let dibujando = false;
 
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
+    canvas.width = canvas.offsetWidth || 300;
+    canvas.height = canvas.offsetHeight || 120;
 
     ctx.lineWidth = 2;
     ctx.lineCap = 'round';
@@ -606,3 +823,5 @@
     html2pdf().set(opciones).from(elemento).save();
   }
 </script>
+</body>
+</html>
