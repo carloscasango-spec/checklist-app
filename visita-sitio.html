@@ -71,14 +71,37 @@
       margin-bottom: 20px;
     }
 
+    .card-title-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
     .card-title {
       font-size: 1rem;
       font-weight: 600;
       color: var(--primary);
-      margin-bottom: 12px;
       display: flex;
       align-items: center;
       gap: 8px;
+      margin: 0;
+    }
+
+    .checkbox-right-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .checkbox-right-label input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
     }
 
     .form-grid {
@@ -107,7 +130,7 @@
       width: 100%;
     }
 
-    /* Avance y métricas */
+    /* Métricas y progreso */
     .metrics-bar {
       display: flex;
       gap: 10px;
@@ -222,16 +245,104 @@
       margin-top: 5px;
     }
 
-    .evidencia-preview {
-      max-width: 150px;
-      max-height: 150px;
-      border-radius: 5px;
+    .preview-container {
+      position: relative;
+      display: inline-block;
       margin-top: 5px;
+      align-self: flex-start;
+    }
+
+    .evidencia-preview {
+      max-width: 220px;
+      max-height: 220px;
+      border-radius: 5px;
       object-fit: cover;
+      cursor: pointer;
+      border: 2px solid #ccc;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .evidencia-preview:hover {
+      transform: scale(1.02);
+      border-color: var(--secondary);
+    }
+
+    .btn-zoom-overlay {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s ease;
+    }
+
+    .btn-zoom-overlay:hover {
+      background: rgba(0, 0, 0, 0.9);
     }
 
     .estado-subida-foto {
       font-size: 0.75rem;
+      font-weight: bold;
+    }
+
+    /* Modal / Lightbox de Zoom */
+    .modal-lightbox {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.88);
+      backdrop-filter: blur(5px);
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: 20px;
+    }
+
+    .modal-lightbox.active {
+      display: flex;
+    }
+
+    .modal-img-content {
+      max-width: 95%;
+      max-height: 85vh;
+      border-radius: 8px;
+      box-shadow: 0 5px 25px rgba(0,0,0,0.6);
+      object-fit: contain;
+    }
+
+    .modal-close-btn {
+      position: absolute;
+      top: 15px;
+      right: 25px;
+      color: #fff;
+      font-size: 40px;
+      font-weight: bold;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .modal-close-btn:hover {
+      color: #bbb;
+    }
+
+    .modal-caption {
+      margin-top: 15px;
+      color: #fff;
+      font-size: 1rem;
+      text-align: center;
       font-weight: bold;
     }
 
@@ -304,7 +415,6 @@
       color: var(--primary);
     }
 
-    /* Reglas para la generación correcta de PDF */
     @media print {
       body {
         background: #ffffff !important;
@@ -322,7 +432,7 @@
         break-inside: avoid !important;
         margin-bottom: 12px !important;
       }
-      .no-pdf, #card-nube, #card-historial, .actions-panel {
+      .no-pdf, #card-nube, #card-historial, .actions-panel, .btn-zoom-overlay, .modal-lightbox {
         display: none !important;
       }
     }
@@ -342,7 +452,7 @@
   <!-- Proyectos Guardados en la Nube -->
   <div class="card" id="card-nube">
     <div class="card-title">☁️ Cargar / Borrador desde Nube</div>
-    <div class="form-grid">
+    <div class="form-grid" style="margin-top: 10px;">
       <div class="form-group" style="grid-column: 1 / -1;">
         <select id="select-proyectos" onchange="cargarProyecto(this.value)">
           <option value="">⏳ Conectando con servidor...</option>
@@ -354,7 +464,7 @@
   <!-- Datos Generales -->
   <div class="card">
     <div class="card-title">📌 Datos de la Inspección</div>
-    <div class="form-grid">
+    <div class="form-grid" style="margin-top: 10px;">
       <div class="form-group">
         <label>Nombre del Proyecto *</label>
         <input type="text" id="req-proyecto" placeholder="Ej: Sucursal Centro">
@@ -370,21 +480,48 @@
     </div>
   </div>
 
+  <!-- SECCIÓN: PLANO DE SEMBRADO DEL PROYECTO -->
+  <div class="card" style="border-left: 5px solid var(--secondary);">
+    <div class="card-title">🗺️ Plano de Sembrado del Proyecto</div>
+    <p style="font-size: 0.8rem; color: #555; margin-top: 4px;">
+      Sube la fotografía o imagen del plano/sembrado para verificar requerimientos, cambios o ediciones solicitadas.
+    </p>
+    
+    <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
+      <div class="form-group">
+        <label>📷 Adjuntar Foto del Sembrado (Nube):</label>
+        <input type="file" accept="image/*" capture="environment" class="no-pdf" onchange="subirSembrado(event)">
+        <span id="estado-foto-sembrado" class="estado-subida-foto"></span>
+      </div>
+
+      <div class="form-group" style="margin-top: 5px;">
+        <label>Notas u Observaciones del Sembrado / Ediciones:</label>
+        <textarea id="obs-sembrado" rows="2" placeholder="Detalla si se pidió algún ajuste, modificación o elemento especial en el plano de sembrado..."></textarea>
+      </div>
+
+      <!-- Vista previa con lupa -->
+      <div class="preview-container" id="preview-sembrado-container" style="display: none; margin-top: 8px;">
+        <img id="img-sembrado-preview" class="evidencia-preview" src="" alt="Plano de Sembrado" onclick="abrirModalZoom(this.src, 'Plano de Sembrado del Proyecto')">
+        <button type="button" class="btn-zoom-overlay no-pdf" title="Ver plano en tamaño grande" onclick="abrirModalZoom(document.getElementById('img-sembrado-preview').src, 'Plano de Sembrado del Proyecto')">🔍</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Opción Especial: Enlace Estación -->
   <div class="card">
-    <div class="card-title">⛽ Enlace Estación</div>
-    <div class="form-group" style="margin-bottom: 10px;">
-      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+    <div class="card-title-container">
+      <div class="card-title">⛽ Enlace Estación</div>
+      <label class="checkbox-right-label">
         <input type="checkbox" id="chk-aplica-enlace" onchange="toggleEnlaceEstacion(this.checked)">
         ¿Aplica Inspección de Enlace Estación?
       </label>
     </div>
 
-    <p id="msg-no-aplica-enlace" style="font-size: 0.8rem; color: #888; font-style: italic;">
+    <p id="msg-no-aplica-enlace" style="font-size: 0.8rem; color: #888; font-style: italic; margin-top: 5px;">
       Esta sección no aplica para la inspección actual.
     </p>
 
-    <div id="contenedor-enlace-estacion" class="form-grid" style="opacity: 0.5; pointer-events: none;">
+    <div id="contenedor-enlace-estacion" class="form-grid" style="opacity: 0.5; pointer-events: none; margin-top: 10px;">
       <div class="form-group">
         <label>CANALIZACION</label>
         <input type="text" id="enlace-proveedor" class="input-enlace" placeholder="" disabled>
@@ -398,9 +535,9 @@
 
   <!-- Progreso y Resumen -->
   <div class="card">
-    <div class="card-title">
-      📊 Avance y Cumplimiento
-      <span id="lbl-porcentaje-avance" style="margin-left: auto; color: var(--secondary);">0% Cumplimiento</span>
+    <div class="card-title-container">
+      <div class="card-title">📊 Avance y Cumplimiento</div>
+      <span id="lbl-porcentaje-avance" style="color: var(--secondary); font-weight: bold; font-size: 0.95rem;">0% Cumplimiento</span>
     </div>
     <div class="progress-outer">
       <div class="progress-fill" id="bar-avance-fill"></div>
@@ -419,7 +556,7 @@
   <!-- Observaciones Generales -->
   <div class="card">
     <div class="card-title">📄 Observaciones Matriz / Comentarios Generales</div>
-    <div class="form-group">
+    <div class="form-group" style="margin-top: 10px;">
       <textarea id="obs-matriz" rows="3" placeholder="Añade notas generales del sitio o recomendaciones de la matriz..."></textarea>
     </div>
   </div>
@@ -470,6 +607,13 @@
     <button type="button" class="btn btn-warning" onclick="nuevoProyecto()">✨ Nuevo Proyecto</button>
     <button type="button" class="btn btn-danger" onclick="eliminarDeNube()">🗑️ Eliminar de Nube</button>
   </div>
+</div>
+
+<!-- Modal / Lightbox de Zoom de Imágenes -->
+<div id="modal-lightbox" class="modal-lightbox no-pdf" onclick="cerrarModalZoom()">
+  <span class="modal-close-btn">&times;</span>
+  <img id="img-modal-target" class="modal-img-content" src="" alt="Vista ampliada">
+  <div id="modal-caption-target" class="modal-caption"></div>
 </div>
 
 <!-- LÓGICA JAVASCRIPT INTEGRADA -->
@@ -534,6 +678,7 @@
 
   let historialGlobal = [];
   let aplicaEnlaceEstacion = false;
+  let urlFotoSembrado = ""; 
   const canvasStates = {};
   const estadoInspeccion = {};
   const detallesEvidencia = {};
@@ -565,6 +710,52 @@
       console.error("Error al inicializar interfaz:", err);
     }
   };
+
+  /* FUNCIÓN PARA SUBIR PLANO DE SEMBRADO A IMGBB */
+  async function subirSembrado(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const estadoTxt = document.getElementById('estado-foto-sembrado');
+    const imgPrev = document.getElementById('img-sembrado-preview');
+    const prevContainer = document.getElementById('preview-sembrado-container');
+
+    if (estadoTxt) {
+      estadoTxt.innerText = "⏳ Subiendo plano de sembrado a la nube...";
+      estadoTxt.style.color = "#007bff";
+    }
+
+    const formData = new FormData();
+    formData.append("key", API_KEY_IMGBB);
+    formData.append("image", file);
+
+    try {
+      const res = await fetch("https://api.imgbb.com/1/upload", {
+        method: "POST",
+        body: formData
+      });
+
+      const data = await res.json();
+
+      if (data && data.success) {
+        urlFotoSembrado = data.data.url;
+        if (imgPrev) imgPrev.src = urlFotoSembrado;
+        if (prevContainer) prevContainer.style.display = 'inline-block';
+        if (estadoTxt) {
+          estadoTxt.innerText = "✅ Plano de sembrado sincronizado correctamente.";
+          estadoTxt.style.color = "green";
+        }
+      } else {
+        throw new Error("No se pudo subir la imagen del sembrado.");
+      }
+    } catch (err) {
+      alert("❌ Error al subir el plano del sembrado. Revisa tu conexión a internet.");
+      if (estadoTxt) {
+        estadoTxt.innerText = "❌ Error de conexión al subir plano.";
+        estadoTxt.style.color = "red";
+      }
+    }
+  }
 
   function toggleEnlaceEstacion(aplica) {
     aplicaEnlaceEstacion = aplica;
@@ -635,7 +826,11 @@
               <span style="font-size: 10px; color: #666; margin-top: 2px;">📷 Adjuntar Foto (En la nube):</span>
               <input type="file" accept="image/*" capture="environment" class="no-pdf" onchange="capturarFoto(event, '${item.id}')">
               <span id="estado-foto-${item.id}" class="estado-subida-foto"></span>
-              <img id="img-prev-${item.id}" class="evidencia-preview" src="${evidencia.foto || ''}" style="display: ${evidencia.foto ? 'block' : 'none'};">
+              
+              <div class="preview-container" id="preview-container-${item.id}" style="display: ${evidencia.foto ? 'inline-block' : 'none'};">
+                <img id="img-prev-${item.id}" class="evidencia-preview" src="${evidencia.foto || ''}" alt="Evidencia ${item.texto}" onclick="abrirModalZoom('${evidencia.foto || ''}', '${item.texto}')">
+                <button type="button" class="btn-zoom-overlay no-pdf" title="Ver en tamaño grande" onclick="abrirModalZoom('${evidencia.foto || ''}', '${item.texto}')">🔍</button>
+              </div>
             </div>
           </div>
         `;
@@ -710,9 +905,10 @@
 
     const estadoTxt = document.getElementById(`estado-foto-${itemId}`);
     const imgPrev = document.getElementById(`img-prev-${itemId}`);
+    const prevContainer = document.getElementById(`preview-container-${itemId}`);
 
     if (estadoTxt) {
-      estadoTxt.innerText = "⏳ Subiendo directamente a ImgBB...";
+      estadoTxt.innerText = "⏳ Subiendo a ImgBB...";
       estadoTxt.style.color = "#007bff";
     }
 
@@ -733,19 +929,17 @@
         detallesEvidencia[itemId] = detallesEvidencia[itemId] || {};
         detallesEvidencia[itemId].foto = urlFoto;
 
-        if (imgPrev) {
-          imgPrev.src = urlFoto;
-          imgPrev.style.display = 'block';
-        }
+        if (imgPrev) imgPrev.src = urlFoto;
+        if (prevContainer) prevContainer.style.display = 'inline-block';
         if (estadoTxt) {
-          estadoTxt.innerText = "✅ Foto sincronizada en la nube.";
+          estadoTxt.innerText = "✅ Foto sincronizada.";
           estadoTxt.style.color = "green";
         }
       } else {
         throw new Error("No se pudo publicar la imagen.");
       }
     } catch (err) {
-      alert("❌ Error de red: La foto debe subirse a la nube para estar sincronizada. Verifica tu conexión a internet.");
+      alert("❌ Error de red al subir foto. Verifica tu conexión a internet.");
       if (estadoTxt) {
         estadoTxt.innerText = "❌ Error de conexión al subir foto.";
         estadoTxt.style.color = "red";
@@ -758,7 +952,23 @@
     detallesEvidencia[itemId].obs = valor;
   }
 
-  /* CÁLCULO DE AVANCE Y PORCENTAJE BASADO EN CUMPLIMIENTO REAL */
+  /* LIGHTBOX / ZOOM DE FOTOGRAFÍAS Y PLANO DE SEMBRADO */
+  function abrirModalZoom(urlSrc, tituloItem) {
+    if (!urlSrc) return;
+    const modal = document.getElementById('modal-lightbox');
+    const imgTarget = document.getElementById('img-modal-target');
+    const captionTarget = document.getElementById('modal-caption-target');
+
+    imgTarget.src = urlSrc;
+    captionTarget.textContent = tituloItem || 'Vista ampliada de evidencia';
+    modal.classList.add('active');
+  }
+
+  function cerrarModalZoom() {
+    const modal = document.getElementById('modal-lightbox');
+    modal.classList.remove('active');
+  }
+
   function calcularAvance() {
     let cumple = 0;
     let observacion = 0;
@@ -775,8 +985,6 @@
 
     let evaluados = cumple + observacion + noCumple;
     let pendientes = total - evaluados;
-
-    // Calculamos el porcentaje basado únicamente en los ítems que CUMPLEN
     let porcentajeCumplimiento = total > 0 ? Math.round((cumple / total) * 100) : 0;
 
     const elCumple = document.getElementById('cnt-cumple');
@@ -797,20 +1005,19 @@
     const elBar = document.getElementById('bar-avance-fill');
     if (elBar) {
       elBar.style.width = porcentajeCumplimiento + '%';
-      // Cambiar color de la barra según nivel de cumplimiento
       if (porcentajeCumplimiento === 100) {
-        elBar.style.backgroundColor = 'var(--cumple)'; // Verde
+        elBar.style.backgroundColor = 'var(--cumple)';
       } else if (porcentajeCumplimiento >= 80) {
-        elBar.style.backgroundColor = 'var(--observacion)'; // Naranja
+        elBar.style.backgroundColor = 'var(--observacion)';
       } else {
-        elBar.style.backgroundColor = 'var(--nocumple)'; // Rojo
+        elBar.style.backgroundColor = 'var(--nocumple)';
       }
     }
 
     return { porcentaje: porcentajeCumplimiento, cumple, observacion, noCumple, pendientes };
   }
 
-  /* GUARDADO EN NUBE CON HISTORIAL DE DETALLES PRECISO */
+  /* GUARDADO EN NUBE INCLUYENDO PLANO DE SEMBRADO Y NOTAS */
   async function guardarProgreso() {
     const proyecto = document.getElementById('req-proyecto').value.trim();
     if (!proyecto) {
@@ -837,6 +1044,8 @@
       proyecto: proyecto,
       fecha: document.getElementById('req-fecha').value,
       tecnico: document.getElementById('req-tecnico').value,
+      fotoSembrado: urlFotoSembrado,
+      obsSembrado: document.getElementById('obs-sembrado').value,
       aplicaEnlaceEstacion: aplicaEnlaceEstacion,
       enlaceProveedor: document.getElementById('enlace-proveedor').value,
       enlaceIp: document.getElementById('enlace-ip').value,
@@ -852,10 +1061,7 @@
 
     try {
       let res = await fetch(URL_NUBE, {
-        headers: {
-          "X-Master-Key": API_KEY,
-          "Cache-Control": "no-cache"
-        }
+        headers: { "X-Master-Key": API_KEY, "Cache-Control": "no-cache" }
       });
 
       if (!res.ok) throw new Error("Error al comunicarse con la nube.");
@@ -864,40 +1070,21 @@
       let proyectos = (data && data.record && data.record.proyectos) ? data.record.proyectos : {};
 
       const versionPrevia = proyectos[`VISITA_${proyecto}`] || null;
-
-      // DETECCIÓN DETALLADA DE CAMBIOS
       let listaCambios = [];
 
       if (!versionPrevia) {
         listaCambios.push("Creación de la inspección");
       } else {
+        if (estadoFormulario.fotoSembrado && (!versionPrevia.fotoSembrado || versionPrevia.fotoSembrado !== estadoFormulario.fotoSembrado)) {
+          listaCambios.push("Actualizó foto del Plano de Sembrado");
+        }
         const estPrevio = versionPrevia.estadoInspeccion || {};
         let cambiosEstadoCount = 0;
         Object.keys(estadoInspeccion).forEach(itemId => {
-          if (estPrevio[itemId] !== estadoInspeccion[itemId]) {
-            cambiosEstadoCount++;
-          }
+          if (estPrevio[itemId] !== estadoInspeccion[itemId]) cambiosEstadoCount++;
         });
         if (cambiosEstadoCount > 0) {
-          listaCambios.push(`Modificó ${cambiosEstadoCount} estado(s) de revisión`);
-        }
-
-        const evPrevia = versionPrevia.detallesEvidencia || {};
-        let fotosNuevas = 0;
-        Object.keys(detallesOptimizados).forEach(itemId => {
-          if (detallesOptimizados[itemId].foto && (!evPrevia[itemId] || !evPrevia[itemId].foto)) {
-            fotosNuevas++;
-          }
-        });
-        if (fotosNuevas > 0) {
-          listaCambios.push(`Añadió ${fotosNuevas} fotografía(s)`);
-        }
-
-        if (estadoFormulario.firma_tecnico && !versionPrevia.firma_tecnico) {
-          listaCambios.push("Agregó firma del técnico");
-        }
-        if (estadoFormulario.firma_cliente && !versionPrevia.firma_cliente) {
-          listaCambios.push("Agregó firma del cliente");
+          listaCambios.push(`Modificó ${cambiosEstadoCount} estado(s)`);
         }
       }
 
@@ -929,12 +1116,9 @@
         body: JSON.stringify({ proyectos: proyectos })
       });
 
-      if (!resPut.ok) {
-        let errData = await resPut.json();
-        throw new Error(errData.message || "Error al actualizar la base de datos remota.");
-      }
+      if (!resPut.ok) throw new Error("Error al actualizar servidor.");
 
-      alert(`☁️ Proyecto sincronizado y actualizado para todos los usuarios.`);
+      alert(`☁️ Proyecto y Plano de Sembrado sincronizados con éxito.`);
       await cargarProyectosDesdeNube(`VISITA_${proyecto}`);
     } catch (err) {
       alert(`❌ Error al guardar en la nube:\n${err.message}`);
@@ -952,10 +1136,7 @@
 
     try {
       let res = await fetch(`${URL_NUBE}?nocache=${new Date().getTime()}`, {
-        headers: {
-          "X-Master-Key": API_KEY,
-          "Cache-Control": "no-cache"
-        }
+        headers: { "X-Master-Key": API_KEY, "Cache-Control": "no-cache" }
       });
 
       if (!res.ok) throw new Error("Error al consultar el servidor.");
@@ -996,6 +1177,25 @@
     document.getElementById('req-fecha').value = data.fecha || '';
     document.getElementById('req-tecnico').value = data.tecnico || '';
 
+    // Cargar Sembrado
+    urlFotoSembrado = data.fotoSembrado || '';
+    document.getElementById('obs-sembrado').value = data.obsSembrado || '';
+    const imgSembrado = document.getElementById('img-sembrado-preview');
+    const containerSembrado = document.getElementById('preview-sembrado-container');
+    const estadoTxtSembrado = document.getElementById('estado-foto-sembrado');
+
+    if (urlFotoSembrado) {
+      if (imgSembrado) imgSembrado.src = urlFotoSembrado;
+      if (containerSembrado) containerSembrado.style.display = 'inline-block';
+      if (estadoTxtSembrado) {
+        estadoTxtSembrado.innerText = "✅ Plano cargado desde la nube.";
+        estadoTxtSembrado.style.color = "green";
+      }
+    } else {
+      if (containerSembrado) containerSembrado.style.display = 'none';
+      if (estadoTxtSembrado) estadoTxtSembrado.innerText = "";
+    }
+
     const chkEnlace = document.getElementById('chk-aplica-enlace');
     chkEnlace.checked = !!data.aplicaEnlaceEstacion;
     toggleEnlaceEstacion(chkEnlace.checked);
@@ -1005,12 +1205,8 @@
       document.getElementById('enlace-ip').value = data.enlaceIp || '';
     }
 
-    if (data.estadoInspeccion) {
-      Object.assign(estadoInspeccion, data.estadoInspeccion);
-    }
-    if (data.detallesEvidencia) {
-      Object.assign(detallesEvidencia, data.detallesEvidencia);
-    }
+    if (data.estadoInspeccion) Object.assign(estadoInspeccion, data.estadoInspeccion);
+    if (data.detallesEvidencia) Object.assign(detallesEvidencia, data.detallesEvidencia);
 
     renderizarAreas();
 
@@ -1091,6 +1287,11 @@
     document.getElementById('req-fecha').valueAsDate = new Date();
     document.getElementById('req-tecnico').value = '';
 
+    urlFotoSembrado = "";
+    document.getElementById('obs-sembrado').value = '';
+    document.getElementById('preview-sembrado-container').style.display = 'none';
+    document.getElementById('estado-foto-sembrado').innerText = '';
+
     const chkEnlace = document.getElementById('chk-aplica-enlace');
     chkEnlace.checked = false;
     toggleEnlaceEstacion(false);
@@ -1123,7 +1324,6 @@
       const rect = canvas.getBoundingClientRect();
       if (rect.width === 0 || rect.height === 0) return;
 
-      const tempImage = canvas.toDataURL();
       canvas.width = rect.width;
       canvas.height = rect.height;
 
@@ -1202,12 +1402,10 @@
     img.src = dataUrl;
   }
 
-  /* GENERACIÓN DE PDF */
   function descargarPDF() {
     const proyecto = document.getElementById('req-proyecto').value.trim() || 'Inspeccion';
     const elemento = document.getElementById('formato-app');
 
-    // Desplegar todas las áreas para incluir en el PDF
     estructuraAreas.forEach(area => {
       const body = document.getElementById(`body-${area.id}`);
       if (body) body.style.display = 'flex';
@@ -1221,9 +1419,7 @@
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    html2pdf().set(opt).from(elemento).save().then(() => {
-      console.log('PDF generado correctamente');
-    });
+    html2pdf().set(opt).from(elemento).save();
   }
 </script>
 
