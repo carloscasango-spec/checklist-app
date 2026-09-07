@@ -450,7 +450,7 @@
   </div>
 
   <!-- Proyectos Guardados en la Nube -->
-  <div class="card" id="card-nube">
+  <div class="card no-pdf" id="card-nube">
     <div class="card-title">☁️ Cargar / Borrador desde Nube</div>
     <div class="form-grid" style="margin-top: 10px;">
       <div class="form-group" style="grid-column: 1 / -1;">
@@ -488,9 +488,9 @@
     </p>
     
     <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
-      <div class="form-group">
+      <div class="form-group no-pdf">
         <label>📷 Adjuntar Foto del Sembrado (Nube):</label>
-        <input type="file" accept="image/*" capture="environment" class="no-pdf" onchange="subirSembrado(event)">
+        <input type="file" accept="image/*" capture="environment" onchange="subirSembrado(event)">
         <span id="estado-foto-sembrado" class="estado-subida-foto"></span>
       </div>
 
@@ -511,7 +511,7 @@
   <div class="card">
     <div class="card-title-container">
       <div class="card-title">⛽ Enlace Estación</div>
-      <label class="checkbox-right-label">
+      <label class="checkbox-right-label no-pdf">
         <input type="checkbox" id="chk-aplica-enlace" onchange="toggleEnlaceEstacion(this.checked)">
         ¿Aplica Inspección de Enlace Estación?
       </label>
@@ -584,7 +584,7 @@
   </div>
 
   <!-- Historial de Modificaciones -->
-  <div class="card" id="card-historial">
+  <div class="card no-pdf" id="card-historial">
     <div class="card-title">📜 Historial de Cambios en Nube</div>
     <table class="table-historial">
       <thead>
@@ -820,9 +820,9 @@
                 ${esNoCumple ? '⚠️ Detalle del Incumplimiento:' : '📝 Detalle de la Observación:'}
               </span>
               <input type="text" id="obs-item-${item.id}" placeholder="Escribe tus notas aquí..." value="${evidencia.obs || ''}" onkeyup="guardarObsItem('${item.id}', this.value)" onchange="guardarObsItem('${item.id}', this.value)">
-              <span style="font-size: 10px; color: #666; margin-top: 2px;">📷 Adjuntar Foto (En la nube):</span>
+              <span style="font-size: 10px; color: #666; margin-top: 2px;" class="no-pdf">📷 Adjuntar Foto (En la nube):</span>
               <input type="file" accept="image/*" capture="environment" class="no-pdf" onchange="capturarFoto(event, '${item.id}')">
-              <span id="estado-foto-${item.id}" class="estado-subida-foto"></span>
+              <span id="estado-foto-${item.id}" class="estado-subida-foto no-pdf"></span>
               
               <div class="preview-container" id="preview-container-${item.id}" style="display: ${evidencia.foto ? 'inline-block' : 'none'};">
                 <img id="img-prev-${item.id}" class="evidencia-preview" src="${evidencia.foto || ''}" alt="Evidencia ${item.texto}" onclick="abrirModalZoom('${evidencia.foto || ''}', '${item.texto}')">
@@ -1399,24 +1399,43 @@
     img.src = dataUrl;
   }
 
+  /* EXPORTACIÓN A PDF CORREGIDA */
   function descargarPDF() {
     const proyecto = document.getElementById('req-proyecto').value.trim() || 'Inspeccion';
     const elemento = document.getElementById('formato-app');
 
+    // Desplegar todas las áreas cerradas antes de capturar
     estructuraAreas.forEach(area => {
       const body = document.getElementById(`body-${area.id}`);
       if (body) body.style.display = 'flex';
     });
 
+    // Ocultar temporalmente los elementos no deseados
+    const elementosNoPdf = document.querySelectorAll('.no-pdf');
+    elementosNoPdf.forEach(el => el.style.setProperty('display', 'none', 'important'));
+
+    // Respetar posición superior original para evitar desplazamientos y páginas vacías
+    window.scrollTo(0, 0);
+
     const opt = {
       margin: [10, 10, 10, 10],
       filename: `Inspeccion_${proyecto.replace(/\s+/g, '_')}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
+      html2canvas: { 
+        scale: 2, 
+        useCORS: true, 
+        scrollY: 0, 
+        scrollX: 0 
+      },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    html2pdf().set(opt).from(elemento).save();
+    html2pdf().set(opt).from(elemento).save().then(() => {
+      elementosNoPdf.forEach(el => el.style.removeProperty('display'));
+    }).catch(err => {
+      console.error("Error al exportar PDF:", err);
+      elementosNoPdf.forEach(el => el.style.removeProperty('display'));
+    });
   }
 </script>
 
