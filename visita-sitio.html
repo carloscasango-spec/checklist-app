@@ -983,61 +983,64 @@
       }
     } catch (err) {
       console.error("Error al obtener datos:", err);
-      select.innerHTML = '<option value="">⚠️ Error al obtener datos en vivo</option>';
+      select.innerHTML = '<option value="">❌ Error al conectar con la nube</option>';
     }
   }
 
   function cargarProyecto(clave) {
     if (!clave || !window.proyectosNube || !window.proyectosNube[clave]) return;
 
-    let estado = window.proyectosNube[clave];
+    const data = window.proyectosNube[clave];
 
-    document.getElementById('req-proyecto').value = estado.proyecto || '';
-    document.getElementById('req-fecha').value = estado.fecha || '';
-    document.getElementById('req-tecnico').value = estado.tecnico || '';
-    document.getElementById('obs-matriz').value = estado.obsMatriz || '';
+    document.getElementById('req-proyecto').value = data.proyecto || '';
+    document.getElementById('req-fecha').value = data.fecha || '';
+    document.getElementById('req-tecnico').value = data.tecnico || '';
 
     const chkEnlace = document.getElementById('chk-aplica-enlace');
-    chkEnlace.checked = !!estado.aplicaEnlaceEstacion;
+    chkEnlace.checked = !!data.aplicaEnlaceEstacion;
     toggleEnlaceEstacion(chkEnlace.checked);
 
     if (chkEnlace.checked) {
-      document.getElementById('enlace-proveedor').value = estado.enlaceProveedor || '';
-      document.getElementById('enlace-ip').value = estado.enlaceIp || '';
+      document.getElementById('enlace-proveedor').value = data.enlaceProveedor || '';
+      document.getElementById('enlace-ip').value = data.enlaceIp || '';
     }
 
-    Object.keys(estadoInspeccion).forEach(k => delete estadoInspeccion[k]);
-    Object.keys(detallesEvidencia).forEach(k => delete detallesEvidencia[k]);
-
-    if (estado.estadoInspeccion) Object.assign(estadoInspeccion, estado.estadoInspeccion);
-    if (estado.detallesEvidencia) Object.assign(detallesEvidencia, estado.detallesEvidencia);
+    if (data.estadoInspeccion) {
+      Object.assign(estadoInspeccion, data.estadoInspeccion);
+    }
+    if (data.detallesEvidencia) {
+      Object.assign(detallesEvidencia, data.detallesEvidencia);
+    }
 
     renderizarAreas();
 
-    historialGlobal = estado.historial || [];
-    renderizarTablaHistorial();
+    document.getElementById('obs-matriz').value = data.obsMatriz || '';
+    document.getElementById('nombre_firma_tecnico').value = data.nombre_tecnico || '';
+    document.getElementById('nombre_firma_cliente').value = data.nombre_cliente || '';
 
-    document.getElementById('nombre_firma_tecnico').value = estado.nombre_tecnico || '';
-    cargarImagenEnCanvas('canvas_tecnico', estado.firma_tecnico);
+    if (data.firma_tecnico) cargarFirmaEnCanvas('canvas_tecnico', data.firma_tecnico);
+    else limpiarCanvas('canvas_tecnico');
 
-    document.getElementById('nombre_firma_cliente').value = estado.nombre_cliente || '';
-    cargarImagenEnCanvas('canvas_cliente', estado.firma_cliente);
+    if (data.firma_cliente) cargarFirmaEnCanvas('canvas_cliente', data.firma_cliente);
+    else limpiarCanvas('canvas_cliente');
+
+    renderizarHistorial(data.historial || []);
   }
 
-  function renderizarTablaHistorial() {
+  function renderizarHistorial(historial) {
     const tbody = document.getElementById('tabla-historial-body');
     if (!tbody) return;
 
-    if (!historialGlobal || historialGlobal.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #888;">Sin historial.</td></tr>';
+    if (!historial || historial.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #888;">Sin datos.</td></tr>';
       return;
     }
 
-    tbody.innerHTML = historialGlobal.map(item => `
+    tbody.innerHTML = historial.map(h => `
       <tr>
-        <td style="padding: 6px; border: 1px solid #ddd;">${item.fecha || '-'}</td>
-        <td style="padding: 6px; border: 1px solid #ddd;"><strong>${item.usuario || 'Anónimo'}</strong></td>
-        <td style="padding: 6px; border: 1px solid #ddd;">${item.accion || 'Edición'}</td>
+        <td>${h.fecha || '-'}</td>
+        <td><strong>${h.usuario || 'Anónimo'}</strong></td>
+        <td>${h.accion || '-'}</td>
       </tr>
     `).join('');
   }
@@ -1045,19 +1048,23 @@
   async function eliminarDeNube() {
     const select = document.getElementById('select-proyectos');
     const clave = select.value;
+
     if (!clave) {
-      alert("⚠️ Selecciona un borrador.");
+      alert("⚠️ Por favor selecciona un proyecto de la lista para eliminar.");
       return;
     }
 
-    if (!confirm("🗑️ ¿Deseas eliminar permanentemente este proyecto de la nube?")) return;
+    if (!confirm(`¿Estás seguro de que deseas eliminar permanentemente el proyecto "${clave.replace("VISITA_", "")}" de la nube?`)) {
+      return;
+    }
 
     try {
       let res = await fetch(URL_NUBE, {
         headers: { "X-Master-Key": API_KEY, "Cache-Control": "no-cache" }
       });
-      if (!res.ok) throw new Error("Error al consultar servidor.");
-      
+
+      if (!res.ok) throw new Error("Error al consultar la nube.");
+
       let data = await res.json();
       let proyectos = (data && data.record && data.record.proyectos) ? data.record.proyectos : {};
 
@@ -1069,28 +1076,70 @@
         body: JSON.stringify({ proyectos: proyectos })
       });
 
-      if (!resPut.ok) throw new Error("Error al actualizar la nube.");
+      if (!resPut.ok) throw new Error("Error al eliminar del servidor.");
 
       alert("🗑️ Proyecto eliminado con éxito.");
       nuevoProyecto();
       await cargarProyectosDesdeNube();
     } catch (err) {
-      alert(`❌ No se pudo eliminar de la nube: ${err.message}`);
+      alert(`❌ Error al eliminar:\n${err.message}`);
     }
   }
 
-  /* --- CONTROLADORES DE CANVAS PARA FIRMAS --- */
-  function inicializarCanvas(id) {
-    const canvas = document.getElementById(id);
+  function nuevoProyecto() {
+    document.getElementById('req-proyecto').value = '';
+    document.getElementById('req-fecha').valueAsDate = new Date();
+    document.getElementById('req-tecnico').value = '';
+
+    const chkEnlace = document.getElementById('chk-aplica-enlace');
+    chkEnlace.checked = false;
+    toggleEnlaceEstacion(false);
+
+    Object.keys(estadoInspeccion).forEach(k => delete estadoInspeccion[k]);
+    Object.keys(detallesEvidencia).forEach(k => delete detallesEvidencia[k]);
+
+    renderizarAreas();
+
+    document.getElementById('obs-matriz').value = '';
+    document.getElementById('nombre_firma_tecnico').value = '';
+    document.getElementById('nombre_firma_cliente').value = '';
+
+    limpiarCanvas('canvas_tecnico');
+    limpiarCanvas('canvas_cliente');
+
+    renderizarHistorial([]);
+    document.getElementById('select-proyectos').value = '';
+  }
+
+  /* MANEJO DE CANVAS DE FIRMAS */
+  function inicializarCanvas(idCanvas) {
+    const canvas = document.getElementById(idCanvas);
     if (!canvas) return;
+
     const ctx = canvas.getContext('2d');
-
-    canvas.width = canvas.offsetWidth || 300;
-    canvas.height = canvas.offsetHeight || 120;
-
     let dibujando = false;
 
-    function obtenerPosicion(e) {
+    function ajustarResolucion() {
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+
+      const tempImage = canvas.toDataURL();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#000';
+
+      if (canvasStates[idCanvas]) {
+        cargarFirmaEnCanvas(idCanvas, canvasStates[idCanvas]);
+      }
+    }
+
+    ajustarResolucion();
+    window.addEventListener('resize', ajustarResolucion);
+
+    function getPos(e) {
       const rect = canvas.getBoundingClientRect();
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -1101,135 +1150,80 @@
     }
 
     function empezarDibujo(e) {
+      e.preventDefault();
       dibujando = true;
-      const pos = obtenerPosicion(e);
+      const pos = getPos(e);
       ctx.beginPath();
       ctx.moveTo(pos.x, pos.y);
-      e.preventDefault();
     }
 
-    function moverDibujo(e) {
+    function dibujar(e) {
       if (!dibujando) return;
-      const pos = obtenerPosicion(e);
-      ctx.lineTo(pos.x, pos.y);
-      ctx.strokeStyle = "#000";
-      ctx.lineWidth = 2;
-      ctx.lineCap = "round";
-      ctx.stroke();
       e.preventDefault();
+      const pos = getPos(e);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
     }
 
-    function terminarDibujo() {
-      if (dibujando) {
-        dibujando = false;
-        canvasStates[id] = canvas.toDataURL();
-      }
+    function terminarDibujo(e) {
+      if (!dibujando) return;
+      dibujando = false;
+      canvasStates[idCanvas] = canvas.toDataURL();
     }
 
     canvas.addEventListener('mousedown', empezarDibujo);
-    canvas.addEventListener('mousemove', moverDibujo);
-    window.addEventListener('mouseup', terminarDibujo);
+    canvas.addEventListener('mousemove', dibujar);
+    canvas.addEventListener('mouseup', terminarDibujo);
+    canvas.addEventListener('mouseleave', terminarDibujo);
 
-    canvas.addEventListener('touchstart', empezarDibujo);
-    canvas.addEventListener('touchmove', moverDibujo);
+    canvas.addEventListener('touchstart', empezarDibujo, { passive: false });
+    canvas.addEventListener('touchmove', dibujar, { passive: false });
     canvas.addEventListener('touchend', terminarDibujo);
   }
 
-  function limpiarCanvas(id) {
-    const canvas = document.getElementById(id);
+  function limpiarCanvas(idCanvas) {
+    const canvas = document.getElementById(idCanvas);
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    canvasStates[id] = null;
+    delete canvasStates[idCanvas];
   }
 
-  function cargarImagenEnCanvas(id, dataUrl) {
-    const canvas = document.getElementById(id);
-    if (!canvas) return;
+  function cargarFirmaEnCanvas(idCanvas, dataUrl) {
+    const canvas = document.getElementById(idCanvas);
+    if (!canvas || !dataUrl) return;
     const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    if (!dataUrl) {
-      canvasStates[id] = null;
-      return;
-    }
-
     const img = new Image();
     img.onload = function() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      canvasStates[id] = dataUrl;
+      canvasStates[idCanvas] = dataUrl;
     };
     img.src = dataUrl;
   }
 
-  /* --- MÉTODOS DE SOPORTE GENERAL --- */
-  function nuevoProyecto() {
-    document.getElementById('req-proyecto').value = '';
-    document.getElementById('req-fecha').valueAsDate = new Date();
-    document.getElementById('req-tecnico').value = '';
-    document.getElementById('obs-matriz').value = '';
-    document.getElementById('nombre_firma_tecnico').value = '';
-    document.getElementById('nombre_firma_cliente').value = '';
-
-    const chkEnlace = document.getElementById('chk-aplica-enlace');
-    chkEnlace.checked = false;
-    toggleEnlaceEstacion(false);
-
-    Object.keys(estadoInspeccion).forEach(k => delete estadoInspeccion[k]);
-    Object.keys(detallesEvidencia).forEach(k => delete detallesEvidencia[k]);
-
-    limpiarCanvas('canvas_tecnico');
-    limpiarCanvas('canvas_cliente');
-
-    historialGlobal = [];
-    renderizarTablaHistorial();
-    renderizarAreas();
-
-    const select = document.getElementById('select-proyectos');
-    if (select) select.value = '';
-  }
-
-  /* EXPORTACIÓN A PDF OPTIMIZADA SIN HOJAS VACÍAS */
-  async function descargarPDF() {
-    const proyecto = document.getElementById('req-proyecto').value.trim() || 'Informe_Inspeccion';
+  /* GENERACIÓN DE PDF */
+  function descargarPDF() {
+    const proyecto = document.getElementById('req-proyecto').value.trim() || 'Inspeccion';
     const elemento = document.getElementById('formato-app');
 
-    // Desplegar todas las áreas para que aparezcan completas en el documento
+    // Desplegar todas las áreas para incluir en el PDF
     estructuraAreas.forEach(area => {
       const body = document.getElementById(`body-${area.id}`);
       if (body) body.style.display = 'flex';
     });
 
-    // Ocultar botones e interfaces no imprimibles
-    const elementosOcultos = document.querySelectorAll('.no-pdf, #card-nube, #card-historial');
-    elementosOcultos.forEach(el => el.style.display = 'none');
-
-    // Mover pantalla al inicio para evitar márgenes superiores fantasma
-    window.scrollTo(0, 0);
-
-    const opciones = {
-      margin:       [8, 8, 8, 8],
-      filename:     `${proyecto.replace(/\s+/g, '_')}_Inspeccion.pdf`,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { 
-        scale: 2, 
-        useCORS: true, 
-        logging: false,
-        scrollY: 0,
-        windowWidth: document.documentElement.offsetWidth
-      },
-      pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    const opt = {
+      margin: [10, 10, 10, 10],
+      filename: `Inspeccion_${proyecto.replace(/\s+/g, '_')}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    try {
-      await html2pdf().set(opciones).from(elemento).save();
-    } catch (err) {
-      console.error("Error al exportar PDF:", err);
-      alert("❌ Ocurrió un error al generar el PDF. Revisa la consola.");
-    } finally {
-      elementosOcultos.forEach(el => el.style.display = '');
-    }
+    html2pdf().set(opt).from(elemento).save().then(() => {
+      console.log('PDF generado correctamente');
+    });
   }
 </script>
 
