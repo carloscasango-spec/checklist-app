@@ -69,6 +69,8 @@
       border-radius: 8px;
       padding: 15px;
       margin-bottom: 20px;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
     }
 
     .card-title-container {
@@ -169,13 +171,15 @@
       transition: width 0.3s ease, background-color 0.3s ease;
     }
 
-    /* Tarjetas de áreas */
+    /* Tarjetas de áreas e ítems */
     .area-card {
       border: 1px solid var(--border-color);
       border-radius: 8px;
       margin-bottom: 12px;
       overflow: hidden;
       background: #fff;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
     }
 
     .area-header {
@@ -204,6 +208,8 @@
       background: #fafafa;
       border-left: 4px solid #ccc;
       gap: 8px;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
     }
 
     .item-cumple { border-left-color: var(--cumple); }
@@ -243,6 +249,8 @@
       border-radius: 5px;
       border: 1px dashed #ccc;
       margin-top: 5px;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
     }
 
     .preview-container {
@@ -427,7 +435,7 @@
         max-width: 100% !important;
         width: 100% !important;
       }
-      .card, .area-card {
+      .card, .area-card, .item-row {
         page-break-inside: avoid !important;
         break-inside: avoid !important;
         margin-bottom: 12px !important;
@@ -1399,7 +1407,7 @@
     img.src = dataUrl;
   }
 
-  /* EXPORTACIÓN A PDF CORREGIDA */
+  /* EXPORTACIÓN A PDF CORREGIDA Y AJUSTADA A HOJAS */
   function descargarPDF() {
     const proyecto = document.getElementById('req-proyecto').value.trim() || 'Inspeccion';
     const elemento = document.getElementById('formato-app');
@@ -1410,7 +1418,7 @@
       if (body) body.style.display = 'flex';
     });
 
-    // Ocultar temporalmente los elementos no deseados
+    // Ocultar elementos no deseados para la exportación
     const elementosNoPdf = document.querySelectorAll('.no-pdf');
     elementosNoPdf.forEach(el => el.style.setProperty('display', 'none', 'important'));
 
@@ -1427,7 +1435,8 @@
         scrollY: 0, 
         scrollX: 0 
       },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
     };
 
     html2pdf().set(opt).from(elemento).save().then(() => {
