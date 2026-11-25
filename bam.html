@@ -1062,7 +1062,30 @@
 
     function tryLoadExternalRelacionesCSV() {
       if (isAppsScript() || location.protocol === 'file:') return;
-      fetch('relaciones.csv', { cache: 'no-store' })
+      const candidates = ['relaciones.csv', 'BAM - RELACION.csv', encodeURIComponent('BAM - RELACION.csv')];
+      (async () => {
+        for (const fname of candidates) {
+          try {
+            const res = await fetch(fname, { cache: 'no-store' });
+            if (res.ok) {
+              const txt = await res.text();
+              const count = mergeRelationsFromCSVText(txt);
+              if (count > 0) {
+                saveState();
+                updateMetrics();
+                renderCatalogGrid();
+                if (appState.selectedSite) {
+                  const refreshed = appState.sites.find(item => item.code === appState.selectedSite.code);
+                  if (refreshed) pickSite(refreshed, false);
+                }
+                document.getElementById('syncLabel').textContent = `Listo · ${decodeURIComponent(fname)} cargado (${count} parejas)`;
+              }
+              return;
+            }
+          } catch (_) {}
+        }
+      })();
+      if (false) fetch('relaciones.csv', { cache: 'no-store' })
         .then(res => res.ok ? res.text() : null)
         .then(txt => {
           if (!txt) return;
