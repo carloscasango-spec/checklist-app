@@ -1,0 +1,1668 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestor Operativo BAM · Grupo Synergo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-canvas: #070b14;
+      --bg-gradient: radial-gradient(circle at 12% 0%, rgba(37, 99, 235, 0.16), transparent 42%),
+                     radial-gradient(circle at 88% 8%, rgba(16, 185, 129, 0.11), transparent 38%),
+                     #070b14;
+      --surface: rgba(15, 23, 42, 0.86);
+      --surface-elevated: #131d33;
+      --surface-input: #0c1322;
+      --border: rgba(148, 163, 184, 0.16);
+      --border-strong: rgba(148, 163, 184, 0.28);
+      --text-primary: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --text-muted: #94a3b8;
+
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --accent-soft: rgba(59, 130, 246, 0.15);
+      --accent-ring: rgba(59, 130, 246, 0.35);
+
+      --success: #10b981;
+      --success-soft: rgba(16, 185, 129, 0.15);
+      --success-text: #6ee7b7;
+
+      --warning: #f59e0b;
+      --warning-soft: rgba(245, 158, 11, 0.15);
+      --warning-text: #fcd34d;
+
+      --danger: #ef4444;
+      --danger-soft: rgba(239, 68, 68, 0.15);
+      --danger-text: #fca5a5;
+
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+      --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg-gradient);
+      background-attachment: fixed;
+      color: var(--text-primary);
+      line-height: 1.5;
+      min-height: 100vh;
+      padding: 20px 14px 48px;
+    }
+
+    .app-shell {
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+
+    /* Top Header */
+    .header-card {
+      background: var(--surface);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px 22px;
+      box-shadow: var(--shadow-card);
+      margin-bottom: 18px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand-block {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-mark {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #2563eb 0%, #10b981 100%);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: #ffffff;
+      letter-spacing: 0.02em;
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
+      flex-shrink: 0;
+    }
+
+    .brand-title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+    }
+
+    .brand-subtitle {
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--success-soft);
+      color: var(--success-text);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      margin-top: 7px;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+
+    /* Segmented Nav */
+    .segmented-nav {
+      display: inline-flex;
+      background: var(--surface-input);
+      border: 1px solid var(--border);
+      padding: 4px;
+      border-radius: var(--radius-md);
+      gap: 4px;
+    }
+
+    .nav-btn {
+      background: transparent;
+      color: var(--text-muted);
+      border: none;
+      padding: 9px 16px;
+      border-radius: 9px;
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.16s ease;
+      white-space: nowrap;
+    }
+
+    .nav-btn:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .nav-btn.active {
+      background: var(--accent);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+    }
+
+    /* KPI Strip */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    @media (max-width: 700px) {
+      .kpi-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+    }
+
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 13px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--shadow-card);
+    }
+
+    .kpi-label {
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .kpi-value {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-top: 2px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .kpi-tag {
+      font-size: 0.74rem;
+      font-weight: 600;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: #93c5fd;
+    }
+
+    /* Workspace Layout */
+    .workspace-grid {
+      display: grid;
+      grid-template-columns: 1.18fr 0.82fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    @media (max-width: 900px) {
+      .workspace-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background: var(--surface);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      box-shadow: var(--shadow-card);
+      margin-bottom: 18px;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .panel-title-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .step-badge {
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      background: var(--accent-soft);
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      color: #93c5fd;
+      font-size: 0.8rem;
+      font-weight: 800;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+
+    .panel-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    /* Form Controls */
+    .field {
+      margin-bottom: 15px;
+      position: relative;
+    }
+
+    label {
+      display: block;
+      font-size: 0.83rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    select {
+      width: 100%;
+      background: var(--surface-input);
+      border: 1px solid var(--border-strong);
+      color: var(--text-primary);
+      border-radius: var(--radius-sm);
+      padding: 11px 13px;
+      font-family: inherit;
+      font-size: 0.94rem;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-ring);
+    }
+
+    .field-note {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      margin-top: 5px;
+    }
+
+    /* Autocomplete Menu */
+    .autocomplete-menu {
+      position: absolute;
+      top: calc(100% + 5px);
+      left: 0;
+      right: 0;
+      background: #0b1220;
+      border: 1px solid var(--accent);
+      border-radius: var(--radius-md);
+      max-height: 260px;
+      overflow-y: auto;
+      z-index: 50;
+      box-shadow: 0 18px 36px rgba(0, 0, 0, 0.65);
+      display: none;
+    }
+
+    .autocomplete-option {
+      padding: 11px 14px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+      font-size: 0.88rem;
+      transition: background 0.12s ease;
+    }
+
+    .autocomplete-option:last-child {
+      border-bottom: none;
+    }
+
+    .autocomplete-option:hover,
+    .autocomplete-option.active {
+      background: var(--accent-soft);
+    }
+
+    .code-mono {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      font-size: 0.84rem;
+    }
+
+    /* Badges */
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .chip-es {
+      background: var(--accent-soft);
+      color: #93c5fd;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .chip-gc {
+      background: var(--success-soft);
+      color: var(--success-text);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .chip-other {
+      background: var(--warning-soft);
+      color: var(--warning-text);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    /* Toggle & Relation Card */
+    .toggle-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      padding: 13px 14px;
+      border-radius: var(--radius-md);
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: border-color 0.15s ease;
+    }
+
+    .toggle-card:hover {
+      border-color: rgba(59, 130, 246, 0.45);
+    }
+
+    .toggle-card input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      accent-color: var(--accent);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .relation-banner {
+      background: rgba(59, 130, 246, 0.09);
+      border: 1px solid rgba(59, 130, 246, 0.32);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      margin-bottom: 15px;
+      font-size: 0.86rem;
+    }
+
+    .relation-banner.muted-state {
+      background: var(--surface-elevated);
+      border-color: var(--border);
+      opacity: 0.85;
+    }
+
+    /* Email Preview Boxes */
+    .preview-box {
+      background: #080d18;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-md);
+      padding: 13px 15px;
+      user-select: all;
+      word-break: break-word;
+    }
+
+    .preview-subject {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.86rem;
+      font-weight: 600;
+      color: #f1f5f9;
+    }
+
+    .preview-body {
+      font-size: 0.9rem;
+      color: #e2e8f0;
+      white-space: pre-wrap;
+      line-height: 1.55;
+    }
+
+    .notice-banner {
+      background: var(--warning-soft);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      color: var(--warning-text);
+      padding: 10px 13px;
+      border-radius: var(--radius-sm);
+      font-size: 0.81rem;
+      margin-top: 9px;
+      display: none;
+    }
+
+    /* Buttons */
+    .action-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-top: 14px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 15px;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 0.87rem;
+      font-weight: 600;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: #042017;
+    }
+
+    .btn-success:hover {
+      filter: brightness(1.06);
+    }
+
+    .btn-ghost {
+      background: var(--surface-elevated);
+      color: var(--text-primary);
+      border-color: var(--border-strong);
+    }
+
+    .btn-ghost:hover {
+      border-color: #64748b;
+      background: #1a2642;
+    }
+
+    .btn-warn {
+      background: var(--warning-soft);
+      color: var(--warning-text);
+      border-color: rgba(245, 158, 11, 0.35);
+    }
+
+    .btn-danger {
+      background: var(--danger-soft);
+      color: var(--danger-text);
+      border-color: rgba(239, 68, 68, 0.35);
+    }
+
+    .btn-xs {
+      padding: 6px 10px;
+      font-size: 0.78rem;
+      border-radius: 7px;
+    }
+
+    /* Active Cards */
+    .active-card {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 13px 15px;
+      margin-bottom: 10px;
+      transition: border-color 0.15s ease;
+    }
+
+    .active-card:hover {
+      border-color: var(--border-strong);
+    }
+
+    .active-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .active-card-title {
+      font-weight: 700;
+      font-size: 0.92rem;
+    }
+
+    .active-card-sub {
+      font-size: 0.77rem;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 24px 14px;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-md);
+    }
+
+    /* Catalog Table */
+    .form-row-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    @media (max-width: 760px) {
+      .form-row-3 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .table-scroller {
+      overflow-x: auto;
+      max-height: 450px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.86rem;
+    }
+
+    th, td {
+      padding: 10px 13px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background: var(--surface-elevated);
+      position: sticky;
+      top: 0;
+      font-weight: 700;
+      color: var(--text-secondary);
+      z-index: 5;
+    }
+
+    tbody tr:hover td {
+      background: rgba(59, 130, 246, 0.06);
+    }
+
+    /* Toast */
+    .toast-banner {
+      position: fixed;
+      bottom: 22px;
+      right: 22px;
+      background: #0b1324;
+      color: var(--text-primary);
+      border: 1px solid var(--success);
+      padding: 11px 16px;
+      border-radius: var(--radius-md);
+      font-size: 0.86rem;
+      font-weight: 600;
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.55);
+      opacity: 0;
+      transform: translateY(12px);
+      transition: all 0.2s ease;
+      z-index: 120;
+      pointer-events: none;
+    }
+
+    .toast-banner.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Encabezado -->
+    <header class="header-card">
+      <div class="brand-block">
+        <div class="brand-mark">BAM</div>
+        <div>
+          <h1 class="brand-title">Gestor Operativo BAM · Grupo Synergo</h1>
+          <p class="brand-subtitle" id="catalogSummaryText">Cargando catálogo de estaciones y tiendas...</p>
+          <div class="status-pill" id="syncBadge">
+            <span class="status-dot"></span>
+            <span id="syncLabel">Listo para operar · Modo local / GitHub</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="segmented-nav" aria-label="Secciones principales">
+        <button class="nav-btn active" id="navGenerador" onclick="switchSection('generador')">Generador y Tablero</button>
+        <button class="nav-btn" id="navCatalogo" onclick="switchSection('catalogo')">Catálogo y Relaciones</button>
+      </nav>
+    </header>
+
+    <!-- Métricas rápidas -->
+    <section class="kpi-grid" aria-label="Resumen operativo">
+      <div class="kpi-card">
+        <div>
+          <div class="kpi-label">Sitios en catálogo</div>
+          <div class="kpi-value" id="kpiSites">224</div>
+        </div>
+        <span class="kpi-tag">ES · GC · GCT</span>
+      </div>
+      <div class="kpi-card">
+        <div>
+          <div class="kpi-label">Parejas ES + GC</div>
+          <div class="kpi-value" id="kpiRelations">74</div>
+        </div>
+        <span class="kpi-tag">Un solo internet</span>
+      </div>
+      <div class="kpi-card">
+        <div>
+          <div class="kpi-label">BAM activas en campo</div>
+          <div class="kpi-value" id="kpiActivas">0</div>
+        </div>
+        <span class="kpi-tag" style="background: var(--success-soft); color: var(--success-text);">En seguimiento</span>
+      </div>
+    </section>
+
+    <!-- VISTA 1: GENERADOR Y TABLERO -->
+    <main id="sectionGenerador">
+      <div class="workspace-grid">
+        <!-- Columna izquierda: Configuración y Redacción -->
+        <div>
+          <section class="panel">
+            <div class="panel-header">
+              <div class="panel-title-group">
+                <span class="step-badge">1</span>
+                <h2 class="panel-title">Seleccionar Sitio y Tipo de Aviso</h2>
+              </div>
+              <button class="btn btn-ghost btn-xs" onclick="clearSiteSelection()">Limpiar</button>
+            </div>
+
+            <div class="field">
+              <label for="siteSearch">Buscar estación o tienda</label>
+              <input
+                type="text"
+                id="siteSearch"
+                placeholder="Ej. 6099, 15009, ANILLO, MARAVEG..."
+                autocomplete="off"
+                oninput="onSearchChange()"
+                onkeydown="onSearchKey(event)"
+                onfocus="onSearchChange()"
+              />
+              <div class="autocomplete-menu" id="autocompleteMenu"></div>
+              <div class="field-note">Busca por clave, número o nombre sin importar acentos o mayúsculas. Enter selecciona el primero.</div>
+            </div>
+
+            <div class="field">
+              <label for="avisoType">Tipo de aviso</label>
+              <select id="avisoType" onchange="renderEmailPreview()">
+                <option value="COLOCACION">AVISO DE COLOCACIÓN (INSTALACIÓN DE BAM)</option>
+                <option value="RETIRO">AVISO DE RETIRO (RESTAURACIÓN DE SERVICIO)</option>
+              </select>
+            </div>
+
+            <label class="toggle-card" for="sharedInternetToggle">
+              <input type="checkbox" id="sharedInternetToggle" onchange="renderEmailPreview()" />
+              <div>
+                <div style="font-weight: 700; font-size: 0.9rem;">Estación y Tienda con un solo internet (ES + GC)</div>
+                <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">
+                  Se activa automáticamente cuando el sitio forma pareja en el catálogo de relaciones.
+                </div>
+              </div>
+            </label>
+
+            <div class="relation-banner muted-state" id="relationBanner">
+              <div style="font-weight: 700; font-size: 0.88rem;" id="relationHeading">Sin pareja vinculada</div>
+              <div id="relationSubtext" style="color: var(--text-muted); font-size: 0.81rem; margin-top: 3px;">
+                Selecciona una estación o tienda para verificar si comparte internet con su pareja.
+              </div>
+            </div>
+
+            <div class="field" style="margin-bottom: 0;">
+              <label for="recipientsInput">Destinatarios (Para — opcional, separados por coma)</label>
+              <input
+                type="email"
+                id="recipientsInput"
+                placeholder="monitoreo@gruposynergo.com, soporte@gruposynergo.com"
+                oninput="persistRecipients()"
+              />
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <div class="panel-title-group">
+                <span class="step-badge">2</span>
+                <h2 class="panel-title">Asunto y Cuerpo Listos para Enviar</h2>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Asunto del correo</label>
+              <div class="preview-box preview-subject" id="subjectPreview">Selecciona una estación o tienda para generar el asunto...</div>
+              <div class="notice-banner" id="retireNotice">
+                <strong>Aviso de Retiro:</strong> Actualiza el asunto a <strong>RESTAURACIÓN DE SERVICIO - RETIRO DE BAM</strong> y evita responder solo sobre el hilo anterior sin cambiar el asunto.
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Cuerpo del correo</label>
+              <div class="preview-box preview-body" id="bodyPreview">El cuerpo del mensaje aparecerá aquí automáticamente...</div>
+            </div>
+
+            <div class="action-bar">
+              <button class="btn btn-ghost" onclick="copyPreview('subjectPreview', 'Asunto copiado')">Copiar Asunto</button>
+              <button class="btn btn-ghost" onclick="copyPreview('bodyPreview', 'Cuerpo copiado')">Copiar Cuerpo</button>
+              <button class="btn btn-primary" onclick="launchGmail()">Abrir en Gmail</button>
+              <button class="btn btn-success" onclick="addActiveBAM()">Registrar en BAM Activas</button>
+            </div>
+          </section>
+        </div>
+
+        <!-- Columna derecha: Tablero de BAM Activas -->
+        <div>
+          <section class="panel">
+            <div class="panel-header">
+              <div class="panel-title-group">
+                <span class="step-badge">3</span>
+                <h2 class="panel-title">BAM Activas (<span id="activeListBadge">0</span>)</h2>
+              </div>
+              <button class="btn btn-ghost btn-xs" onclick="downloadActivasCSV()">Exportar CSV</button>
+            </div>
+
+            <p class="field-note" style="margin-bottom: 14px;">
+              Registra los sitios donde se colocó BAM. Cuando vuelva el servicio del proveedor, pulsa <strong>Retirar BAM</strong> para abrir el correo de restauración.
+            </p>
+
+            <div id="activeCardsContainer"></div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <!-- VISTA 2: CATÁLOGO Y RELACIONES -->
+    <section id="sectionCatalogo" class="hidden">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title-group">
+            <span class="step-badge">+</span>
+            <h2 class="panel-title">Agregar o Editar Sitio y Relación (ES + GC)</h2>
+          </div>
+          <button class="btn btn-ghost btn-xs" onclick="resetSiteForm()">Nuevo registro</button>
+        </div>
+
+        <form id="catalogForm" onsubmit="handleCatalogSubmit(event)">
+          <input type="hidden" id="originalSiteCode" value="" />
+
+          <div class="form-row-3">
+            <div class="field">
+              <label for="newSiteType">Tipo de sitio</label>
+              <select id="newSiteType" onchange="updateCodePlaceholder()">
+                <option value="ES">ES (Estación de Servicio)</option>
+                <option value="GC">GC (Tienda / Conveniencia)</option>
+                <option value="GCT1">GCT1 (Tortillería / Especial)</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="newSiteCode">Clave / Número</label>
+              <input type="text" id="newSiteCode" required placeholder="Ej. ES15700 o GC125" />
+            </div>
+
+            <div class="field">
+              <label for="newSiteName">Nombre corto del sitio</label>
+              <input type="text" id="newSiteName" required placeholder="Ej. ANILLO REAL" />
+            </div>
+          </div>
+
+          <div class="form-row-3">
+            <div class="field">
+              <label for="relEsInput">Clave ES en Relación (opcional)</label>
+              <input type="text" id="relEsInput" placeholder="Ej. ES15009" />
+            </div>
+
+            <div class="field">
+              <label for="relGcInput">Clave GC en Relación (opcional)</label>
+              <input type="text" id="relGcInput" placeholder="Ej. GC113" />
+            </div>
+
+            <div class="field">
+              <label for="relNameInput">Nombre compartido (opcional)</label>
+              <input type="text" id="relNameInput" placeholder="Ej. ANILLO REAL" />
+            </div>
+          </div>
+
+          <div class="action-bar">
+            <button type="submit" class="btn btn-primary" id="submitCatalogBtn">Guardar en Catálogo</button>
+            <button type="button" class="btn btn-ghost" onclick="downloadCatalogJSON()">Exportar JSON</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title-group">
+            <h2 class="panel-title">Catálogo (<span id="catalogTableCount">0</span> sitios)</h2>
+          </div>
+          <input
+            type="text"
+            id="catalogSearchInput"
+            placeholder="Filtrar por clave o nombre..."
+            style="max-width: 270px; padding: 7px 12px; font-size: 0.84rem;"
+            oninput="renderCatalogGrid()"
+          />
+        </div>
+
+        <div class="table-scroller">
+          <table>
+            <thead>
+              <tr>
+                <th>Clave</th>
+                <th>Nombre</th>
+                <th>Tipo</th>
+                <th>Relación (ES + GC)</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="catalogGridBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast-banner" id="toastBanner"></div>
+
+  <script>
+    const INITIAL_DATA = {"sites":[{"code":"GC1","num":"1","name":"CHIT","tipo":"GC"},{"code":"GC2","num":"2","name":"RIMATOVE","tipo":"GC"},{"code":"GC3","num":"3","name":"SANTA BLANCA","tipo":"GC"},{"code":"GC4","num":"4","name":"KOH","tipo":"GC"},{"code":"GC5","num":"5","name":"LA COSTA","tipo":"GC"},{"code":"GC6","num":"6","name":"AMERICAS","tipo":"GC"},{"code":"GC7","num":"7","name":"NORPONIENTE","tipo":"GC"},{"code":"GC8","num":"8","name":"DOS MUNDOS","tipo":"GC"},{"code":"GC9","num":"9","name":"MARAVEG","tipo":"GC"},{"code":"GC10","num":"10","name":"VILLA RICA","tipo":"GC"},{"code":"GC11","num":"11","name":"TRES ISLAS","tipo":"GC"},{"code":"GC12","num":"12","name":"CIMARRON","tipo":"GC"},{"code":"GC13","num":"13","name":"MANANTIAL","tipo":"GC"},{"code":"GC14","num":"14","name":"ZENOTE","tipo":"GC"},{"code":"GC15","num":"15","name":"MONOSABIO","tipo":"GC"},{"code":"GC16","num":"16","name":"MILENIO","tipo":"GC"},{"code":"GC17","num":"17","name":"MAR CARIBEÑO","tipo":"GC"},{"code":"GC18","num":"18","name":"AVOGAS","tipo":"GC"},{"code":"GC19","num":"19","name":"AGUA VERDE","tipo":"GC"},{"code":"GC20","num":"20","name":"SEIS ANEMONAS","tipo":"GC"},{"code":"GC21","num":"21","name":"ARCO KABAH","tipo":"GC"},{"code":"GC22","num":"22","name":"EUSREKA","tipo":"GC"},{"code":"GC23","num":"23","name":"AGUA DULCE","tipo":"GC"},{"code":"GC24","num":"24","name":"TULIPANES","tipo":"GC"},{"code":"GC25","num":"25","name":"GAS TAURUS","tipo":"GC"},{"code":"GC26","num":"26","name":"PUERTO CANCUN","tipo":"GC"},{"code":"GC27","num":"27","name":"COSTA AZUL","tipo":"GC"},{"code":"GC28","num":"28","name":"MARITIMOS TURQUESA","tipo":"GC"},{"code":"GC29","num":"29","name":"CRUCERO","tipo":"GC"},{"code":"GC30","num":"30","name":"IRUN","tipo":"GC"},{"code":"GC31","num":"31","name":"MAR PROFUNDO","tipo":"GC"},{"code":"GC32","num":"32","name":"FOOD MART","tipo":"GC"},{"code":"GC35","num":"35","name":"LA LUNA","tipo":"GC"},{"code":"GC36","num":"36","name":"QUETZAL","tipo":"GC"},{"code":"GC37","num":"37","name":"GRAN CALAMAR","tipo":"GC"},{"code":"GC38","num":"38","name":"ZAINO","tipo":"GC"},{"code":"GC39","num":"39","name":"MARITIMO CORAL","tipo":"GC"},{"code":"GC40","num":"40","name":"TORRE BLANCA","tipo":"GC"},{"code":"GC41","num":"41","name":"CAPOTE","tipo":"GC"},{"code":"GC42","num":"42","name":"CAT 1","tipo":"GC"},{"code":"GC43","num":"43","name":"NAGUSIA","tipo":"GC"},{"code":"GC44","num":"44","name":"TULES","tipo":"GC"},{"code":"GC45","num":"45","name":"GLADIOLAS","tipo":"GC"},{"code":"GC46","num":"46","name":"DELFINES","tipo":"GC"},{"code":"GC47","num":"47","name":"LAGUNA","tipo":"GC"},{"code":"GC48","num":"48","name":"MAHAHUAL","tipo":"GC"},{"code":"GC49","num":"49","name":"PUERTO JUAREZ","tipo":"GC"},{"code":"GC50","num":"50","name":"CARIBE REAL","tipo":"GC"},{"code":"GC51","num":"51","name":"CAIMANES","tipo":"GC"},{"code":"GC52","num":"52","name":"ACORO","tipo":"GC"},{"code":"GC53","num":"53","name":"ABASTOS","tipo":"GC"},{"code":"GC54","num":"54","name":"SEVILLA","tipo":"GC"},{"code":"GC55","num":"55","name":"COMALCALCO","tipo":"GC"},{"code":"GC56","num":"56","name":"AVALLANOS","tipo":"GC"},{"code":"GC57","num":"57","name":"CRUZ DE","tipo":"GC"},{"code":"GC58","num":"58","name":"RAVEMA","tipo":"GC"},{"code":"GC59","num":"59","name":"LA ISLA","tipo":"GC"},{"code":"GC60","num":"60","name":"PAVO REAL","tipo":"GC"},{"code":"GC61","num":"61","name":"ARBOLADA","tipo":"GC"},{"code":"GC62","num":"62","name":"VILLAS DEL","tipo":"GC"},{"code":"GC63","num":"63","name":"KIKIMBE","tipo":"GC"},{"code":"GC64","num":"64","name":"MOON PALACE","tipo":"GC"},{"code":"GC65","num":"65","name":"FONATUR","tipo":"GC"},{"code":"GC66","num":"66","name":"PESCADORES","tipo":"GC"},{"code":"GC67","num":"67","name":"THE STORE","tipo":"GC"},{"code":"GC68","num":"68","name":"LAS RAMAS","tipo":"GC"},{"code":"GC69","num":"69","name":"COLOSIO","tipo":"GC"},{"code":"GC70","num":"70","name":"CLAVELES","tipo":"GC"},{"code":"GC71","num":"71","name":"HUAYACAN LODEMO","tipo":"GC"},{"code":"GC72","num":"72","name":"HUAYACAN COLEGIOS","tipo":"GC"},{"code":"GC73","num":"73","name":"MANATI","tipo":"GC"},{"code":"GC74","num":"74","name":"LOPEZ PORTILLO","tipo":"GC"},{"code":"GC75","num":"75","name":"CEVICHE","tipo":"GC"},{"code":"GC76","num":"76","name":"PLAZA COBA","tipo":"GC"},{"code":"GC77","num":"77","name":"ZAZIL HA","tipo":"GC"},{"code":"GC78","num":"78","name":"JARDINES DEL","tipo":"GC"},{"code":"GC79","num":"79","name":"KEMA GC79","tipo":"GC"},{"code":"GC80","num":"80","name":"PUNTA SAM","tipo":"GC"},{"code":"GC82","num":"82","name":"PLAYACAR","tipo":"GC"},{"code":"GC83","num":"83","name":"ASTORIA","tipo":"GC"},{"code":"GC84","num":"84","name":"XCANAN","tipo":"GC"},{"code":"GC85","num":"85","name":"EL CORCHAL","tipo":"GC"},{"code":"GC86","num":"86","name":"COSTA VASCA","tipo":"GC"},{"code":"GC87","num":"87","name":"BUQUE DE","tipo":"GC"},{"code":"GC88","num":"88","name":"ISLA BONITA","tipo":"GC"},{"code":"GC89","num":"89","name":"YALKU","tipo":"GC"},{"code":"GC90","num":"90","name":"QUINTA AVENIDA","tipo":"GC"},{"code":"GC91","num":"91","name":"LINDAVISTA","tipo":"GC"},{"code":"GC92","num":"92","name":"THE STORE","tipo":"GC"},{"code":"GC93","num":"93","name":"CHIT II","tipo":"GC"},{"code":"GC94","num":"94","name":"PORTILLO II","tipo":"GC"},{"code":"GC95","num":"95","name":"FUEL ABASTECIMIENTO","tipo":"GC"},{"code":"GC96","num":"96","name":"ESPADA FLAMANTE","tipo":"GC"},{"code":"GC97","num":"97","name":"PECORI","tipo":"GC"},{"code":"GC98","num":"98","name":"JAZMIN","tipo":"GC"},{"code":"GC99","num":"99","name":"CORUÑA","tipo":"GC"},{"code":"GC100","num":"100","name":"ORBAIZ","tipo":"GC"},{"code":"GC101","num":"101","name":"AEROPUERTO TULUM","tipo":"GC"},{"code":"GC103","num":"103","name":"PLOMO NEGRO","tipo":"GC"},{"code":"GC104","num":"104","name":"ARENA LISA","tipo":"GC"},{"code":"GC105","num":"105","name":"CASPIO","tipo":"GC"},{"code":"GC106","num":"106","name":"RIO HONDO","tipo":"GC"},{"code":"GC107","num":"107","name":"TREN MAYA","tipo":"GC"},{"code":"GC109","num":"109","name":"PLAYA LANGOSTA","tipo":"GC"},{"code":"GC110","num":"110","name":"CHILUCA","tipo":"GC"},{"code":"GC111","num":"111","name":"RUINAS KUKULCAN","tipo":"GC"},{"code":"GC112","num":"112","name":"THE STORE","tipo":"GC"},{"code":"GC113","num":"113","name":"ANILLO REAL","tipo":"GC"},{"code":"GCT1","num":"TORTILLERIA","name":"ARCO KABAH","tipo":"GCT1"},{"code":"GC114","num":"114","name":"VIBRACIONES ACUSTICAS","tipo":"GC"},{"code":"GC115","num":"115","name":"ZAMA","tipo":"GC"},{"code":"GC116","num":"116","name":"ELITE ANCHA","tipo":"GC"},{"code":"GC117","num":"117","name":"AEROPUERTO CANCUN","tipo":"GC"},{"code":"GC118","num":"118","name":"NICHUPTE","tipo":"GC"},{"code":"GC119","num":"119","name":"MARINA PUERTO","tipo":"GC"},{"code":"GC120","num":"120","name":"MUNIAIN","tipo":"GC"},{"code":"ES5854","num":"5854","name":"CIMARRON","tipo":"ES"},{"code":"ES5941","num":"5941","name":"AGUA VERDE","tipo":"ES"},{"code":"ES5971","num":"5971","name":"GASMORVIL","tipo":"ES"},{"code":"ES5993","num":"5993","name":"MANANTIAL","tipo":"ES"},{"code":"ES6015","num":"6015","name":"MILENIO","tipo":"ES"},{"code":"ES6043","num":"6043","name":"SERVICIO ZENOTE","tipo":"ES"},{"code":"ES6048","num":"6048","name":"PUERTO CANCUN","tipo":"ES"},{"code":"ES6099","num":"6099","name":"CBE","tipo":"ES"},{"code":"ES6217","num":"6217","name":"MARITIMOS TURQUESA","tipo":"ES"},{"code":"ES6225","num":"6225","name":"ARRECIFE","tipo":"ES"},{"code":"ES6239","num":"6239","name":"TALLERES","tipo":"ES"},{"code":"ES6391","num":"6391","name":"NORPONIENTE","tipo":"ES"},{"code":"ES6427","num":"6427","name":"MAR CARIBEÑO","tipo":"ES"},{"code":"ES6461","num":"6461","name":"AVO GAS","tipo":"ES"},{"code":"ES6561","num":"6561","name":"KOHUNLICH","tipo":"ES"},{"code":"ES6562","num":"6562","name":"GASTAURUS","tipo":"ES"},{"code":"ES7259","num":"7259","name":"MAR PROFUNDO","tipo":"ES"},{"code":"ES7525","num":"7525","name":"CAT 2","tipo":"ES"},{"code":"ES7865","num":"7865","name":"TULIPANES","tipo":"ES"},{"code":"ES7944","num":"7944","name":"TUCANES","tipo":"ES"},{"code":"ES7951","num":"7951","name":"ALPES","tipo":"ES"},{"code":"ES8254","num":"8254","name":"TORRE BLANCA.","tipo":"ES"},{"code":"ES8311","num":"8311","name":"CAT 1","tipo":"ES"},{"code":"ES8531","num":"8531","name":"PLAYACAR","tipo":"ES"},{"code":"ES8600","num":"8600","name":"MARITIMO CORAL","tipo":"ES"},{"code":"ES8837","num":"8837","name":"CORRALEJO","tipo":"ES"},{"code":"ES9062","num":"9062","name":"DOS MUNDOS","tipo":"ES"},{"code":"ES9353","num":"9353","name":"JAZMIN","tipo":"ES"},{"code":"ES9426","num":"9426","name":"CASTAÑO","tipo":"ES"},{"code":"ES9568","num":"9568","name":"CAPOTE","tipo":"ES"},{"code":"ES9619","num":"9619","name":"SEVILLA","tipo":"ES"},{"code":"ES9661","num":"9661","name":"GLADIOLAS","tipo":"ES"},{"code":"ES9698","num":"9698","name":"AVALLANOS","tipo":"ES"},{"code":"ES9833","num":"9833","name":"CAMINO","tipo":"ES"},{"code":"ES9840","num":"9840","name":"MIRADOR","tipo":"ES"},{"code":"ES9841","num":"9841","name":"CLAVELES","tipo":"ES"},{"code":"ES9842","num":"9842","name":"LA ISLA","tipo":"ES"},{"code":"ES9852","num":"9852","name":"LA CRUZ DE SERVICIO","tipo":"ES"},{"code":"ES9912","num":"9912","name":"LA COSTA","tipo":"ES"},{"code":"ES10000","num":"10000","name":"LAGUNA","tipo":"ES"},{"code":"ES10091","num":"10091","name":"ORQUIDEAS","tipo":"ES"},{"code":"ES10121","num":"10121","name":"TRES ISLAS","tipo":"ES"},{"code":"ES10199","num":"10199","name":"RUINAS DE COBA","tipo":"ES"},{"code":"ES10338","num":"10338","name":"OVELISCO","tipo":"ES"},{"code":"ES10474","num":"10474","name":"KUKULKAN","tipo":"ES"},{"code":"ES10479","num":"10479","name":"RIO HONDO","tipo":"ES"},{"code":"ES10549","num":"10549","name":"DELFINES","tipo":"ES"},{"code":"ES10722","num":"10722","name":"RIMATOVE","tipo":"ES"},{"code":"ES10745","num":"10745","name":"CASTILLA LA MANCHA","tipo":"ES"},{"code":"ES10800","num":"10800","name":"CORUÑA","tipo":"ES"},{"code":"ES10785","num":"10785","name":"SERVICIO RAVEMA","tipo":"ES"},{"code":"ES10784","num":"10784","name":"MAHAHUAL","tipo":"ES"},{"code":"ES10814","num":"10814","name":"SERVICIO BACALAR","tipo":"ES"},{"code":"ES10871","num":"10871","name":"SERVICIO TIERRA MAYA S.A. DE C.V.","tipo":"ES"},{"code":"ES10873","num":"10873","name":"OTOCH","tipo":"ES"},{"code":"ES10977","num":"10977","name":"LAN KIN","tipo":"ES"},{"code":"ES11159","num":"11159","name":"SANTA BLANCA","tipo":"ES"},{"code":"ES11144","num":"11144","name":"CHILUCA","tipo":"ES"},{"code":"ES11235","num":"11235","name":"ARCO NORTE","tipo":"ES"},{"code":"ES11226","num":"11226","name":"KOH","tipo":"ES"},{"code":"ES11312","num":"11312","name":"CAIMANES","tipo":"ES"},{"code":"ES11327","num":"11327","name":"MONOSABIO","tipo":"ES"},{"code":"ES11504","num":"11504","name":"OSTUNI","tipo":"ES"},{"code":"ES11702","num":"11702","name":"PLAYA CENTRO","tipo":"ES"},{"code":"ES11850","num":"11850","name":"VILLA RICA","tipo":"ES"},{"code":"ES12009","num":"12009","name":"SEIS ANEMONA","tipo":"ES"},{"code":"ES12010","num":"12010","name":"ARCO KABAH","tipo":"ES"},{"code":"ES12006","num":"12006","name":"EUSREKA","tipo":"ES"},{"code":"ES12007","num":"12007","name":"AGUA DULCE","tipo":"ES"},{"code":"ES12118","num":"12118","name":"IRUN","tipo":"ES"},{"code":"ES3250","num":"3250","name":"CADENAS DE VALOR","tipo":"ES"},{"code":"ES12634","num":"12634","name":"ISLA ISABEL","tipo":"ES"},{"code":"ES12641","num":"12641","name":"GRAN CALAMAR","tipo":"ES"},{"code":"ES12747","num":"12747","name":"PLAYA SUR","tipo":"ES"},{"code":"ES12729","num":"12729","name":"NAGUSIA","tipo":"ES"},{"code":"ES12938","num":"12938","name":"TULES","tipo":"ES"},{"code":"ES13254","num":"13254","name":"FEDRACUN","tipo":"ES"},{"code":"ES13308","num":"13308","name":"ZAINO","tipo":"ES"},{"code":"ES13543","num":"13543","name":"GALUPE","tipo":"ES"},{"code":"ES9370","num":"9370","name":"HANDALL","tipo":"ES"},{"code":"ES80005","num":"80005","name":"LAS RAMAS","tipo":"ES"},{"code":"ES80006","num":"80006","name":"AMAITE","tipo":"ES"},{"code":"ES22859","num":"22859","name":"CISNE CANTOR","tipo":"ES"},{"code":"ES13733","num":"13733","name":"KEMA","tipo":"ES"},{"code":"ES23239","num":"23239","name":"GASNOT","tipo":"ES"},{"code":"ES15342","num":"15342","name":"PLOMO NEGRO.","tipo":"ES"},{"code":"ES14788","num":"14788","name":"ARENA LISA","tipo":"ES"},{"code":"ES13950","num":"13950","name":"IBICENCO","tipo":"ES"},{"code":"ES14089","num":"14089","name":"COSTA CALIDA","tipo":"ES"},{"code":"ES14589","num":"14589","name":"ORBAIZ","tipo":"ES"},{"code":"ES14764","num":"14764","name":"BUQUE DE VELA","tipo":"ES"},{"code":"ES14766","num":"14766","name":"PINO AZTECA","tipo":"ES"},{"code":"ES14769","num":"14769","name":"SERVICIO ISLA BONITA","tipo":"ES"},{"code":"ES14789","num":"14789","name":"GUISEG","tipo":"ES"},{"code":"ES14790","num":"14790","name":"CASPIO","tipo":"ES"},{"code":"ES14837","num":"14837","name":"ESPADA FLAMANTE","tipo":"ES"},{"code":"ES14838","num":"14838","name":"PECORI","tipo":"ES"},{"code":"ES14961","num":"14961","name":"FUEL ABASTECIMIENTOS","tipo":"ES"},{"code":"ES24403","num":"24403","name":"CONTOY","tipo":"ES"},{"code":"ES14955","num":"14955","name":"VIBRACIONES ACÚSTICAS","tipo":"ES"},{"code":"ES15009","num":"15009","name":"ANILLO REAL","tipo":"ES"},{"code":"ES14962","num":"14962","name":"ELITE ANCHA","tipo":"ES"},{"code":"ES15372","num":"15372","name":"MUNIAIN","tipo":"ES"},{"code":"ES14996","num":"14996","name":"MANGLARES","tipo":"ES"},{"code":"ES15278","num":"15278","name":"MACARELA","tipo":"ES"},{"code":"ES15527","num":"15527","name":"IRAOLA","tipo":"ES"},{"code":"ES15613","num":"ES15613","name":"SEREQUE","tipo":"ES"},{"code":"ES15614","num":"ES15614","name":"PASEOS DEL CARIBE 2","tipo":"ES"}],"relations":[{"esCode":"ES5854","esName":"CIMARRON","gcCode":"GC12","gcName":"CIMARRON"},{"esCode":"ES5941","esName":"AGUA VERDE","gcCode":"GC19","gcName":"AGUA VERDE"},{"esCode":"ES6015","esName":"MILENIO","gcCode":"GC16","gcName":"MILENIO"},{"esCode":"ES6043","esName":"ZENOTE","gcCode":"GC14","gcName":"ZENOTE"},{"esCode":"ES6048","esName":"PUERTO CANCUN","gcCode":"GC26","gcName":""},{"esCode":"ES6217","esName":"MARITIMOS TURQUESA","gcCode":"GC28","gcName":"MARITIMO TURQUESA"},{"esCode":"ES6391","esName":"NORPONIENTE","gcCode":"GC7","gcName":"NORPONIENTE"},{"esCode":"ES6427","esName":"MAR CARIBEÑO","gcCode":"GC17","gcName":"MAR CARIBEÑO"},{"esCode":"ES6461","esName":"AVOGAS","gcCode":"GC18","gcName":"AVOGAS"},{"esCode":"ES6562","esName":"GASTAURUS","gcCode":"GC25","gcName":"GASTAURUS"},{"esCode":"ES7259","esName":"MAR PROFUNDO","gcCode":"GC31","gcName":"MAR PROFUNDO"},{"esCode":"ES7525","esName":"CAT 2","gcCode":"GC27","gcName":"CAT 2"},{"esCode":"ES7865","esName":"TULIPANES","gcCode":"GC24","gcName":"TULIPANES"},{"esCode":"ES8254","esName":"TORRE BLANCA","gcCode":"GC40","gcName":"TORRE BLANCA"},{"esCode":"ES8531","esName":"PLAYACAR","gcCode":"GC80","gcName":"PLAYACAR"},{"esCode":"ES8600","esName":"MARITIMO CORAL","gcCode":"GC39","gcName":"MARITIMO CORAL"},{"esCode":"ES9062","esName":"DOS MUNDOS","gcCode":"GC08","gcName":"DOS MUNDOS"},{"esCode":"ES9353","esName":"JAZMIN","gcCode":"GC98","gcName":"JAZMIN"},{"esCode":"ES9568","esName":"CAPOTE","gcCode":"GC41","gcName":"CAPOTE"},{"esCode":"ES9619","esName":"SEVILLA","gcCode":"GC54","gcName":"SEVILLA"},{"esCode":"ES9661","esName":"GLADIOLAS","gcCode":"GC45","gcName":"GLADIOLAS"},{"esCode":"ES9698","esName":"AVALLANOS","gcCode":"GC56","gcName":"AVALLANOS"},{"esCode":"ES9841","esName":"CLAVELES","gcCode":"GC70","gcName":"CLAVELES"},{"esCode":"ES9842","esName":"LA ISLA","gcCode":"GC59","gcName":"LA ISLA"},{"esCode":"ES9852","esName":"LA CRUZ DE SERVICIO","gcCode":"GC57","gcName":"CRUZ DE SERVICIO"},{"esCode":"ES9912","esName":"LA COSTA","gcCode":"GC5","gcName":"LA COSTA"},{"esCode":"ES10000","esName":"LAGUNA","gcCode":"GC47","gcName":"LAGUNA"},{"esCode":"ES10121","esName":"TRES ISLAS","gcCode":"GC11","gcName":"TRES ISLAS"},{"esCode":"ES10479","esName":"RIO HONDO","gcCode":"GC106","gcName":"RIO HONDO"},{"esCode":"ES10549","esName":"DELFINES","gcCode":"GC46","gcName":"DELFINES"},{"esCode":"ES10722","esName":"RIMATOVE","gcCode":"GC2","gcName":"RIMATOVE"},{"esCode":"ES10800","esName":"CORUÑA","gcCode":"GC99","gcName":"CORUÑA"},{"esCode":"ES10785","esName":"RAVEMA","gcCode":"GC58","gcName":"RAVEMA"},{"esCode":"ES10784","esName":"MAHAHUAL","gcCode":"GC48","gcName":"MAHAHUAL"},{"esCode":"ES11159","esName":"SANTA BLANCA","gcCode":"GC3","gcName":"SANTA BLANCA"},{"esCode":"ES11226","esName":"KOH","gcCode":"GC4","gcName":"KOH"},{"esCode":"ES11312","esName":"CAIMANES","gcCode":"GC51","gcName":"CAIMANES"},{"esCode":"ES11327","esName":"MONOSABIO","gcCode":"GC15","gcName":"MONOSABIO"},{"esCode":"ES11850","esName":"VILLA RICA","gcCode":"GC10","gcName":"VILLARICA"},{"esCode":"ES12009","esName":"SEIS ANEMONA","gcCode":"GC20","gcName":"SEIS ANEMONAS"},{"esCode":"ES12010","esName":"ARCO KABAH","gcCode":"GC21","gcName":"ARCO KABAH"},{"esCode":"ES12006","esName":"EUSREKA","gcCode":"GC22","gcName":"EUSREKA"},{"esCode":"ES12007","esName":"AGUA DULCE","gcCode":"GC23","gcName":"AGUA DULCE"},{"esCode":"ES12118","esName":"IRUN","gcCode":"GC30","gcName":"IRUN"},{"esCode":"ES3250","esName":"CADENAS DE VALOR","gcCode":"GC32","gcName":"FOOD MART"},{"esCode":"ES12634","esName":"ISLA ISABEL","gcCode":"GC36","gcName":"QUETZAL"},{"esCode":"ES12641","esName":"GRAN CALAMAR","gcCode":"GC37","gcName":"GRAN CALAMAR"},{"esCode":"ES12729","esName":"NAGUSIA","gcCode":"GC43","gcName":"NAGUSIA"},{"esCode":"ES12938","esName":"TULES","gcCode":"GC44","gcName":"TULES"},{"esCode":"ES13308","esName":"ZAINO","gcCode":"GC38","gcName":"ZAINO"},{"esCode":"ES80005","esName":"LAS RAMAS","gcCode":"GC68","gcName":"LAS RAMAS"},{"esCode":"ES22859","esName":"CISNE CANTOR","gcCode":"GC73","gcName":"MANATI"},{"esCode":"ES13733","esName":"KEMA","gcCode":"GC79","gcName":"KEMA"},{"esCode":"ES23239","esName":"GASNOT","gcCode":"GC72","gcName":"COLEGIO"},{"esCode":"ES15342","esName":"PLOMO NEGRO","gcCode":"GC103","gcName":"PLOMO NEGRO"},{"esCode":"ES14788","esName":"ARENA LISA","gcCode":"GC104","gcName":"ARENA LISA"},{"esCode":"ES13950","esName":"IBICENCO","gcCode":"GC78","gcName":"JARDINES DEL SUR"},{"esCode":"ES14089","esName":"COSTA CALIDA","gcCode":"GC89","gcName":"YALKU"},{"esCode":"ES14589","esName":"ORBAIZ","gcCode":"GC100","gcName":"ORBAIZ"},{"esCode":"ES14764","esName":"BUQUE DE VELA","gcCode":"GC87","gcName":"MALLORCA"},{"esCode":"ES14766","esName":"PINO AZTECA","gcCode":"GC86","gcName":"COSTA VASCA"},{"esCode":"ES14769","esName":"ISLA BONITA","gcCode":"GC88","gcName":"ISLA BONITA"},{"esCode":"ES14790","esName":"CASPIO","gcCode":"GC105","gcName":"CASPIO"},{"esCode":"ES14837","esName":"ESPADA FLAMANTE","gcCode":"GC96","gcName":"ESPADA FLAMANTE"},{"esCode":"ES14838","esName":"PECORI","gcCode":"GC97","gcName":"PECORI"},{"esCode":"ES14961","esName":"FUEL ABASTECIMIENTOS","gcCode":"GC95","gcName":"FUEL ABASTECIMIENTO"},{"esCode":"ES24403","esName":"CONTOY","gcCode":"GC85","gcName":"EL CORCHAL"},{"esCode":"ES14955","esName":"VIBRACIONES ACÚSTICAS","gcCode":"GC114","gcName":"VIBRACIONES ACUSTICAS"},{"esCode":"ES15009","esName":"ANILLO REAL","gcCode":"GC113","gcName":"ANILLO REAL"},{"esCode":"ES14962","esName":"ELITE ANCHA","gcCode":"GC116","gcName":"ELITE ANCHA"},{"esCode":"ES15372","esName":"MUNIAIN","gcCode":"GC120","gcName":"MINIAIN"},{"esCode":"ES15278","esName":"MACARELA","gcCode":"GC122","gcName":"MACARELA"},{"esCode":"ES15613","esName":"SEREQUE","gcCode":"GC124","gcName":"SEREQUE"},{"esCode":"ES15464","esName":"PASEOS DEL CARIBE 2","gcCode":"GC123","gcName":"PASEOS DEL CARIBE 2"}]};
+
+    const STORAGE_KEYS = {
+      SITES: 'synergo_bam_sites_v1',
+      RELATIONS: 'synergo_bam_relations_v1',
+      ACTIVAS: 'synergo_bam_activas_v1',
+      RECIPIENTS: 'synergo_bam_recipients_v1'
+    };
+
+    const appState = {
+      sites: [],
+      relations: [],
+      activas: [],
+      selectedSite: null,
+      matches: [],
+      highlightedIndex: -1
+    };
+
+    function isAppsScript() {
+      return typeof google !== 'undefined' && google.script && google.script.run;
+    }
+
+    function notify(message, isError = false) {
+      const toast = document.getElementById('toastBanner');
+      toast.textContent = message;
+      toast.style.borderColor = isError ? '#ef4444' : '#10b981';
+      toast.classList.add('visible');
+      setTimeout(() => toast.classList.remove('visible'), 2500);
+    }
+
+    function normalizeStr(value) {
+      return String(value || '')
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .toUpperCase()
+        .trim();
+    }
+
+    function normalizeCode(rawCode, fallbackPrefix = '') {
+      let code = String(rawCode || '').toUpperCase().trim().replace(/\s+/g, '');
+      if (!code) return '';
+      if (code.startsWith('CG')) code = 'GC' + code.slice(2);
+      if (/^\d+$/.test(code) && fallbackPrefix) {
+        code = fallbackPrefix.toUpperCase() + code;
+      }
+      return code;
+    }
+
+    function loadState() {
+      const s = localStorage.getItem(STORAGE_KEYS.SITES);
+      const r = localStorage.getItem(STORAGE_KEYS.RELATIONS);
+      const a = localStorage.getItem(STORAGE_KEYS.ACTIVAS);
+      const rec = localStorage.getItem(STORAGE_KEYS.RECIPIENTS);
+
+      appState.sites = s ? JSON.parse(s) : [...INITIAL_DATA.sites];
+      appState.relations = r ? JSON.parse(r) : [...INITIAL_DATA.relations];
+      appState.activas = a ? JSON.parse(a) : [];
+      if (rec) {
+        document.getElementById('recipientsInput').value = rec;
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEYS.SITES, JSON.stringify(appState.sites));
+      localStorage.setItem(STORAGE_KEYS.RELATIONS, JSON.stringify(appState.relations));
+      localStorage.setItem(STORAGE_KEYS.ACTIVAS, JSON.stringify(appState.activas));
+    }
+
+    function persistRecipients() {
+      localStorage.setItem(STORAGE_KEYS.RECIPIENTS, document.getElementById('recipientsInput').value);
+    }
+
+    
+    function parseSimpleCSV(text) {
+      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      if (!lines.length) return [];
+      const sep = lines[0].includes(';') && !lines[0].includes(',') ? ';' : ',';
+      return lines.map(line => {
+        const cols = [];
+        let cur = '', inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+          const ch = line[i];
+          if (ch === '"') {
+            if (inQuotes && line[i + 1] === '"') { cur += '"'; i++; }
+            else inQuotes = !inQuotes;
+          } else if (ch === sep && !inQuotes) {
+            cols.push(cur.trim());
+            cur = '';
+          } else {
+            cur += ch;
+          }
+        }
+        cols.push(cur.trim());
+        return cols;
+      });
+    }
+
+    function mergeRelationsFromCSVText(csvText) {
+      const rows = parseSimpleCSV(csvText);
+      if (!rows.length) return 0;
+      let addedOrUpdated = 0;
+      rows.forEach((cols, idx) => {
+        if (!cols.length) return;
+        const c0 = normalizeCode(cols[0], 'ES');
+        const c1 = normalizeCode(cols[1] || '', 'GC');
+        const c2 = (cols[2] || '').trim().toUpperCase();
+        const c3 = (cols[3] || '').trim().toUpperCase();
+        // Skip header row if present
+        if (idx === 0 && (c0.includes('CLAVE') || c0 === 'ES' || c0.includes('ESTACION'))) return;
+        if (!c0 || !c1) return;
+
+        const esCode = c0.startsWith('GC') && c1.startsWith('ES') ? c1 : c0;
+        const gcCode = c0.startsWith('GC') && c1.startsWith('ES') ? c0 : c1;
+        const esName = c2 || c3 || '';
+        const gcName = c3 || c2 || esName;
+        const sharedName = gcName || esName;
+
+        if (sharedName) {
+          if (!appState.sites.some(s => s.code === esCode)) {
+            appState.sites.push({ code: esCode, num: esCode.replace(/^ES/, ''), name: sharedName, tipo: 'ES' });
+          }
+          if (!appState.sites.some(s => s.code === gcCode)) {
+            appState.sites.push({ code: gcCode, num: gcCode.replace(/^GC/, ''), name: sharedName, tipo: 'GC' });
+          }
+        }
+
+        const relObj = { esCode, esName, gcCode, gcName };
+        const existingIdx = appState.relations.findIndex(
+          r => normalizeCode(r.esCode) === esCode || normalizeCode(r.gcCode) === gcCode
+        );
+        if (existingIdx >= 0) {
+          appState.relations[existingIdx] = relObj;
+        } else {
+          appState.relations.push(relObj);
+        }
+        addedOrUpdated++;
+      });
+      return addedOrUpdated;
+    }
+
+    function tryLoadExternalRelacionesCSV() {
+      if (isAppsScript() || location.protocol === 'file:') return;
+      fetch('relaciones.csv', { cache: 'no-store' })
+        .then(res => res.ok ? res.text() : null)
+        .then(txt => {
+          if (!txt) return;
+          const count = mergeRelationsFromCSVText(txt);
+          if (count > 0) {
+            saveState();
+            updateMetrics();
+            renderCatalogGrid();
+            if (appState.selectedSite) {
+              const refreshed = appState.sites.find(item => item.code === appState.selectedSite.code);
+              if (refreshed) pickSite(refreshed, false);
+            }
+            document.getElementById('syncLabel').textContent = `Listo · relaciones.csv cargado (${count} parejas)`;
+          }
+        })
+        .catch(() => {});
+    }
+
+    function bootApp() {
+      loadState();
+      updateMetrics();
+      renderActiveCards();
+      renderCatalogGrid();
+      renderEmailPreview();
+
+      if (isAppsScript()) {
+        document.getElementById('syncLabel').textContent = 'Sincronizando con Google Sheets...';
+        google.script.run
+          .withSuccessHandler((data) => {
+            if (data && Array.isArray(data.sites) && data.sites.length > 0) {
+              appState.sites = data.sites;
+            }
+            if (data && Array.isArray(data.relations)) {
+              appState.relations = data.relations;
+            }
+            if (data && Array.isArray(data.activas)) {
+              appState.activas = data.activas;
+            }
+            saveState();
+            updateMetrics();
+            renderActiveCards();
+            renderCatalogGrid();
+            if (appState.selectedSite) {
+              const refreshed = appState.sites.find(item => item.code === appState.selectedSite.code);
+              if (refreshed) pickSite(refreshed, false);
+            }
+            document.getElementById('syncLabel').textContent = 'Conectado a Google Sheets · Equipo';
+          })
+          .withFailureHandler(() => {
+            document.getElementById('syncLabel').textContent = 'Modo local activo';
+          })
+          .getDatosIniciales();
+      } else {
+        document.getElementById('syncLabel').textContent = 'Listo en navegador · GitHub Pages';
+        tryLoadExternalRelacionesCSV();
+      }
+    }
+
+    function updateMetrics() {
+      const esTotal = appState.sites.filter(s => s.tipo === 'ES').length;
+      const gcTotal = appState.sites.filter(s => s.tipo === 'GC' || s.tipo === 'GCT1').length;
+      const activeTotal = appState.activas.filter(a => a.estatus === 'ACTIVA').length;
+
+      document.getElementById('catalogSummaryText').textContent =
+        `${appState.sites.length} sitios (${esTotal} ES · ${gcTotal} GC/GCT) y ${appState.relations.length} relaciones ES+GC`;
+      document.getElementById('kpiSites').textContent = appState.sites.length;
+      document.getElementById('kpiRelations').textContent = appState.relations.length;
+      document.getElementById('kpiActivas').textContent = activeTotal;
+      document.getElementById('activeListBadge').textContent = activeTotal;
+      document.getElementById('catalogTableCount').textContent = appState.sites.length;
+    }
+
+    function switchSection(section) {
+      const isGen = section === 'generador';
+      document.getElementById('sectionGenerador').classList.toggle('hidden', !isGen);
+      document.getElementById('sectionCatalogo').classList.toggle('hidden', isGen);
+      document.getElementById('navGenerador').classList.toggle('active', isGen);
+      document.getElementById('navCatalogo').classList.toggle('active', !isGen);
+      if (!isGen) renderCatalogGrid();
+    }
+
+    /* Autocompletado */
+    function onSearchChange() {
+      const q = normalizeStr(document.getElementById('siteSearch').value);
+      const menu = document.getElementById('autocompleteMenu');
+
+      if (!q) {
+        menu.style.display = 'none';
+        appState.matches = [];
+        return;
+      }
+
+      const matches = appState.sites.filter(s =>
+        normalizeStr(`${s.code} ${s.num} ${s.name} ${s.tipo}`).includes(q)
+      ).slice(0, 14);
+
+      appState.matches = matches;
+      appState.highlightedIndex = matches.length ? 0 : -1;
+
+      if (!matches.length) {
+        menu.innerHTML = `<div class="autocomplete-option" style="color:var(--text-muted); cursor:default;">Sin resultados para "${document.getElementById('siteSearch').value}"</div>`;
+        menu.style.display = 'block';
+        return;
+      }
+
+      menu.innerHTML = matches.map((m, idx) => {
+        const chipCls = m.tipo === 'ES' ? 'chip-es' : (m.tipo === 'GC' ? 'chip-gc' : 'chip-other');
+        const rel = getRelation(m.code);
+        const pairHint = rel
+          ? `<span class="code-mono" style="font-size:0.74rem; color:#93c5fd;">⇄ ${m.code === rel.esCode ? rel.gcCode : rel.esCode}</span>`
+          : '';
+        return `
+          <div class="autocomplete-option ${idx === 0 ? 'active' : ''}" onclick="pickSiteByCode('${m.code}')">
+            <div>
+              <span class="code-mono">${m.code}</span> · <span>${m.name}</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:7px;">
+              ${pairHint}
+              <span class="chip ${chipCls}">${m.tipo || 'SITIO'}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+      menu.style.display = 'block';
+    }
+
+    function onSearchKey(e) {
+      const menu = document.getElementById('autocompleteMenu');
+      if (menu.style.display !== 'block' || !appState.matches.length) return;
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        appState.highlightedIndex = (appState.highlightedIndex + 1) % appState.matches.length;
+        updateHighlight();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        appState.highlightedIndex = (appState.highlightedIndex - 1 + appState.matches.length) % appState.matches.length;
+        updateHighlight();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const chosen = appState.matches[Math.max(0, appState.highlightedIndex)];
+        if (chosen) pickSite(chosen, true);
+      } else if (e.key === 'Escape') {
+        menu.style.display = 'none';
+      }
+    }
+
+    function updateHighlight() {
+      const items = document.querySelectorAll('#autocompleteMenu .autocomplete-option');
+      items.forEach((el, i) => el.classList.toggle('active', i === appState.highlightedIndex));
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.field')) {
+        document.getElementById('autocompleteMenu').style.display = 'none';
+      }
+    });
+
+    function pickSiteByCode(code) {
+      const found = appState.sites.find(s => s.code === code);
+      if (found) pickSite(found, true);
+    }
+
+    function pickSite(site, fillInput = true) {
+      appState.selectedSite = site;
+      if (fillInput) {
+        document.getElementById('siteSearch').value = `${site.code} · ${site.name}`;
+      }
+      document.getElementById('autocompleteMenu').style.display = 'none';
+
+      const rel = getRelation(site.code);
+      document.getElementById('sharedInternetToggle').checked = Boolean(rel);
+      renderEmailPreview();
+    }
+
+    function clearSiteSelection() {
+      appState.selectedSite = null;
+      document.getElementById('siteSearch').value = '';
+      document.getElementById('sharedInternetToggle').checked = false;
+      renderEmailPreview();
+    }
+
+    function getRelation(code) {
+      const target = normalizeCode(code);
+      return appState.relations.find(
+        r => normalizeCode(r.esCode) === target || normalizeCode(r.gcCode) === target
+      ) || null;
+    }
+
+    function resolveContext() {
+      const site = appState.selectedSite;
+      if (!site) return null;
+
+      const rel = getRelation(site.code);
+      const sharedChecked = document.getElementById('sharedInternetToggle').checked;
+
+      if (rel && sharedChecked) {
+        const esCode = normalizeCode(rel.esCode);
+        const gcCode = normalizeCode(rel.gcCode);
+        const sharedName = (rel.gcName || rel.esName || site.name).trim();
+        return {
+          isPair: true,
+          esCode,
+          gcCode,
+          name: sharedName
+        };
+      }
+
+      return {
+        isPair: false,
+        site,
+        rel,
+        name: site.name.trim()
+      };
+    }
+
+    function renderEmailPreview() {
+      const site = appState.selectedSite;
+      const aviso = document.getElementById('avisoType').value;
+      const banner = document.getElementById('relationBanner');
+      const heading = document.getElementById('relationHeading');
+      const subtext = document.getElementById('relationSubtext');
+      const subjectBox = document.getElementById('subjectPreview');
+      const bodyBox = document.getElementById('bodyPreview');
+      const retireNotice = document.getElementById('retireNotice');
+
+      retireNotice.style.display = aviso === 'RETIRO' ? 'block' : 'none';
+
+      if (!site) {
+        banner.classList.add('muted-state');
+        heading.textContent = 'Sin pareja vinculada';
+        subtext.textContent = 'Selecciona una estación o tienda para verificar si comparte internet con su pareja.';
+        subjectBox.textContent = 'Selecciona una estación o tienda para generar el asunto...';
+        bodyBox.textContent = 'El cuerpo del mensaje aparecerá aquí automáticamente...';
+        return;
+      }
+
+      const rel = getRelation(site.code);
+      const sharedChecked = document.getElementById('sharedInternetToggle').checked;
+
+      if (rel) {
+        banner.classList.remove('muted-state');
+        const partnerCode = normalizeCode(rel.esCode) === normalizeCode(site.code) ? rel.gcCode : rel.esCode;
+        const partnerName = normalizeCode(rel.esCode) === normalizeCode(site.code)
+          ? (rel.gcName || rel.esName)
+          : (rel.esName || rel.gcName);
+        heading.textContent = `Relación detectada: ${rel.esCode} + ${rel.gcCode} (${rel.gcName || rel.esName || site.name})`;
+        subtext.textContent = sharedChecked
+          ? `Un solo internet activo: se redactará para ${rel.esCode} y ${rel.gcCode}.`
+          : `Relación disponible (${partnerCode} ${partnerName || ''}), desmarcada para aviso individual.`;
+      } else {
+        banner.classList.add('muted-state');
+        heading.textContent = `Sitio individual (${site.code})`;
+        subtext.textContent = sharedChecked
+          ? 'Marcaste un solo internet, pero este sitio no tiene pareja en el catálogo de relaciones.'
+          : 'Se redactará el aviso únicamente para este sitio.';
+      }
+
+      const ctx = resolveContext();
+      const actionLabel = aviso === 'COLOCACION'
+        ? 'INSTALACIÓN DE BAM'
+        : 'RESTAURACIÓN DE SERVICIO - RETIRO DE BAM';
+
+      let subjectText = '';
+      let entityText = '';
+
+      if (ctx.isPair) {
+        subjectText = `${ctx.esCode} y ${ctx.gcCode} ${ctx.name} / ${actionLabel}`;
+        entityText = `la estación ${ctx.esCode} y tienda ${ctx.gcCode} ${ctx.name}`;
+      } else {
+        subjectText = `${site.code} ${site.name} / ${actionLabel}`;
+        const kindPhrase = site.tipo === 'ES'
+          ? 'la estación'
+          : (site.tipo === 'GC' ? 'la tienda' : 'el sitio');
+        entityText = `${kindPhrase} ${site.code} ${site.name}`;
+      }
+
+      const bodyText = aviso === 'COLOCACION'
+        ? `Para informar que ${entityText} está trabajando con BAM por fallas de internet por parte del proveedor. se sacan cámaras de monitoreo`
+        : `Para informar que ${entityText} ya está trabajando con el modem del proveedor, se retira BAM. Se regresan cámaras a monitoreo.`;
+
+      subjectBox.textContent = subjectText;
+      bodyBox.textContent = bodyText;
+    }
+
+    function copyPreview(elId, doneMessage) {
+      const txt = document.getElementById(elId).textContent.trim();
+      if (!txt || txt.startsWith('Selecciona') || txt.startsWith('El cuerpo')) {
+        notify('Selecciona un sitio primero', true);
+        return;
+      }
+      navigator.clipboard.writeText(txt).then(() => {
+        notify(doneMessage);
+      }).catch(() => {
+        const tmp = document.createElement('textarea');
+        tmp.value = txt;
+        document.body.appendChild(tmp);
+        tmp.select();
+        document.execCommand('copy');
+        document.body.removeChild(tmp);
+        notify(doneMessage);
+      });
+    }
+
+    function launchGmail(overrideSubject = null, overrideBody = null) {
+      const subject = overrideSubject || document.getElementById('subjectPreview').textContent.trim();
+      const body = overrideBody || document.getElementById('bodyPreview').textContent.trim();
+
+      if (!subject || subject.startsWith('Selecciona')) {
+        notify('Selecciona un sitio primero', true);
+        return;
+      }
+
+      const to = encodeURIComponent(document.getElementById('recipientsInput').value.trim());
+      const su = encodeURIComponent(subject);
+      const bo = encodeURIComponent(body);
+      const url = `https://mail.google.com/mail/?view=cm&fs=1&to=${to}&su=${su}&body=${bo}`;
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+
+    /* Tablero de BAM Activas */
+    function addActiveBAM() {
+      const ctx = resolveContext();
+      if (!ctx) {
+        notify('Selecciona una estación o tienda primero', true);
+        return;
+      }
+
+      const clave = ctx.isPair ? `${ctx.esCode} y ${ctx.gcCode}` : ctx.site.code;
+      const tipo = ctx.isPair ? 'ES+GC' : (ctx.site.tipo || 'SITIO');
+      const fecha = new Date().toLocaleString('es-MX', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      const record = {
+        id: 'BAM-' + Date.now(),
+        clave,
+        nombre: ctx.name,
+        tipo,
+        fecha,
+        estatus: 'ACTIVA'
+      };
+
+      appState.activas.unshift(record);
+      saveState();
+      updateMetrics();
+      renderActiveCards();
+      notify(`Registrada en BAM Activas: ${clave}`);
+
+      if (isAppsScript()) {
+        google.script.run.guardarRegistroBAM(record);
+      }
+    }
+
+    function retireActiveBAM(id) {
+      const item = appState.activas.find(x => x.id === id);
+      if (!item) return;
+
+      const isPair = item.tipo === 'ES+GC' || item.clave.includes(' y ');
+      const entityPhrase = isPair
+        ? `la estación ${item.clave.split(' y ')[0]} y tienda ${item.clave.split(' y ')[1]} ${item.nombre}`
+        : `${item.tipo === 'ES' ? 'la estación' : 'la tienda'} ${item.clave} ${item.nombre}`;
+
+      const retiroSubject = `${item.clave} ${item.nombre} / RESTAURACIÓN DE SERVICIO - RETIRO DE BAM`;
+      const retiroBody = `Para informar que ${entityPhrase} ya está trabajando con el modem del proveedor, se retira BAM. Se regresan cámaras a monitoreo.`;
+
+      item.estatus = 'RETIRADA';
+      saveState();
+      updateMetrics();
+      renderActiveCards();
+
+      if (isAppsScript()) {
+        google.script.run.marcarRetiroBAM(id);
+      }
+
+      launchGmail(retiroSubject, retiroBody);
+      notify(`Aviso de retiro listo para ${item.clave}`);
+    }
+
+    function removeActiveBAM(id) {
+      appState.activas = appState.activas.filter(x => x.id !== id);
+      saveState();
+      updateMetrics();
+      renderActiveCards();
+      if (isAppsScript()) {
+        google.script.run.eliminarRegistroActiva(id);
+      }
+      notify('Registro eliminado');
+    }
+
+    function renderActiveCards() {
+      const container = document.getElementById('activeCardsContainer');
+      const openItems = appState.activas.filter(x => x.estatus === 'ACTIVA');
+      updateMetrics();
+
+      if (!openItems.length) {
+        container.innerHTML = `<div class="empty-state">No hay BAM activas registradas en este momento.</div>`;
+        return;
+      }
+
+      container.innerHTML = openItems.map(item => `
+        <div class="active-card">
+          <div class="active-card-head">
+            <div>
+              <div class="active-card-title"><span class="code-mono">${item.clave}</span> · ${item.nombre}</div>
+              <div class="active-card-sub">Tipo: ${item.tipo} · Alta: ${item.fecha}</div>
+            </div>
+            <span class="chip chip-es">ACTIVA</span>
+          </div>
+          <div class="action-bar" style="margin-top: 10px;">
+            <button class="btn btn-warn btn-xs" onclick="retireActiveBAM('${item.id}')">Retirar BAM y abrir correo</button>
+            <button class="btn btn-danger btn-xs" onclick="removeActiveBAM('${item.id}')">Quitar</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function downloadActivasCSV() {
+      if (!appState.activas.length) {
+        notify('No hay registros para exportar', true);
+        return;
+      }
+      const cols = ['ID', 'CLAVE', 'NOMBRE', 'TIPO', 'FECHA', 'ESTATUS'];
+      const lines = appState.activas.map(r =>
+        cols.map(c => `"${String(r[c.toLowerCase()] || '').replace(/"/g, '""')}"`).join(',')
+      );
+      const csvContent = [cols.join(','), ...lines].join('
+');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'historial_bam_synergo.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+      notify('CSV exportado');
+    }
+
+    /* Catálogo y Relaciones */
+    function updateCodePlaceholder() {
+      const tipo = document.getElementById('newSiteType').value;
+      const input = document.getElementById('newSiteCode');
+      if (!input.value.trim()) {
+        input.placeholder = tipo === 'ES' ? 'Ej. ES15700' : (tipo === 'GC' ? 'Ej. GC125' : 'Ej. GCT2');
+      }
+    }
+
+    function resetSiteForm() {
+      document.getElementById('originalSiteCode').value = '';
+      document.getElementById('newSiteType').value = 'ES';
+      document.getElementById('newSiteCode').value = '';
+      document.getElementById('newSiteName').value = '';
+      document.getElementById('relEsInput').value = '';
+      document.getElementById('relGcInput').value = '';
+      document.getElementById('relNameInput').value = '';
+      document.getElementById('submitCatalogBtn').textContent = 'Guardar en Catálogo';
+    }
+
+    function handleCatalogSubmit(e) {
+      e.preventDefault();
+      const origCode = document.getElementById('originalSiteCode').value;
+      const tipo = document.getElementById('newSiteType').value;
+      const code = normalizeCode(document.getElementById('newSiteCode').value, tipo);
+      const name = document.getElementById('newSiteName').value.trim().toUpperCase();
+
+      if (!code || !name) {
+        notify('Completa clave y nombre', true);
+        return;
+      }
+
+      const num = code.replace(/^(ES|GC|GCT1)/, '') || code;
+      const entry = { code, num, name, tipo };
+
+      const targetIndex = appState.sites.findIndex(s => s.code === (origCode || code));
+      if (targetIndex >= 0) {
+        appState.sites[targetIndex] = entry;
+      } else {
+        appState.sites.push(entry);
+      }
+
+      const relEs = normalizeCode(document.getElementById('relEsInput').value, 'ES');
+      const relGc = normalizeCode(document.getElementById('relGcInput').value, 'GC');
+      const relName = document.getElementById('relNameInput').value.trim().toUpperCase() || name;
+
+      if (origCode && origCode !== code) {
+        appState.relations = appState.relations.filter(
+          r => normalizeCode(r.esCode) !== origCode && normalizeCode(r.gcCode) !== origCode
+        );
+      }
+
+      let relSaved = null;
+      if (relEs && relGc) {
+        relSaved = { esCode: relEs, esName: relName, gcCode: relGc, gcName: relName };
+        const relIdx = appState.relations.findIndex(
+          r => normalizeCode(r.esCode) === relEs || normalizeCode(r.gcCode) === relGc
+        );
+        if (relIdx >= 0) {
+          appState.relations[relIdx] = relSaved;
+        } else {
+          appState.relations.push(relSaved);
+        }
+      }
+
+      if (isAppsScript()) {
+        google.script.run.guardarSitioYRelacion(entry, relSaved, origCode);
+      }
+
+      saveState();
+      updateMetrics();
+      renderCatalogGrid();
+      resetSiteForm();
+      notify(`Guardado ${code} (${name})`);
+    }
+
+    function startEditSite(code) {
+      const site = appState.sites.find(s => s.code === code);
+      if (!site) return;
+
+      document.getElementById('originalSiteCode').value = site.code;
+      document.getElementById('newSiteType').value = site.tipo || 'ES';
+      document.getElementById('newSiteCode').value = site.code;
+      document.getElementById('newSiteName').value = site.name;
+
+      const rel = getRelation(site.code);
+      if (rel) {
+        document.getElementById('relEsInput').value = rel.esCode;
+        document.getElementById('relGcInput').value = rel.gcCode;
+        document.getElementById('relNameInput').value = rel.gcName || rel.esName || site.name;
+      } else {
+        document.getElementById('relEsInput').value = site.tipo === 'ES' ? site.code : '';
+        document.getElementById('relGcInput').value = site.tipo === 'GC' ? site.code : '';
+        document.getElementById('relNameInput').value = '';
+      }
+
+      document.getElementById('submitCatalogBtn').textContent = 'Actualizar Sitio';
+      switchSection('catalogo');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function removeSite(code) {
+      appState.sites = appState.sites.filter(s => s.code !== code);
+      appState.relations = appState.relations.filter(
+        r => normalizeCode(r.esCode) !== code && normalizeCode(r.gcCode) !== code
+      );
+      if (appState.selectedSite && appState.selectedSite.code === code) {
+        clearSiteSelection();
+      }
+      saveState();
+      updateMetrics();
+      renderCatalogGrid();
+      notify(`Eliminado ${code}`);
+    }
+
+    function renderCatalogGrid() {
+      const filter = normalizeStr(document.getElementById('catalogSearchInput').value);
+      const tbody = document.getElementById('catalogGridBody');
+
+      const rows = appState.sites.filter(s => {
+        if (!filter) return true;
+        return normalizeStr(`${s.code} ${s.name} ${s.tipo}`).includes(filter);
+      });
+
+      tbody.innerHTML = rows.map(s => {
+        const rel = getRelation(s.code);
+        const relBadge = rel
+          ? `<span class="chip chip-es">${rel.esCode} + ${rel.gcCode}</span>`
+          : `<span style="color:var(--text-muted); font-size:0.78rem;">Individual</span>`;
+        const typeChip = s.tipo === 'ES' ? 'chip-es' : (s.tipo === 'GC' ? 'chip-gc' : 'chip-other');
+        return `
+          <tr>
+            <td><span class="code-mono">${s.code}</span></td>
+            <td>${s.name}</td>
+            <td><span class="chip ${typeChip}">${s.tipo || 'SITIO'}</span></td>
+            <td>${relBadge}</td>
+            <td>
+              <button class="btn btn-ghost btn-xs" onclick="startEditSite('${s.code}')">Editar</button>
+              <button class="btn btn-danger btn-xs" onclick="removeSite('${s.code}')">Borrar</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function downloadCatalogJSON() {
+      const dataStr = JSON.stringify({ sites: appState.sites, relations: appState.relations }, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'catalogo_bam_synergo.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      notify('JSON exportado');
+    }
+
+    bootApp();
+  </script>
+</body>
+</html>
